@@ -373,7 +373,16 @@ fn saved_analysis_rejects_resigned_cache_clocks_tags_ownership_and_metadata_path
 #[test]
 fn saved_analysis_rejects_registered_disabled_scientific_archives_and_metadata_byte_overflow() {
     let archive = complete_construction_archive();
-    rewrite_index(&archive, |i| i.mode = CollectionMode::Scientific);
+    rewrite_index(&archive, |i| {
+        i.mode = CollectionMode::Scientific;
+        let bytes = fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../docs/superpowers/specs/2026-10-08-foraging-5-registration-proposal.json"
+        ))
+        .unwrap();
+        i.manifest = serde_json::from_slice(&bytes).unwrap();
+        i.provenance.manifest_sha256 = sha256(&bytes);
+    });
     let out = archive.temp.path().join("analysis");
     assert!(analyze(&archive.index, &out)
         .unwrap_err()

@@ -55,10 +55,11 @@ fn bounded_reads_accept_exact_limit_and_reject_one_byte_short_and_overflow() {
     assert!(read_bounded(&p, u64::MAX).is_err());
 }
 #[test]
-fn registered_disabled_scientific_writer_creates_nothing() {
+fn historical_registered_disabled_scientific_writer_creates_nothing() {
     let tmp = owned_tempdir();
     let out = tmp.path().join("new");
-    let m = candidate().unwrap();
+    let mut m = candidate().unwrap();
+    m.execution_authorized = false;
     assert!(ArchiveWriter::create(
         &out,
         &m,

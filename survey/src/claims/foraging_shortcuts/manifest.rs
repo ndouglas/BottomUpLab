@@ -65,7 +65,7 @@ pub(super) fn candidate() -> Result<Manifest, String> {
         schema: "foraging-shortcut-manifest-v1".into(),
         version: 1,
         status: "registered".into(),
-        execution_authorized: false,
+        execution_authorized: true,
         protocol:
             "docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md"
                 .into(),
@@ -97,16 +97,23 @@ pub(super) fn wire_manifest(manifest: &Manifest) -> Result<WireManifest, String>
         .map_err(|e| format!("manifest wire representation: {e}"))
 }
 
-/// Only these two complete identities are supported; history never authorizes collection.
+/// Only these three complete identities are supported; history never authorizes collection.
 pub(super) fn resolve_saved(wire: &WireManifest, digest: &str) -> Result<Manifest, String> {
     let active = candidate()?;
+    let mut closed = active.clone();
+    closed.execution_authorized = false;
     let mut historical = active.clone();
+    historical.execution_authorized = false;
     historical.status = "draft".into();
     historical.protocol =
         "docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md".into();
     for (manifest, known_digest) in [
         (
             active,
+            "3a78882035f89758659131da929b32d78d6af0b29f890aeb9bce4f03f0825216",
+        ),
+        (
+            closed,
             "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759",
         ),
         (

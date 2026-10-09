@@ -1,6 +1,9 @@
 use super::super::{
     archive::{limits, raw_path, ArchiveReader, ArchiveWriter, Index, RawRef},
-    manifest::{candidate, expected_keys, manifest_bytes},
+    manifest::{
+        authorize, candidate, canonical_bytes, expected_keys, manifest_bytes, resolve_saved,
+        wire_manifest,
+    },
     report::analyze,
     sha256,
     wire::{encode_envelope, WireEnvelope, WireManifest},
@@ -9,11 +12,7 @@ use super::super::{
 use super::support::{
     cached_candidate_episode, owned_tempdir, test_provenance, TestArchiveFixture,
 };
-use std::{
-    fs,
-    path::PathBuf,
-    sync::{LazyLock, OnceLock},
-};
+use std::{fs, path::PathBuf, sync::LazyLock};
 
 static LEGACY: LazyLock<Vec<u8>> = LazyLock::new(|| {
     fs::read(concat!(
@@ -22,7 +21,7 @@ static LEGACY: LazyLock<Vec<u8>> = LazyLock::new(|| {
     ))
     .unwrap()
 });
-static ACTIVE: LazyLock<Vec<u8>> = LazyLock::new(|| {
+static CLOSED: LazyLock<Vec<u8>> = LazyLock::new(|| {
     fs::read(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../docs/superpowers/specs/2026-10-08-foraging-5-registration-proposal.json"
@@ -31,13 +30,12 @@ static ACTIVE: LazyLock<Vec<u8>> = LazyLock::new(|| {
 });
 
 // Saved historical evidence is assembled directly, never through the active-only writer.
-fn historical_archive() -> TestArchiveFixture {
-    static FILES: OnceLock<Vec<(PathBuf, Vec<u8>)>> = OnceLock::new();
-    let files = FILES.get_or_init(|| {
+fn historical_archive(identity: &[u8]) -> TestArchiveFixture {
+    let files = {
         let m = candidate().unwrap();
         let keys = expected_keys(&m, CollectionMode::Construction);
         let mut p = test_provenance();
-        p.manifest_sha256 = sha256(&LEGACY);
+        p.manifest_sha256 = sha256(identity);
         let mut files = vec![];
         let mut runs = vec![];
         let mut total = 0;
@@ -63,7 +61,7 @@ fn historical_archive() -> TestArchiveFixture {
         }
         let index = Index {
             schema: "foraging-shortcut-archive-v1".into(),
-            manifest: serde_json::from_slice(&LEGACY).unwrap(),
+            manifest: serde_json::from_slice(identity).unwrap(),
             mode: CollectionMode::Construction,
             provenance: p,
             approval_context: "immutable historical construction fixture".into(),
@@ -77,9 +75,9 @@ fn historical_archive() -> TestArchiveFixture {
             serde_json::to_vec(&index).unwrap(),
         ));
         files
-    });
+    };
     let temp = owned_tempdir();
-    for (relative, bytes) in files {
+    for (relative, bytes) in &files {
         let path = temp.path().join("saved").join(relative);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(path, bytes).unwrap();
@@ -90,79 +88,127 @@ fn historical_archive() -> TestArchiveFixture {
     }
 }
 
+static ACTIVE: LazyLock<Vec<u8>> = LazyLock::new(|| {
+    fs::read(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../docs/superpowers/specs/2026-10-09-foraging-5-authorized-manifest.json"
+    ))
+    .unwrap()
+});
+
 #[test]
-fn registered_disabled_factory_is_exact_reviewed_artifact() {
-    assert!(
-        manifest_bytes().unwrap() == *ACTIVE,
-        "factory must equal the complete reviewed artifact bytes"
-    );
-    assert_eq!(
-        sha256(&ACTIVE),
-        "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759"
-    );
-    assert_eq!(
-        sha256(&LEGACY),
-        "8e532eaf779b970d4bd9a2550fc1634f89abe63a00b7d05d3134f04a4a2deb62"
-    );
+fn authorized_factory_changes_only_approval_and_pins_all_three_identities() {
+    let active = candidate().unwrap();
+    assert!(active.execution_authorized);
+    assert_eq!(manifest_bytes().unwrap(), *ACTIVE);
+    let mut closed = active.clone();
+    closed.execution_authorized = false;
+    assert_eq!(canonical_bytes(&closed).unwrap(), *CLOSED);
+    for (bytes, expected, authorized) in [
+        (
+            &*ACTIVE,
+            "3a78882035f89758659131da929b32d78d6af0b29f890aeb9bce4f03f0825216",
+            true,
+        ),
+        (
+            &*CLOSED,
+            "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759",
+            false,
+        ),
+        (
+            &*LEGACY,
+            "8e532eaf779b970d4bd9a2550fc1634f89abe63a00b7d05d3134f04a4a2deb62",
+            false,
+        ),
+    ] {
+        assert_eq!(sha256(bytes), expected);
+        let wire = serde_json::from_slice(bytes).unwrap();
+        let resolved = resolve_saved(&wire, expected).unwrap();
+        assert_eq!(wire_manifest(&resolved).unwrap(), wire);
+        assert_eq!(resolved.execution_authorized, authorized);
+        assert_eq!(
+            authorize(&resolved, CollectionMode::Scientific).is_ok(),
+            authorized
+        );
+        let keys = expected_keys(&resolved, CollectionMode::Scientific);
+        let expected_keys: Vec<_> = resolved
+            .conditions
+            .iter()
+            .flat_map(|c| {
+                (10001..=10040).map(move |seed| super::super::RunKey {
+                    condition: c.id.clone(),
+                    seed,
+                })
+            })
+            .collect();
+        assert_eq!(keys, expected_keys);
+        assert_eq!(keys.len(), 600);
+    }
 }
 
 #[test]
 fn historical_construction_reanalysis_preserves_original_bytes() {
-    let f = historical_archive();
-    let index_before = fs::read(&f.index).unwrap();
-    let index: Index = serde_json::from_slice(&index_before).unwrap();
-    let raw_before: Vec<_> = index
-        .runs
-        .iter()
-        .map(|r| fs::read(f.index.parent().unwrap().join(&r.path)).unwrap())
-        .collect();
-    let mut reader = ArchiveReader::open(&f.index).unwrap();
-    let mut count = 0;
-    while reader.next().unwrap().is_some() {
-        count += 1;
-    }
-    assert_eq!(count, 30);
-    for out in ["first", "second"] {
-        analyze(&f.index, &f.temp.path().join(out)).unwrap();
-    }
-    for file in ["analysis.json", "results.md"] {
-        let bytes = fs::read(f.temp.path().join("first").join(file)).unwrap();
-        assert_eq!(
-            bytes,
-            fs::read(f.temp.path().join("second").join(file)).unwrap()
-        );
-        let expected = if file == "analysis.json" {
-            "2b0a808d007bfbc399fcd0c70f56c91f39aaf4b4e23b915f2033ff46f4543694"
-        } else {
-            "fbeac26a842d456ec5b29b09283f2f4aaffc3db247b4ebd703477f18c17d9df0"
-        };
-        assert_eq!(
-            sha256(&bytes),
-            expected,
-            "historical report changed from pre-registration baseline"
-        );
-    }
-    assert_eq!(fs::read(&f.index).unwrap(), index_before);
-    for (r, before) in index.runs.iter().zip(raw_before) {
-        assert_eq!(
-            fs::read(f.index.parent().unwrap().join(&r.path)).unwrap(),
-            before
-        );
+    for identity in [LEGACY.as_slice(), CLOSED.as_slice()] {
+        let f = historical_archive(identity);
+        let index_before = fs::read(&f.index).unwrap();
+        let index: Index = serde_json::from_slice(&index_before).unwrap();
+        let raw_before: Vec<_> = index
+            .runs
+            .iter()
+            .map(|r| fs::read(f.index.parent().unwrap().join(&r.path)).unwrap())
+            .collect();
+        let mut reader = ArchiveReader::open(&f.index).unwrap();
+        let mut count = 0;
+        while reader.next().unwrap().is_some() {
+            count += 1;
+        }
+        assert_eq!(count, 30);
+        for out in ["first", "second"] {
+            analyze(&f.index, &f.temp.path().join(out)).unwrap();
+        }
+        for file in ["analysis.json", "results.md"] {
+            let bytes = fs::read(f.temp.path().join("first").join(file)).unwrap();
+            assert_eq!(
+                bytes,
+                fs::read(f.temp.path().join("second").join(file)).unwrap()
+            );
+            let expected = if identity == LEGACY.as_slice() && file == "analysis.json" {
+                "2b0a808d007bfbc399fcd0c70f56c91f39aaf4b4e23b915f2033ff46f4543694"
+            } else if identity == LEGACY.as_slice() {
+                "fbeac26a842d456ec5b29b09283f2f4aaffc3db247b4ebd703477f18c17d9df0"
+            } else if file == "analysis.json" {
+                "3eb028131dab1e3c2337cf2c62e03047ff07d5290787885f954562832495dae6"
+            } else {
+                "d9c3b7281a244f6b37934d1a0e5b29896820cb1da90c0c60e5ca1fd37073777a"
+            };
+            assert_eq!(
+                sha256(&bytes),
+                expected,
+                "historical report changed from pre-activation baseline"
+            );
+        }
+        assert_eq!(fs::read(&f.index).unwrap(), index_before);
+        for (r, before) in index.runs.iter().zip(raw_before) {
+            assert_eq!(
+                fs::read(f.index.parent().unwrap().join(&r.path)).unwrap(),
+                before
+            );
+        }
     }
 }
 
 #[test]
-fn both_saved_identities_reject_mutations_and_scientific_mode_before_output() {
-    let f = historical_archive();
+fn all_saved_identities_reject_mutations_and_scientific_mode_before_output() {
+    let f = historical_archive(&LEGACY);
     let original: Index = serde_json::from_slice(&fs::read(&f.index).unwrap()).unwrap();
-    for identity in [LEGACY.as_slice(), ACTIVE.as_slice()] {
+    for identity in [LEGACY.as_slice(), CLOSED.as_slice(), ACTIVE.as_slice()] {
         for mutation in 0..14 {
             let mut bad = original.clone();
             bad.manifest = serde_json::from_slice(identity).unwrap();
             bad.provenance.manifest_sha256 = sha256(identity);
             match mutation {
                 0 => bad.manifest.status = "unknown".into(),
-                1 => bad.manifest.execution_authorized = true,
+                1 => bad.manifest.execution_authorized = !bad.manifest.execution_authorized,
                 2 => bad.manifest.protocol.push_str(".changed"),
                 3 => bad.manifest.conditions[0].setup.width += 1,
                 4 => bad.manifest.conditions[0].options.ticks -= 1,
@@ -200,7 +246,7 @@ fn both_saved_identities_reject_mutations_and_scientific_mode_before_output() {
 
 #[test]
 fn active_index_with_historical_envelopes_fails_closed() {
-    let f = historical_archive();
+    let f = historical_archive(&LEGACY);
     let mut index: Index = serde_json::from_slice(&fs::read(&f.index).unwrap()).unwrap();
     index.manifest = serde_json::from_slice(&ACTIVE).unwrap();
     index.provenance.manifest_sha256 = sha256(&ACTIVE);
@@ -213,7 +259,7 @@ fn active_index_with_historical_envelopes_fails_closed() {
 
 #[test]
 fn historical_index_rejects_a_resigned_active_envelope_at_the_last_key() {
-    let f = historical_archive();
+    let f = historical_archive(&LEGACY);
     let mut index: Index = serde_json::from_slice(&fs::read(&f.index).unwrap()).unwrap();
     let reference = index.runs.last_mut().unwrap();
     let path = f.index.parent().unwrap().join(&reference.path);
@@ -233,31 +279,43 @@ fn historical_index_rejects_a_resigned_active_envelope_at_the_last_key() {
 }
 
 #[test]
-fn historical_and_authorization_edited_manifests_cannot_create_new_archives() {
+fn both_historical_identities_cannot_create_new_archives() {
     let temp = owned_tempdir();
-    for historical in [true, false] {
-        let mut m = candidate().unwrap();
-        if historical {
-            let wire: WireManifest = serde_json::from_slice(&LEGACY).unwrap();
-            m.status = wire.status;
-            m.protocol = wire.protocol;
-        } else {
-            m.execution_authorized = true;
-        }
+    for bytes in [LEGACY.as_slice(), CLOSED.as_slice()] {
+        let wire: WireManifest = serde_json::from_slice(bytes).unwrap();
+        let m = resolve_saved(&wire, &sha256(bytes)).unwrap();
         let mut p = test_provenance();
-        if historical {
-            p.manifest_sha256 = sha256(&LEGACY);
+        p.manifest_sha256 = sha256(bytes);
+        for mode in [CollectionMode::Construction, CollectionMode::Scientific] {
+            let out = temp.path().join("new");
+            assert!(ArchiveWriter::create(&out, &m, mode, &p, "test", limits(&m)).is_err());
+            assert!(!out.exists());
         }
-        let out = temp.path().join("new");
-        assert!(ArchiveWriter::create(
-            &out,
-            &m,
-            CollectionMode::Construction,
-            &p,
-            "test",
-            limits(&m)
-        )
-        .is_err());
-        assert!(!out.exists());
     }
+}
+
+#[test]
+fn authorized_scientific_writer_records_exact_complete_keyset_without_episodes() {
+    let temp = owned_tempdir();
+    let out = temp.path().join("authorized-preflight");
+    let m = candidate().unwrap();
+    let _writer = ArchiveWriter::create(
+        &out,
+        &m,
+        CollectionMode::Scientific,
+        &test_provenance(),
+        "explicit full run approval",
+        limits(&m),
+    )
+    .unwrap();
+    let index: Index =
+        serde_json::from_slice(&fs::read(out.join("index.incomplete.json")).unwrap()).unwrap();
+    assert!(!index.completed);
+    assert!(index.runs.is_empty());
+    assert_eq!(
+        index.expected_keys,
+        expected_keys(&m, CollectionMode::Scientific)
+    );
+    assert_eq!(index.expected_keys.len(), 600);
+    assert!(!out.join("index.json").exists());
 }

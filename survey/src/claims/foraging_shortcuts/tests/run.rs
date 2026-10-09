@@ -60,7 +60,19 @@ fn parser_rejects_overrides_repeats_missing_empty_and_incompatible_flags() {
     }
 }
 #[test]
-fn collector_rejects_registered_disabled_scientific_request_before_output() {
+fn authorized_scientific_preflight_binds_provenance_without_collection_or_output() {
+    let (_tmp, ctx, mut r) = owned_git_context();
+    r.mode = CollectionMode::Scientific;
+    let p = preflight(&ctx, &candidate().unwrap(), &r).unwrap();
+    assert_eq!(
+        p.manifest_sha256,
+        "3a78882035f89758659131da929b32d78d6af0b29f890aeb9bce4f03f0825216"
+    );
+    assert!(!r.out.exists());
+}
+
+#[test]
+fn historical_scientific_preflight_rejects_before_repository_or_output() {
     let tmp = owned_tempdir();
     let r = RunRequest {
         mode: CollectionMode::Scientific,
@@ -72,10 +84,17 @@ fn collector_rejects_registered_disabled_scientific_request_before_output() {
         tmp.path().join("missing-repository"),
         tmp.path().join("collector"),
     );
-    assert!(collect(&ctx, &r)
-        .unwrap_err()
-        .contains("execution approval pending"));
-    assert!(!r.out.exists());
+    for draft in [false, true] {
+        let mut m = candidate().unwrap();
+        m.execution_authorized = false;
+        if draft {
+            m.status = "draft".into();
+        }
+        assert!(preflight(&ctx, &m, &r)
+            .unwrap_err()
+            .contains("execution approval pending"));
+        assert!(!r.out.exists());
+    }
 }
 #[test]
 fn preflight_binds_canonical_commit_manifest_and_executable_bytes() {

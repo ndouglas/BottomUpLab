@@ -329,7 +329,7 @@ fn manifest_declares_exact_canonical_conditions_and_workload() {
     assert_eq!(m.schema, "foraging-shortcut-manifest-v1");
     assert_eq!(m.version, 1);
     assert_eq!(m.status, "registered");
-    assert!(!m.execution_authorized);
+    assert!(m.execution_authorized);
     assert_eq!(
         m.protocol,
         "docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md"
@@ -355,7 +355,7 @@ fn manifest_declares_exact_canonical_conditions_and_workload() {
             .collect();
         assert_eq!(expected_keys(&m, mode), expected);
     }
-    assert!(authorize(&m, CollectionMode::Scientific).is_err());
+    assert!(authorize(&m, CollectionMode::Scientific).is_ok());
     assert!(authorize(&m, CollectionMode::Construction).is_ok());
 }
 
@@ -372,7 +372,7 @@ fn manifest_bytes_and_sha256_are_stable_and_canonical() {
     );
     assert_eq!(
         sha256(&bytes),
-        "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759"
+        "3a78882035f89758659131da929b32d78d6af0b29f890aeb9bce4f03f0825216"
     );
     let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(json["conditions"][5]["regime"], "already_open");

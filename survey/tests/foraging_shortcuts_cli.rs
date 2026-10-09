@@ -40,7 +40,7 @@ fn assert_selector_available(directory: &OwnedDir) {
     );
 }
 #[test]
-fn default_shortcut_command_prints_registered_disabled_manifest_without_files() {
+fn default_shortcut_command_prints_authorized_manifest_without_files() {
     let dir = owned_dir();
     assert_selector_available(&dir);
     let output = binary(&["--foraging-shortcuts"], &dir);
@@ -48,36 +48,25 @@ fn default_shortcut_command_prints_registered_disabled_manifest_without_files() 
     let m: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(m["schema"], "foraging-shortcut-manifest-v1");
     assert_eq!(m["status"], "registered");
-    assert_eq!(m["execution_authorized"], false);
+    assert_eq!(m["execution_authorized"], true);
     assert_eq!(
         output.stdout,
         fs::read(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../docs/superpowers/specs/2026-10-08-foraging-5-registration-proposal.json"
+            "/../docs/superpowers/specs/2026-10-09-foraging-5-authorized-manifest.json"
         ))
         .unwrap()
     );
     assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 0);
 }
 #[test]
-fn help_is_pure_and_registered_disabled_scientific_run_rejects_before_output() {
+fn help_is_pure_and_records_current_authorization() {
     let dir = owned_dir();
-    assert_selector_available(&dir);
-    let output = binary(
-        &[
-            "--foraging-shortcuts",
-            "--run",
-            "--protocol-revision",
-            &"a".repeat(40),
-            "--approval-context",
-            "test",
-            "--out",
-            "new",
-        ],
-        &dir,
-    );
-    assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("execution approval pending"));
+    let output = binary(&["--foraging-shortcuts", "--help"], &dir);
+    assert!(output.status.success());
+    let help = String::from_utf8_lossy(&output.stdout);
+    assert!(help.contains("execution authorized"));
+    assert!(!help.contains("execution approval pending"));
     assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 0);
 }
 #[test]
