@@ -67,7 +67,7 @@ Intervals describe computational seed variation for 40 paired whole episodes, no
 - Analysis JSON SHA-256: `7bba70c19802bb7b97abe69b84c592fd869bd1a09132912eabf508ab657ce527`.
 - Results Markdown SHA-256: `2903e4c952e7974a13f17dcd209a0f70b5d9e7086b546f3756e50fc343591c46`.
 
-Local raw evidence is `/Users/nathan/Projects/ndouglas/SugarScape/survey/out/foraging-shortcuts/2026-10-09-registered-600/`. Adjacent `2026-10-09-registered-600-analysis/` and `2026-10-09-registered-600-reanalysis/` retain complete reports. They live outside the feature worktree and are ignored by Git. Operational receipts, raw hash inventory, source proof, review reports, pinned collector and audit scripts are preserved under `/tmp/sugarscape-f5-execution-20261009/sdd/`; this is local evidence, not a remote backup.
+Local raw evidence is `/Users/nathan/Projects/ndouglas/SugarScape/survey/out/foraging-shortcuts/2026-10-09-registered-600/`. Adjacent `2026-10-09-registered-600-analysis/` and `2026-10-09-registered-600-reanalysis/` retain complete reports. They live outside the feature worktree and are untracked in the main checkout; they are not ignored by its current Git rules. A complete hash-verified local copy is retained under `/tmp/sugarscape-f5-execution-20261009/official-data/`. Operational receipts, raw hash inventory, source proof, review reports, pinned collector and audit scripts are preserved under `/tmp/sugarscape-f5-execution-20261009/sdd/`; this is local evidence, not a remote backup.
 
 Minor M2: the implementer's gate receipt overwrote its detailed include-map output. The independent task reviewer reconstructed all 276 literal include entries, with zero missing production inputs, in `task-1-review-includes.json`. The reconstructed map is archived alongside the original receipts. The existing nonblocking M1 cumulative-guard test-isolation follow-up is unchanged.
 
@@ -77,3 +77,7 @@ No merge or push is part of this execution. The registration/activation branch r
 
 1. Treat M2 as corrected evidence traceability through the independently retained include map and explicit disclosure, without changing passing source or repeating suites. If wrong, the audit may need reconstruction again.
 2. Keep the previously approved design/report schema, existing M1, core algorithms, biological calibration, empirical reproduction, reproducible-build and hostile-toolchain guarantees outside administrative activation review, retaining their existing limits. If wrong, this run may need later reinterpretation or separate validation; it supports no biological inference.
+
+## Subsequent saved-only diagnosis
+
+The [post hoc diagnosis](2026-10-09-foraging-5-diagnosis.md) traces heavy AlreadyOpen congestion to the supplied shortest-step-only traffic rule, and late excavation to open-frontier priority. Every route episode that dug had already delivered at least 12 tokens; the sole shortening episode first dug after all food was delivered. Registered results and raw evidence remain unchanged; no controller modification or new simulation was performed.
