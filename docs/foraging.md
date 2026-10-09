@@ -482,3 +482,8 @@ energy conversion, significance-selected verdict or animal uncertainty claim.
 The inaccessible workbook/README and source figure remain prerequisites for a
 source-data or quantitative biological comparison; this harness supplies no
 hidden calibration and scientific execution remains a separate approval.
+
+
+## F5 registered scientific run — 2026-10-09
+
+The user authorized the full fixed matrix, and all 600 episodes completed at runtime `a129f06`: 15 conditions × seeds 10001..10040, 512 ticks each and 2,457,600 total opportunities. Exact archive validation and two saved-only analyses passed; both reports are byte-identical with raw evidence unchanged. All three primary Paid-minus-Protected route delivery contrasts are zero for every paired seed. Sealed Paid cases have some access and delivery gains; all zeros and censored rows remain. The [full-run record](studies/2026-10-09-foraging-5-full-run.md) retains every contrast, artifact identity, verification result and local evidence path. This computational run does not establish biological calibration. Registration/activation remains on `foraging-5-registration`; no merge or push accompanied execution.
