@@ -217,7 +217,7 @@ pub(super) fn owned_git_context() -> (
         &protocol,
         include_bytes!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md"
+            "/../docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md"
         )),
     )
     .unwrap();

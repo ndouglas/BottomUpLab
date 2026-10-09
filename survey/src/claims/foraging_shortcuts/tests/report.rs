@@ -26,7 +26,7 @@ fn construction_analysis_keeps_every_zero_and_emits_no_scientific_contrasts() {
         a.rows.iter().map(|r| r.key.clone()).collect::<Vec<_>>(),
         expected_keys(&candidate().unwrap(), CollectionMode::Construction)
     );
-    let text = markdown(&a).unwrap();
+    let text = markdown(&a, &candidate().unwrap()).unwrap();
     assert!(text.contains("Construction engineering checks"));
     assert!(!text.contains("Condition means"));
     assert!(text.contains("sampled physical projection"));
@@ -314,12 +314,12 @@ fn synthetic_reports_are_descriptive_ordered_and_match_existing_student_t_stats(
         rows,
         contrasts,
     };
-    let text = markdown(&a).unwrap();
+    let text = markdown(&a, &candidate().unwrap()).unwrap();
     assert!(text.contains("Condition means (descriptive)"));
     assert!(text.contains("Primary route delivery differences"));
     assert!(text.contains("Secondary route references and sealed access differences"));
     a.rows.reverse();
-    assert_eq!(markdown(&a).unwrap(), text);
+    assert_eq!(markdown(&a, &candidate().unwrap()).unwrap(), text);
 }
 #[test]
 fn saved_analysis_rejects_resigned_cache_clocks_tags_ownership_and_metadata_paths() {
@@ -371,11 +371,13 @@ fn saved_analysis_rejects_resigned_cache_clocks_tags_ownership_and_metadata_path
     }
 }
 #[test]
-fn saved_analysis_rejects_draft_scientific_archives_and_metadata_byte_overflow() {
+fn saved_analysis_rejects_registered_disabled_scientific_archives_and_metadata_byte_overflow() {
     let archive = complete_construction_archive();
     rewrite_index(&archive, |i| i.mode = CollectionMode::Scientific);
     let out = archive.temp.path().join("analysis");
-    assert!(analyze(&archive.index, &out).unwrap_err().contains("draft"));
+    assert!(analyze(&archive.index, &out)
+        .unwrap_err()
+        .contains("execution approval pending"));
     assert!(!out.exists());
     fs::write(&archive.index, vec![b' '; 4 * 1024 * 1024 + 1]).unwrap();
     assert!(analyze(&archive.index, &out)

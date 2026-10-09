@@ -328,11 +328,11 @@ fn manifest_declares_exact_canonical_conditions_and_workload() {
     assert!(condition(&m, "missing").unwrap_err().contains("missing"));
     assert_eq!(m.schema, "foraging-shortcut-manifest-v1");
     assert_eq!(m.version, 1);
-    assert_eq!(m.status, "draft");
+    assert_eq!(m.status, "registered");
     assert!(!m.execution_authorized);
     assert_eq!(
         m.protocol,
-        "docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md"
+        "docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md"
     );
     assert_eq!(m.construction_seeds, vec![7, 8]);
     assert_eq!(m.scientific_seeds, (10001..=10040).collect::<Vec<_>>());
@@ -372,7 +372,7 @@ fn manifest_bytes_and_sha256_are_stable_and_canonical() {
     );
     assert_eq!(
         sha256(&bytes),
-        "8e532eaf779b970d4bd9a2550fc1634f89abe63a00b7d05d3134f04a4a2deb62"
+        "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759"
     );
     let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(json["conditions"][5]["regime"], "already_open");
@@ -382,6 +382,7 @@ fn manifest_bytes_and_sha256_are_stable_and_canonical() {
 #[test]
 fn scientific_authorization_requires_both_registration_fields() {
     let mut m = candidate().unwrap();
+    m.status = "draft".into();
     m.execution_authorized = true;
     assert!(authorize(&m, CollectionMode::Scientific).is_err());
     m.status = "registered".into();

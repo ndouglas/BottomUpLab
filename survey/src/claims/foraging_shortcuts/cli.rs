@@ -6,7 +6,7 @@ use super::{
 };
 use std::{collections::BTreeMap, io::Write, path::PathBuf};
 
-const HELP: &str = "survey --foraging-shortcuts [--help | --run [--construction] --protocol-revision COMMIT --approval-context TEXT --out NEW_DIR | --analyze INDEX --out NEW_DIR]\nDefault prints the fully resolved draft manifest without execution. Construction uses fixed seeds 7,8; scientific execution requires an authorized registered manifest. Provenance flags record approval references and do not confer authorization.\n";
+const HELP: &str = "survey --foraging-shortcuts [--help | --run [--construction] --protocol-revision COMMIT --approval-context TEXT --out NEW_DIR | --analyze INDEX --out NEW_DIR]\nDefault prints the fully resolved registered manifest (execution approval pending) without execution. Construction uses fixed seeds 7,8; scientific execution requires an authorized registered manifest. Provenance flags record approval references and do not confer authorization.\n";
 
 #[derive(Clone, Debug, PartialEq)]
 pub(super) enum Command {

@@ -1,7 +1,7 @@
 # F5 scientific registration proposal
 
 **Date:** 2026-10-08.
-**Status:** review proposal. Preparation scope approved by the user; this document and manifest await review. This is not executable registration or permission to collect scientific episodes.
+**Status:** approved executable registration; execution approval pending. The user approved this reviewed package and bounded activation with historical compatibility. Scientific collection remains unauthorized.
 **Preparation baseline:** main `74feeed12216262f2ffefca90487b8f665f5c715`; F5 integration `c314283`, integration evidence `aa485aa`. F5 implementation/manifest/source-binding files are unchanged between that integration and the preparation baseline.
 **Authoritative model/workload:** [approved F5 design](2026-10-07-foraging-5-shortcut-comparison-design.md).
 **Proposal artifact:** [complete resolved manifest](2026-10-08-foraging-5-registration-proposal.json).
@@ -11,9 +11,9 @@
 
 Register the already supplied mechanism comparison before inspecting scientific outcomes. The question is whether excavation eligibility changes finite-horizon food delivery under the existing F4 controller in the three supplied initial geometries. No geometry, controller, horizon, seed, outcome or weighting is chosen using scientific results.
 
-The user approved preparing this registration package and preserving historical construction evidence. Package review, executable gate changes and actual collection remain separate steps. The current executable factory and its committed draft artifact remain unchanged: status `draft`, execution_authorized `false`. The proposal artifact uses status `registered` and execution_authorized `false` to describe the proposed reviewed-but-not-execution-approved state; no current loader or collector activates it. Approval of this review packet must not be recorded as collection approval.
+The user approved the registration package, bounded executable activation and preservation of historical construction evidence. The current executable factory and this committed proposal artifact now use status `registered` and execution_authorized `false`. The original draft artifact remains immutable for exact historical Construction validation. Package approval does not grant collection permission.
 
-Before any scientific run, a later reviewed change must install the approved immutable registration, preserve old archive validation, and receive explicit execution approval. The approval receipt must identify the final committed protocol and manifest, permitted workload, code/build provenance and fresh output location. CLI approval text records that receipt; it does not grant permission on its own.
+Before any scientific run, a later reviewed change must receive explicit execution approval for an exact authorized registration while preserving old archive validation. The approval receipt must identify the final committed protocol and manifest, permitted workload, code/build provenance and fresh output location. CLI approval text records that receipt; it does not grant permission on its own.
 
 ## Exact frozen inputs
 
@@ -53,7 +53,7 @@ Saved-only analysis must consume the complete reader through terminal None, vali
 
 The published draft has SHA-256 `8e532eaf779b970d4bd9a2550fc1634f89abe63a00b7d05d3134f04a4a2deb62`. Preserve its exact complete manifest bytes and semantics as an immutable known Construction identity. Its thirty keys remain the same fifteen cases × seeds7/8, with construction reports omitting scientific means/contrasts. Do not rewrite old envelopes, provenance, index manifests or hashes to resemble a later registration.
 
-Current archive validation pins the active complete manifest and active manifest digest. Therefore changing the factory status/protocol path alone would break historical Construction reads. Before activation, resolve saved archives against a finite explicit set of committed known manifest identities, validate the complete representation and its own digest, and reconstruct that identity's expected conditions, keys, options and limits. A known draft permits Construction only. Unknown hashes, changed embedded manifests, science-labelled draft records and subset/mixed identities fail closed. This is a narrow historical-input resolver, not generic model registration or World restoration.
+Saved archive validation now resolves against exactly the active registered-disabled identity and the immutable historical draft identity. It validates the complete representation and that identity's canonical digest, then uses its expected conditions, keys, options and limits. A known draft permits Construction only. Unknown hashes, changed embedded manifests, science-labelled draft records and subset/mixed identities fail closed. This is a narrow historical-input resolver, not generic model registration or World restoration.
 
 Collection authorization uses the selected current executable registration; saved validation uses the archive's recognized historical identity. Any later execution-approved registration must have its own reviewed exact manifest and approval receipt. Registration alone leaves scientific collection blocked. Old construction archives must stay readable after that transition, under current strict physical/source-independent saved validation.
 
@@ -71,4 +71,10 @@ This is a supplied computational mechanism comparison. Parameters are not termit
 
 ## Proposal identity and preparation verification
 
-Proposal SHA-256: `a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759`. The full resolved proposal differs from the reviewed draft only in status and protocol-document path; execution_authorized remains false. All scientific definitions, seed sets, limits and options are preserved exactly. Current factory, committed executable draft, core and other-study implementations remain unchanged. Preparation checks parse both manifests, compare every remaining field, validate key cardinality/order/budgets, independent initial geometry and local document links; no World or scientific collection is invoked.
+Proposal SHA-256: `a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759`. The full resolved proposal differs from the reviewed draft only in status and protocol-document path; execution_authorized remains false. All scientific definitions, seed sets, limits and options are preserved exactly. The active factory now matches the exact reviewed proposal bytes; the original committed draft, core and other-study implementations remain unchanged. Preparation checks parse both manifests, compare every remaining field, validate key cardinality/order/budgets, independent initial geometry and local document links; no World or scientific collection is invoked.
+
+## Bounded activation and remaining collection review
+
+Activation preserves both manifest artifacts byte-for-byte and changes only executable registration/identity compatibility and necessary provenance plumbing. Scientific execution is still blocked before repository or output operations. Historical Construction analysis retains its original provenance and deterministic report bytes. The CLI prints the registered-disabled artifact by default.
+
+Reporting audit: the existing scientific Markdown renderer provides all fifteen condition means and fifteen paired contrasts from complete synthetic seed rows; Analysis JSON retains complete rows and contrasts without a separate condition-mean field. Construction reports omit means and contrasts. A later collection-readiness review must assess whether explicit JSON means are needed and verify the final authorized registration and approval receipt; this activation does not certify collection readiness.

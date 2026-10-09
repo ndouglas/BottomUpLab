@@ -1,5 +1,7 @@
-//! Fully resolved immutable candidate inputs and prospective execution gate.
-use super::{scenario, CollectionMode, Geometry, Panel, Regime, RunKey};
+//! Fully resolved immutable registration and explicit saved historical identities.
+use super::{
+    scenario, sha256, wire::WireManifest, CollectionMode, Geometry, Panel, Regime, RunKey,
+};
 use serde::Serialize;
 use sugarscape_core::foraging::construction as core;
 
@@ -62,10 +64,11 @@ pub(super) fn candidate() -> Result<Manifest, String> {
     Ok(Manifest {
         schema: "foraging-shortcut-manifest-v1".into(),
         version: 1,
-        status: "draft".into(),
+        status: "registered".into(),
         execution_authorized: false,
-        protocol: "docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md"
-            .into(),
+        protocol:
+            "docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md"
+                .into(),
         conditions,
         construction_seeds: vec![7, 8],
         scientific_seeds: (10001..=10040).collect(),
@@ -76,10 +79,49 @@ pub(super) fn candidate() -> Result<Manifest, String> {
 }
 
 pub(super) fn manifest_bytes() -> Result<Vec<u8>, String> {
-    let mut bytes = serde_json::to_vec_pretty(&candidate()?)
+    canonical_bytes(&candidate()?)
+}
+
+pub(super) fn canonical_bytes(manifest: &Manifest) -> Result<Vec<u8>, String> {
+    let mut bytes = serde_json::to_vec_pretty(manifest)
         .map_err(|e| format!("serialize shortcut manifest: {e}"))?;
     bytes.push(b'\n');
     Ok(bytes)
+}
+
+// The reader bounds untrusted metadata before it can select an identity's limits.
+pub(super) const SAVED_METADATA_LIMIT: u64 = 4 * 1024 * 1024;
+
+pub(super) fn wire_manifest(manifest: &Manifest) -> Result<WireManifest, String> {
+    serde_json::from_slice(&serde_json::to_vec(manifest).map_err(|e| e.to_string())?)
+        .map_err(|e| format!("manifest wire representation: {e}"))
+}
+
+/// Only these two complete identities are supported; history never authorizes collection.
+pub(super) fn resolve_saved(wire: &WireManifest, digest: &str) -> Result<Manifest, String> {
+    let active = candidate()?;
+    let mut historical = active.clone();
+    historical.status = "draft".into();
+    historical.protocol =
+        "docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md".into();
+    for (manifest, known_digest) in [
+        (
+            active,
+            "a96d3a678676b581a385880cf8f4fd80d0b737bcd0557b76ec9e77267a07d759",
+        ),
+        (
+            historical,
+            "8e532eaf779b970d4bd9a2550fc1634f89abe63a00b7d05d3134f04a4a2deb62",
+        ),
+    ] {
+        if *wire == wire_manifest(&manifest)?
+            && digest == known_digest
+            && sha256(&canonical_bytes(&manifest)?) == known_digest
+        {
+            return Ok(manifest);
+        }
+    }
+    Err("unknown complete saved manifest identity or manifest_sha256 mismatch".into())
 }
 
 pub(super) fn condition<'a>(manifest: &'a Manifest, id: &str) -> Result<&'a Condition, String> {
@@ -111,7 +153,7 @@ pub(super) fn authorize(manifest: &Manifest, mode: CollectionMode) -> Result<(),
     if mode == CollectionMode::Scientific
         && (!manifest.execution_authorized || manifest.status != "registered")
     {
-        return Err("scientific shortcut execution requires an authorized registered manifest; candidate is draft".into());
+        return Err(format!("scientific shortcut execution requires an authorized registered manifest; current status {}, execution approval pending", manifest.status));
     }
     Ok(())
 }

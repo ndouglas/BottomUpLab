@@ -60,7 +60,7 @@ fn parser_rejects_overrides_repeats_missing_empty_and_incompatible_flags() {
     }
 }
 #[test]
-fn collector_rejects_draft_scientific_request_before_output() {
+fn collector_rejects_registered_disabled_scientific_request_before_output() {
     let tmp = owned_tempdir();
     let r = RunRequest {
         mode: CollectionMode::Scientific,
@@ -68,8 +68,13 @@ fn collector_rejects_draft_scientific_request_before_output() {
         approval_context: "test".into(),
         out: tmp.path().join("new"),
     };
-    let ctx = ExecutionContext::new(tmp.path().to_owned(), tmp.path().join("collector"));
-    assert!(collect(&ctx, &r).unwrap_err().contains("draft"));
+    let ctx = ExecutionContext::new(
+        tmp.path().join("missing-repository"),
+        tmp.path().join("collector"),
+    );
+    assert!(collect(&ctx, &r)
+        .unwrap_err()
+        .contains("execution approval pending"));
     assert!(!r.out.exists());
 }
 #[test]
@@ -101,7 +106,7 @@ fn preflight_rejects_malformed_nonexistent_and_noncommit_revisions() {
             &ctx.repo,
             &[
                 "rev-parse",
-                "HEAD:docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md",
+                "HEAD:docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md",
             ],
         ),
     ] {
@@ -172,7 +177,7 @@ fn preflight_refuses_dangling_output_and_executable_symlinks() {
     assert!(preflight(&linked_context, &candidate().unwrap(), &r).is_err());
 }
 #[test]
-fn committed_draft_artifact_matches_pure_factory_bytes() {
+fn committed_registered_artifact_matches_pure_factory_bytes() {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(MANIFEST_PATH);
@@ -468,4 +473,23 @@ fn preflight_native_context_has_no_fixture_identity_override() {
         "{error}"
     );
     assert!(!r.out.exists());
+}
+
+#[test]
+fn source_identity_includes_all_current_browser_fixture_inputs() {
+    for path in [
+        "crates/sugarscape-core/src/browser_experiments/fixtures/audit-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/engine-identities.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/strategic-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/strategy-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/surface-examples.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/testimony-game-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/testimony-search-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/wink-portability.json",
+    ] {
+        assert!(
+            super::super::run::source_identity::selected(path),
+            "missing compiled fixture: {path}"
+        );
+    }
 }
