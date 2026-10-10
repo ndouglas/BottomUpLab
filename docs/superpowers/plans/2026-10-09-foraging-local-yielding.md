@@ -10,7 +10,7 @@
 
 **Spec:** [Approved private local-yielding design](../specs/2026-10-09-foraging-local-yielding-design.md), approved by the user on 2026-10-09 after commit `59e1036`.
 
-**Execution status:** approved by the user on 2026-10-09; subagent-driven execution starting.
+**Execution status:** all four subagent-driven tasks and independent task/whole-plan reviews complete on 2026-10-09. Runtime `a45d2f6` verified; [evidence and chronological rulings](../../studies/2026-10-09-foraging-local-yielding-verification.md) archived. Branch/worktree retained; no merge/push or new scientific collection.
 
 ## Global Constraints
 
@@ -183,7 +183,7 @@ pub(super) fn run_with_traffic_limit(
 
 **Interfaces:** Consume current Knowledge/Observation/ComputeCounts and route_step; produce the Task 1 contracts above. Task 2 consumes RoutePlan/TrafficState/TrafficEffect; Task 3 consumes public views.
 
-- [ ] **Step 1: Capture the actual baseline before production edits.** Temporarily register a capture test using the existing `tests::setup()`, seed 7 and `RunOptions { ticks: 40, sample_every: 7, snapshots: true }`. Serialize the complete base episode directly to a String, and independently step a World 40 times then capture its next `rng.gen::<u64>()`. Store a test-only JSON record containing that exact episode string and next RNG value through exclusive create into the task-owned capture directory. Do not deserialize a core Episode or reconstruct its floats through Value. Await the passing capture command and hash the output before changing production.
+- [x] **Step 1: Capture the actual baseline before production edits.** Temporarily register a capture test using the existing `tests::setup()`, seed 7 and `RunOptions { ticks: 40, sample_every: 7, snapshots: true }`. Serialize the complete base episode directly to a String, and independently step a World 40 times then capture its next `rng.gen::<u64>()`. Store a test-only JSON record containing that exact episode string and next RNG value through exclusive create into the task-owned capture directory. Do not deserialize a core Episode or reconstruct its floats through Value. Await the passing capture command and hash the output before changing production.
 
 ```rust
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -203,7 +203,7 @@ serde_json::to_writer_pretty(file, &record).unwrap();
 
 Run the temporary capture test with `SUGARSCAPE_TRAFFIC_CAPTURE_DIR` set to this task's existing owned capture directory and `cargo test --locked -p sugarscape-core capture_current_traffic_baseline -- --nocapture`. Copy the captured bytes to the exact fixtures path, hash-verify, remove the temporary capture test and environment-writing code, and retain a permanent read-only golden test. Add that literal JSON path to the maintained F5 source selector; it is the only new non-Rust compile input in this task.
 
-- [ ] **Step 2: Add failing feature tests and inspect RED.** Register traffic_types and plan tests. Cover policy strings/unknown identity, checked overflow, illegal legacy yield/hold, streak/hold invariants, and private candidate ranking/free-shortest/AtGoal/Unreachable. Scaffold compile failures are recorded honestly.
+- [x] **Step 2: Add failing feature tests and inspect RED.** Register traffic_types and plan tests. Cover policy strings/unknown identity, checked overflow, illegal legacy yield/hold, streak/hold invariants, and private candidate ranking/free-shortest/AtGoal/Unreachable. Scaffold compile failures are recorded honestly.
 
 ```rust
 #[test]
@@ -228,7 +228,7 @@ fn a_pending_hold_requires_zero_streak() {
 
 For private-plan tests reuse navigation.rs's complete ordinary-observation `fresh`/`learned` fixture pattern in its current test module. The existing corridor fixture pins a full nearest goal plus a longer free escape: the plan must have no free shortest step but a finite yielding candidate. Add a branch with multiple equal ranked free cells to pin north/south/east/west ordering. A goal already at origin has zero route calls; an unreachable goal has one BFS but no candidates. Existing invalid observation/unknown-goal checks still fail contextually.
 
-- [ ] **Step 3: Implement minimal types and plan extraction.** Reuse the exact reverse BFS and validation; do not query physical geometry or add another BFS. Keep legacy selection as the following adapter:
+- [x] **Step 3: Implement minimal types and plan extraction.** Reuse the exact reverse BFS and validation; do not query physical geometry or add another BFS. Keep legacy selection as the following adapter:
 
 ```rust
 match plan_route(knowledge, origin, goals, observation)? {
@@ -242,8 +242,8 @@ match plan_route(knowledge, origin, goals, observation)? {
 
 Implement checked traffic data and export public types. A temporary narrow dead-code allowance may name TrafficState/TrafficEffect and their Task 2 consumers; remove it in Task 2. Do not enable revised World behavior yet.
 
-- [ ] **Step 4: Verify GREEN and baseline.** Run `cargo test --locked -p sugarscape-core foraging::construction::`, `cargo fmt --all --check`, and `cargo clippy --locked -p sugarscape-core --all-targets -- -D warnings`. Confirm complete golden bytes/RNG and old route draw/count tests. Preserve capture, actual RED and final gate receipts.
-- [ ] **Step 5: Self-review and commit.** Commit only the named task files with message `feat(foraging): add traffic policy data and private route plans`. The task reviewer checks counters, private inputs, byte identity and single-BFS legacy behavior.
+- [x] **Step 4: Verify GREEN and baseline.** Run `cargo test --locked -p sugarscape-core foraging::construction::`, `cargo fmt --all --check`, and `cargo clippy --locked -p sugarscape-core --all-targets -- -D warnings`. Confirm complete golden bytes/RNG and old route draw/count tests. Preserve capture, actual RED and final gate receipts.
+- [x] **Step 5: Self-review and commit.** Commit only the named task files with message `feat(foraging): add traffic policy data and private route plans`. The task reviewer checks counters, private inputs, byte identity and single-BFS legacy behavior.
 
 ### Task 2: Seeded yielding, holds and paid controller integration
 
@@ -251,7 +251,7 @@ Implement checked traffic data and export public types. A temporary narrow dead-
 
 **Interfaces:** Consume Task 1 contracts; produce select_route, decide_with_traffic and World::new_with_traffic. Keep `advance(setup, state, draws)` unchanged: it reads state.traffic_policy. Keep the legacy decide wrapper for current tests. Test support exports `queue_setup() -> Setup`, `opposing_queue(policy) -> World`, and `advance_scripted(world: &mut World, draws: &mut Scripted) -> Checked<()>` for Tasks 3/4. Test support also exports `QUEUE_THIRD_TICK_SCRIPT: &[f64] = &[0.5, 0.0, 0.5, 0.5, 0.9, 0.0, 0.9]` and `QUEUE_FOURTH_TICK_SCRIPT: &[f64] = &[0.5, 0.0, 0.5, 0.5, 0.5, 0.0]`, with the exact per-worker interpretation below. The advance helper clones state/draws and commits both only on success, following the existing controller test helper. Tests inspect Scripted.next for actual consumed draws. Also provide `held_worker(mode: Mode) -> (World, usize, Observation)` through paid fixture actions: actual PickupFood/Dig for cargo, a validated yielding Move for the pending hold, and a fresh local view. This helper must not fabricate ledger assignments.
 
-- [ ] **Step 1: Write failing selector/hold tests.** Use Task 1 private plans and Scripted draws. Supply a pre-existing streak of two with valid paid counts for selector tests; standalone plan tests do not claim a naturally occurring episode. After scaffolding the new constructor/decision interfaces, run compiled assertions before implementing yielding; the third blocked step must still fail by returning the old wait.
+- [x] **Step 1: Write failing selector/hold tests.** Use Task 1 private plans and Scripted draws. Supply a pre-existing streak of two with valid paid counts for selector tests; standalone plan tests do not claim a naturally occurring episode. After scaffolding the new constructor/decision interfaces, run compiled assertions before implementing yielding; the third blocked step must still fail by returning the old wait.
 
 ```rust
 let mut scene = setup();
@@ -282,7 +282,7 @@ assert_eq!(draws.next, 2);
 
 Repeat with ticket 0.25: Blocked/BlockedWait, one ticket, no choice draw. With streak zero/one or no free candidate expect zero tickets. With a free shortest step expect only its ordinary choice draw and Normal. AtGoal/Unreachable have no traffic tickets/counters. Assert the minimum-ranked tied candidate and singleton choice convention. Invalid NaN/1.0/negative/exhausted tickets must error.
 
-- [ ] **Step 2: Build paid queue support.** Use this fixed fixture, not a favorable F5 seed:
+- [x] **Step 2: Build paid queue support.** Use this fixed fixture, not a favorable F5 seed:
 
 ```rust
 fn queue_setup() -> Setup {
@@ -305,7 +305,7 @@ Construct with seed 7 and the requested policy. Prepare positions through ordina
 
 Use cloned fixtures for legacy and revised comparisons. Two blocked ticks pay waits and consume only the two Searching give-up draws per tick. On the third revised tick script worker 0's successful ticket and east-bay choice, worker 1's failed ticket, worker 2's ordinary nest step and worker 3's failed ticket. On the next tick worker 0 holds while worker 1 moves north and the returners use normal arrival/travel. The third-tick script has worker 0 give-up/ticket/bay-choice (0.5/0.0/0.5), worker 1 give-up/failed-ticket (0.5/0.9), worker 2 ordinary step (0.0), and worker 3 failed-ticket (0.9). The fourth has no draw for worker 0 hold, worker 1 give-up/step (0.5/0.0), worker 2 empty-arrival draws (0.5/0.5/0.5), and worker 3 ordinary step (0.0). Pin consumed lengths 7 and 6 and the actual north/south/east/west tie lists. Each legacy comparison tick consumes only [0.5, 0.5]. Verify both traffic directions cross the boundary, every capacity stays <=2, and legacy workers remain blocked over the comparison window.
 
-- [ ] **Step 3: Implement controller integration.** All ordinary routes use select_route with the explicit profile and one shared private plan. A private selected-action result carries Action plus TrafficEffect through pursue/frontier/face/return paths; Decision exposes that effect to the transaction. Terminal actions select Normal and clear pending memory; otherwise hold selects its dedicated internal wait reason before phase draws. Ordinary route-blocked waits select BlockedWait; all other ordinary actions select Normal.
+- [x] **Step 3: Implement controller integration.** All ordinary routes use select_route with the explicit profile and one shared private plan. A private selected-action result carries Action plus TrafficEffect through pursue/frontier/face/return paths; Decision exposes that effect to the transaction. Terminal actions select Normal and clear pending memory; otherwise hold selects its dedicated internal wait reason before phase draws. Ordinary route-blocked waits select BlockedWait; all other ordinary actions select Normal.
 
 ```rust
 // Wrapper contract; the normal constructor keeps exact legacy selection.
@@ -334,7 +334,7 @@ if free_shortest.is_empty() {
 
 At transaction application validate the effect matches the physical action: YieldMove requires Move and the revised profile; Hold requires the internal hold wait and revised profile; BlockedWait requires a route congestion wait; Normal cannot create a traffic hold. Pay the existing Move/Wait category, then commit traffic memory/counters. A hold contributes the mode-appropriate congestion count, and takes no arrival/server/phase draws. Check traffic invariants in controller::check, including checked aggregate sums and legacy restrictions. Remove all Task 1 future-use allowances.
 
-- [ ] **Step 4: Cover hold/cargo/terminal behavior and verify GREEN.** Use paid fixture preparation to obtain food and spoil through PickupFood/Dig, never fabricate ledger ownership. For each mode check exact cargo/phase/site/frontier/face retention, one hold, observation increments and no extra trip/publication/transaction. Food arrival at nest, empty arrival at nest and spoil arrival at outlet each override a pending hold and retain their exact original draw cadence. Holds on a food-bearing cell defer pickup by one opportunity. A normal transition or no-neighbor wait clears the streak. Legacy holds/attempts/yields and hold-plus-streak corruption fail contextual checks.
+- [x] **Step 4: Cover hold/cargo/terminal behavior and verify GREEN.** Use paid fixture preparation to obtain food and spoil through PickupFood/Dig, never fabricate ledger ownership. For each mode check exact cargo/phase/site/frontier/face retention, one hold, observation increments and no extra trip/publication/transaction. Food arrival at nest, empty arrival at nest and spoil arrival at outlet each override a pending hold and retain their exact original draw cadence. Holds on a food-bearing cell defer pickup by one opportunity. A normal transition or no-neighbor wait clears the streak. Legacy holds/attempts/yields and hold-plus-streak corruption fail contextual checks.
 
 ```rust
 let (world, worker, fresh_view) = held_worker(Mode::FoodReturning);
@@ -357,7 +357,7 @@ Run construction tests, root formatter and core Clippy as in Task 1; inspect fin
 
 **Interfaces:** Consume traffic state/profile and World::new_with_traffic; produce traffic_summary/traffic_snapshot/TrafficEpisode/run_with_traffic/run_with_traffic_limit with the signatures above. Existing run and base snapshot helper behavior remain intact.
 
-- [ ] **Step 1: Write failing public boundary tests.** Pin wrapper identity, default-versus-explicit legacy episode equality, aligned checkpoints, disabled recording and read-only views. Record missing-API RED honestly.
+- [x] **Step 1: Write failing public boundary tests.** Pin wrapper identity, default-versus-explicit legacy episode equality, aligned checkpoints, disabled recording and read-only views. Record missing-API RED honestly.
 
 ```rust
 #[test]
@@ -383,7 +383,7 @@ fn traffic_views_do_not_mutate_world_or_rng() {
 }
 ```
 
-- [ ] **Step 2: Implement views and runner.** Validate state then clone worker rows in ID order; sum counters with checked arithmetic. Reuse existing option validation and CountingWriter semantics. Run the full horizon; append paired base/traffic snapshots at initial, scheduled and final checkpoints exactly once. Count compact base and traffic bytes separately, then check their addition against the supplied limit before accepting a pair. TrafficRecording.append validates matching checkpoint/policy/worker rows, calculates both next counts before mutating its vectors, and keeps the previous recording intact on a failed append. Disable both sets when snapshots=false. Keep wrapper metadata outside snapshot bytes. Do not construct traffic snapshots for ordinary legacy run.
+- [x] **Step 2: Implement views and runner.** Validate state then clone worker rows in ID order; sum counters with checked arithmetic. Reuse existing option validation and CountingWriter semantics. Run the full horizon; append paired base/traffic snapshots at initial, scheduled and final checkpoints exactly once. Count compact base and traffic bytes separately, then check their addition against the supplied limit before accepting a pair. TrafficRecording.append validates matching checkpoint/policy/worker rows, calculates both next counts before mutating its vectors, and keeps the previous recording intact on a failed append. Disable both sets when snapshots=false. Keep wrapper metadata outside snapshot bytes. Do not construct traffic snapshots for ordinary legacy run.
 
 ```rust
 let next_total = base_bytes.checked_add(traffic_bytes)
@@ -395,7 +395,7 @@ let next_total = base_bytes.checked_add(traffic_bytes)
 
 Expose only the existing counting helper(s) needed by the sibling runner. No whole-file restructure or new archive parser. The typed policy enum rejects unknown deserialized identities; other new views/wrappers remain Serialize-only.
 
-- [ ] **Step 3: Pin byte caps/cutoff/observational behavior.** Compute actual compact serialized sums for the successful tiny fixture, assert both recorded byte fields, then supply exact-total limit (success) and exact-total-minus-one (failure). Also choose a cap above each component but below their sum; it must fail. Directly test checked_snapshot_total(u64::MAX, 1, u64::MAX) overflow without allocating a huge record. Advance a prepared queue through a scripted yielding move, then feed its real base/traffic snapshots to TrafficRecording.append: the recorded pending hold and hold_waits<yield_moves must remain legal. Continuing one opportunity pays a hold unless terminal. This is a labeled synthetic fixture checkpoint, not a new seeded Episode or a public restoration API; do not add a prepared-world runner that disguises its history.
+- [x] **Step 3: Pin byte caps/cutoff/observational behavior.** Compute actual compact serialized sums for the successful tiny fixture, assert both recorded byte fields, then supply exact-total limit (success) and exact-total-minus-one (failure). Also choose a cap above each component but below their sum; it must fail. Directly test checked_snapshot_total(u64::MAX, 1, u64::MAX) overflow without allocating a huge record. Advance a prepared queue through a scripted yielding move, then feed its real base/traffic snapshots to TrafficRecording.append: the recorded pending hold and hold_waits<yield_moves must remain legal. Continuing one opportunity pays a hold unless terminal. This is a labeled synthetic fixture checkpoint, not a new seeded Episode or a public restoration API; do not add a prepared-world runner that disguises its history.
 
 ```rust
 let options = RunOptions { ticks: 40, sample_every: 7, snapshots: true };
@@ -409,7 +409,7 @@ assert!(run_with_traffic_limit(setup(), 7, options,
 
 Check repeated seed replay, sample_every>ticks, sample_every dividing ticks, zero interval rejection, full horizons after depletion, disabled recording and identical control/traffic/RNG behavior across sampling options. Ensure baseline pre-change golden stays exact.
 
-- [ ] **Step 4: Verify and commit.** Run construction tests, root formatter/core Clippy; preserve RED/GREEN and cap evidence. Commit `feat(foraging): record labeled traffic episodes with bounded snapshots`. Reviewer checks provenance labeling, observational APIs, combined bounds and cutoff censoring.
+- [x] **Step 4: Verify and commit.** Run construction tests, root formatter/core Clippy; preserve RED/GREEN and cap evidence. Commit `feat(foraging): record labeled traffic episodes with bounded snapshots`. Reviewer checks provenance labeling, observational APIs, combined bounds and cutoff censoring.
 
 ### Task 4: Complete queue, privacy, rollback and F5 compatibility acceptance
 
@@ -417,7 +417,7 @@ Check repeated seed replay, sample_every>ticks, sample_every dividing ticks, zer
 
 **Interfaces:** Consume all public APIs and Task 2 queue support. No new model policy, scientific workload or reporting schema is introduced.
 
-- [ ] **Step 1: Add missing behavioral acceptance before corrections.** Assert complete legacy baseline preservation and exact raw golden RNG, both-direction queue progress/capacity/work sums, isolated malformed diagnostic inequalities and profile-label consistency. Added passing supplemental coverage is disclosed, not represented as an earlier failure.
+- [x] **Step 1: Add missing behavioral acceptance before corrections.** Assert complete legacy baseline preservation and exact raw golden RNG, both-direction queue progress/capacity/work sums, isolated malformed diagnostic inequalities and profile-label consistency. Added passing supplemental coverage is disclosed, not represented as an earlier failure.
 
 ```rust
 let mut a = World::new(setup(), 7).unwrap();
@@ -431,7 +431,7 @@ assert_eq!(a.rng.gen::<u64>(), b.rng.gen::<u64>());
 
 Add an isolated test for each counter inequality with all other counters/physical inventories consistent; do not repeat the existing M1 pattern of multiple simultaneous inconsistencies. The legacy wrapper has zero yield attempts/moves/holds despite legal blocked-route counts.
 
-- [ ] **Step 2: Prove information and rollback boundaries.** Compare decisions/draw counts from identical private agent state and identical local observations when remote physical occupancy/food/diggable state differs. Use real valid worlds and fresh observations; no researcher state enters decision signatures. Test changed local capacity affects only legal local steps. For rollback, prepare the queue at the yielding threshold, then use a DrawSource that errors at a later worker after an earlier yield. Capture complete State and the scripted source before the cloned-tick helper; both must remain identical on error, including cargo/maps/advice/traffic state.
+- [x] **Step 2: Prove information and rollback boundaries.** Compare decisions/draw counts from identical private agent state and identical local observations when remote physical occupancy/food/diggable state differs. Use real valid worlds and fresh observations; no researcher state enters decision signatures. Test changed local capacity affects only legal local steps. For rollback, prepare the queue at the yielding threshold, then use a DrawSource that errors at a later worker after an earlier yield. Capture complete State and the scripted source before the cloned-tick helper; both must remain identical on error, including cargo/maps/advice/traffic state.
 
 ```rust
 let before = world.state.clone();
@@ -447,7 +447,7 @@ Additionally use a separate raw advance on cloned scratch solely to establish th
 
 Also exercise actual public World::step: start from the paid queue fixture after a yielding move, so the first worker has a pending hold. Set a later worker's observations counter to u64::MAX, which passes the initial invariants but errors when that worker learns its next observation. Prove the first candidate hold occurred using a separate scratch advance, then call World::step and compare the complete source State and cloned RNG continuation against before. Restore the injected counter in the source and an untouched control, step both successfully and compare state and the next RNG value. This tests production clone/commit wiring without adding a fault-injection API or relying on a lucky seeded yield ticket.
 
-- [ ] **Step 3: Freeze and run final gates once.** Await and inspect each completed command; save complete logs/exit codes and aggregates. Both workspace and independent survey depend on changed core inputs, so neither full suite can be retained solely by the old input proof.
+- [x] **Step 3: Freeze and run final gates once.** Await and inspect each completed command; save complete logs/exit codes and aggregates. Both workspace and independent survey depend on changed core inputs, so neither full suite can be retained solely by the old input proof.
 
 ```bash
  CARGO_TARGET_DIR=/Users/nathan/Projects/ndouglas/SugarScape/target cargo test --workspace --locked
@@ -460,11 +460,11 @@ Also exercise actual public World::step: start from the paid queue fixture after
 
 Audit every literal include against the maintained source selector, including the baseline fixture. Verify selected checkout/committed/embedded source fingerprints on the final runtime commit. Remove temporary capture code and future-use allowances. Preserve every original manifest SHA and both historical construction report goldens. In the F5 report tests explicitly compare its cached seed-7 episode to run_with_traffic(...ShortestOnlyV1).episode, while inspecting that production collect still calls ordinary run. Default/help/preflight checks stay pure; no scientific collection test reaches a World.
 
-- [ ] **Step 4: Saved-only historical science check.** After the final native binary is rebuilt from the clean runtime commit, analyze the existing completed index twice into fresh owned directories `/tmp/sugarscape-foraging-local-yielding-20261009/reanalysis-a` and `reanalysis-b`. Never overwrite an existing directory or rerun its 600 worlds. Use the copied verified executable with `--foraging-shortcuts --analyze /Users/nathan/Projects/ndouglas/SugarScape/survey/out/foraging-shortcuts/2026-10-09-registered-600/index.json --out /tmp/sugarscape-foraging-local-yielding-20261009/reanalysis-a`, then the same command with the reanalysis-b path. Pin a private executable copy from the clean final build before invoking it, to avoid replacement by concurrent shared-target builds.
+- [x] **Step 4: Saved-only historical science check.** After the final native binary is rebuilt from the clean runtime commit, analyze the existing completed index twice into fresh owned directories `/tmp/sugarscape-foraging-local-yielding-20261009/reanalysis-a` and `reanalysis-b`. Never overwrite an existing directory or rerun its 600 worlds. Use the copied verified executable with `--foraging-shortcuts --analyze /Users/nathan/Projects/ndouglas/SugarScape/survey/out/foraging-shortcuts/2026-10-09-registered-600/index.json --out /tmp/sugarscape-foraging-local-yielding-20261009/reanalysis-a`, then the same command with the reanalysis-b path. Pin a private executable copy from the clean final build before invoking it, to avoid replacement by concurrent shared-target builds.
 
 Both report pairs must match each other and original JSON SHA `7bba70c19802bb7b97abe69b84c592fd869bd1a09132912eabf508ab657ce527` / Markdown SHA `2903e4c952e7974a13f17dcd209a0f70b5d9e7086b546f3756e50fc343591c46`. Recheck the completed index SHA `faaa5acbed1397f3451cd670071b97d66fbcc39b1870308e6dc8f2dc97104fa4` and all 600 original raw hashes/sizes before and after. This verifies old saved compatibility, not revised scientific efficacy.
 
-- [ ] **Step 5: Commit, whole review and archival handoff.** Commit acceptance code as `test(foraging): verify traffic queue relief and retained F5 compatibility`; parent coordinates the final whole-branch review across all four tasks. Any correction goes through a consolidated implementer and scoped review, with covering verification. Then record runtime commit, actual gate totals, queue fixture evidence, limitations and source identities in programme docs. Hash-preserve this plan's evidence and all chronological rulings before retiring only its completed ignored workspace/tracker. Commit documentation separately; do not repeat unchanged-source suites. Keep the branch/worktree for a later integration decision. The next design is earlier informed excavation; no scientific performance claim follows from engineering queue acceptance.
+- [x] **Step 5: Commit, whole review and archival handoff.** Commit acceptance code as `test(foraging): verify traffic queue relief and retained F5 compatibility`; parent coordinates the final whole-branch review across all four tasks. Any correction goes through a consolidated implementer and scoped review, with covering verification. Then record runtime commit, actual gate totals, queue fixture evidence, limitations and source identities in programme docs. Hash-preserve this plan's evidence and all chronological rulings before retiring only its completed ignored workspace/tracker. Commit documentation separately; do not repeat unchanged-source suites. Keep the branch/worktree for a later integration decision. The next design is earlier informed excavation; no scientific performance claim follows from engineering queue acceptance.
 
 ## Plan self-review coverage
 

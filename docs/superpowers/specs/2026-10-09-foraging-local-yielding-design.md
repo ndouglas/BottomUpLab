@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-09
 
-**Status:** the user approved the traffic-first approach, then this written specification on 2026-10-09. The user also approved the [implementation plan](../plans/2026-10-09-foraging-local-yielding.md); subagent-driven engineering execution is starting.
+**Status:** the user approved the traffic-first approach, then this written specification on 2026-10-09. The user also approved the [implementation plan](../plans/2026-10-09-foraging-local-yielding.md); all four subagent-driven stages and independent task/whole-plan reviews are complete. Runtime `a45d2f6` passed fresh workspace3184/0/105 and survey435/0/0 verification, both formatting checks and both all-target Clippy gates. [Verification and evidence](../../studies/2026-10-09-foraging-local-yielding-verification.md) record baseline preservation, native identities and exact saved reanalysis; branch/worktree are retained for later integration.
 
 **Context:** [F5 saved-only diagnosis](../../studies/2026-10-09-foraging-5-diagnosis.md), [registered results](../../studies/2026-10-09-foraging-5-full-run.md), [F4 construction design](2026-10-06-foraging-4-construction-design.md).
 
