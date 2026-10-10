@@ -68,3 +68,7 @@ mod traffic_support;
 mod traffic_runner;
 
 mod traffic_acceptance;
+
+mod excavation_baseline;
+mod excavation_navigation;
+mod excavation_types;

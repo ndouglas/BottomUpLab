@@ -33,6 +33,7 @@ pub const FILES: &[&str] = &[
     "crates/sugarscape-core/src/deduction/strategy_inference/diagnostic-reference.json",
     "crates/sugarscape-core/src/deduction/strategy_inference/tests/evaluation-reference.json",
     "crates/sugarscape-core/src/deduction/strategy_inference/tests/inference-reference.json",
+    "crates/sugarscape-core/src/foraging/construction/tests/fixtures/informed_excavation_baseline.json",
     "crates/sugarscape-core/src/foraging/construction/tests/fixtures/local_yielding_baseline.json",
     "crates/sugarscape-core/src/shared_surface/tests/fixtures/diagnostic-reference.json",
     "crates/sugarscape-core/src/shared_surface/tests/fixtures/diagnostic-traces-reference.json",

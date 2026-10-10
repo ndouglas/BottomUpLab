@@ -109,3 +109,13 @@ mod traffic_navigation;
 mod traffic_runner;
 mod traffic_view;
 pub use traffic_runner::{run_with_traffic, TrafficEpisode};
+
+mod excavation;
+pub use excavation::{
+    ExcavationAgentView, ExcavationAssessment, ExcavationCandidate, ExcavationCounts,
+    ExcavationPolicy, ExcavationSnapshot, ExcavationSummary,
+};
+#[cfg(test)]
+mod excavation_navigation;
+#[cfg(test)]
+mod excavation_state;

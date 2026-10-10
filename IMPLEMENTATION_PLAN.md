@@ -6,7 +6,7 @@ Plan: [approved implementation plan](docs/superpowers/plans/2026-10-09-foraging-
 **Goal**: Capture the current traffic baseline and add policy records plus draw-free cost estimates.
 **Success Criteria**: Exact baseline/RNG preserved; geometric and full-cost filters and bounded diagnostics verified.
 **Tests**: Construction baseline, excavation types/navigation, formatting, core all-target Clippy.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 2: Paid controller integration
 **Goal**: Select informed early digs using independent policies and ordinary paid transactions.
