@@ -6,13 +6,13 @@ Owned by docs/superpowers/plans/2026-10-10-surface-experiment-discovery.md.
 **Goal**: Reviewed declarative protocol, independent exact references and feasibility caps.
 **Success Criteria**: Independent author/reviewer receipts and all declared exact projections; no product changes.
 **Tests**: Reference Python RED/GREEN, derivations and feasibility gate.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 2: Checked engine and inference
 **Goal**: Tasks 2–4: chronological kernel, exact raw planner, policy replay and population metrics.
 **Success Criteria**: Reference equality, local privacy, expected-value embedding and old comparator parity.
 **Tests**: Focused Rust kernel/planner/replay/evaluation tests, edited formatting and Clippy.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 3: Fixed diagnostic
 **Goal**: Task 5: checked compact 48-setting diagnostic and CLI.

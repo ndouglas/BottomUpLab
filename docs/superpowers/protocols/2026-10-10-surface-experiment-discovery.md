@@ -776,3 +776,27 @@ cannot select the collection subset. First/repeat outputs are exclusive and
 immutable. Any scientific revision after measurements preserves original outputs
 and uses an explicitly revised series; delivery-only source deltas are recorded
 separately from the first-measurement source identity.
+
+## Initial engineering limit registration
+
+Independent numerical review and its scoped witness correction passed before
+product implementation. Registered ceilings from the completed independent
+reference are 360,304 states, 993,058 branches and 1,419,968,512 allocation bytes.
+Each is exactly twice its maximum completed reference requirement: 180,152,
+496,529 and 709,984,256 respectively. The accounting boundary is one compilation
+plus its applicable actual environments, taking the maximum over 16 compilations;
+these ceilings are not a shared cumulative allowance across unrelated policies.
+
+The strict limits-reference fixture binds the actual final independent review
+receipt. Provisional candidates, original first reference outputs and earlier
+protocol bytes remain retained. Reference allocation accounting combines
+identity-deduplicated CPython size estimates and measured process high-water RSS;
+it does not establish native-layout equivalence. Native accounting and browser
+feasibility still require their later reviewed gates. Engineering-only cap
+revisions before judged collection require retained receipts and independent
+review; Task 8 freezes final production limits before any judged invocation.
+
+This registration appends engineering metadata to the reviewed declarative
+handoff without changing actions, priors, prices, horizon, ties or numerical
+results. Independent derivation metadata continues to identify its immutable
+reviewed input bytes rather than silently claiming the appended document hash.
