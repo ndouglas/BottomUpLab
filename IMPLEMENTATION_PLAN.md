@@ -18,7 +18,7 @@ Plan: [approved implementation plan](docs/superpowers/plans/2026-10-09-foraging-
 **Goal**: Expose observational excavation views and triple-stream construction-policy episodes.
 **Success Criteria**: Legacy equivalence, policy provenance, historical record validity and combined byte cap verified.
 **Tests**: Runner/views, byte boundaries, sampling, construction regressions, format/Clippy.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 4: Acceptance and compatibility
 **Goal**: Verify privacy/production rollback and retained F5 compatibility, then archive the evidence.

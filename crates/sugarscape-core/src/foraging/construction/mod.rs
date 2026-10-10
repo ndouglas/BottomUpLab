@@ -117,3 +117,6 @@ pub use excavation::{
 };
 mod excavation_navigation;
 mod excavation_state;
+mod excavation_view;
+mod policy_runner;
+pub use policy_runner::{run_with_policies, ConstructionPolicyEpisode};
