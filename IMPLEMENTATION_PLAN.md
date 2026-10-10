@@ -12,7 +12,7 @@ Plan: [approved implementation plan](docs/superpowers/plans/2026-10-09-foraging-
 **Goal**: Select informed early digs using independent policies and ordinary paid transactions.
 **Success Criteria**: Eligibility, priority, draw order, conservation, fallback and reconsideration verified.
 **Tests**: Paid informed fixtures, excavation controller, traffic/cargo cases, construction regressions, format/Clippy.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 3: Labeled bounded recording
 **Goal**: Expose observational excavation views and triple-stream construction-policy episodes.
