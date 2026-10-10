@@ -31,4 +31,3 @@ Owned by docs/superpowers/plans/2026-10-10-surface-experiment-discovery.md.
 **Success Criteria**: Retained reports/reference checks, independent final review, merged/pushed exact commit CI/Pages.
 **Tests**: Project gates, complete census validation, byte repeat and final source hashes.
 **Status**: Not Started
-
