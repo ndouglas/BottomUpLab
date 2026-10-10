@@ -2,7 +2,7 @@
 **Goal**: Checked traffic types and draw-free route planning with pinned baseline.
 **Success Criteria**: Baseline episode/RNG exact; identities/counter invariants/private plans pass.
 **Tests**: Construction suite, policy/counter/plan tests, fmt/core Clippy.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 2: Seeded yielding and paid holds
 **Goal**: Explicit traffic policy integrated with atomic controller.

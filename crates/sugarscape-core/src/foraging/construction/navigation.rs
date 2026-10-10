@@ -264,8 +264,70 @@ fn check_observation(knowledge: &Knowledge, origin: Pos, observation: &Observati
     Ok(())
 }
 
-/// Reverse multi-source private BFS keeps nearest goals fixed. Capacity filters
-/// only decreasing-distance immediate steps; blocked routes never take detours.
+/// One reverse private BFS supplies shortest steps and ranked free escape cells.
+/// Fresh occupancy filters immediate candidates without changing the distance field.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) enum RoutePlan {
+    AtGoal,
+    Unreachable {
+        counts: ComputeCounts,
+    },
+    Reachable {
+        free_shortest: Vec<Pos>,
+        yield_candidates: Vec<Pos>,
+        counts: ComputeCounts,
+    },
+}
+
+pub(super) fn plan_route(
+    knowledge: &Knowledge,
+    origin: Pos,
+    goals: &[Pos],
+    observation: &Observation,
+) -> Checked<RoutePlan> {
+    check_origin(knowledge, origin)?;
+    check_observation(knowledge, origin, observation)?;
+    for &goal in goals {
+        knowledge.kind(goal)?;
+    }
+    if goals.contains(&origin) {
+        return Ok(RoutePlan::AtGoal);
+    }
+    let (width, height) = knowledge.dimensions();
+    let (distance, counts) = distances(knowledge, goals)?;
+    let Some(current) = distance[index(origin, width)] else {
+        return Ok(RoutePlan::Unreachable { counts });
+    };
+    let free: Vec<_> = neighbors(origin, width, height)
+        .into_iter()
+        .filter_map(|next| {
+            let distance = distance[index(next, width)]?;
+            observation
+                .cells
+                .iter()
+                .any(|c| c.pos == next && c.open && c.occupants < 2)
+                .then_some((next, distance))
+        })
+        .collect();
+    let free_shortest = free
+        .iter()
+        .filter(|(_, distance)| *distance == current - 1)
+        .map(|&(next, _)| next)
+        .collect();
+    let best = free.iter().map(|&(_, distance)| distance).min();
+    let yield_candidates = free
+        .iter()
+        .filter(|(_, distance)| Some(*distance) == best)
+        .map(|&(next, _)| next)
+        .collect();
+    Ok(RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        counts,
+    })
+}
+
+/// Legacy selection consumes exactly the original checked step-choice draw.
 pub(super) fn route_step(
     knowledge: &Knowledge,
     origin: Pos,
@@ -273,33 +335,18 @@ pub(super) fn route_step(
     observation: &Observation,
     draws: &mut impl DrawSource,
 ) -> Checked<(Navigation, ComputeCounts)> {
-    check_origin(knowledge, origin)?;
-    check_observation(knowledge, origin, observation)?;
-    for &goal in goals {
-        knowledge.kind(goal)?;
+    match plan_route(knowledge, origin, goals, observation)? {
+        RoutePlan::AtGoal => Ok((Navigation::AtGoal, ComputeCounts::default())),
+        RoutePlan::Unreachable { counts } => Ok((Navigation::Unreachable, counts)),
+        RoutePlan::Reachable {
+            free_shortest,
+            counts,
+            ..
+        } => Ok((
+            choose(&free_shortest, draws)?.map_or(Navigation::Blocked, Navigation::Move),
+            counts,
+        )),
     }
-    if goals.contains(&origin) {
-        return Ok((Navigation::AtGoal, ComputeCounts::default()));
-    }
-    let (width, height) = knowledge.dimensions();
-    let (distance, counts) = distances(knowledge, goals)?;
-    let Some(current) = distance[index(origin, width)] else {
-        return Ok((Navigation::Unreachable, counts));
-    };
-    let candidates: Vec<_> = neighbors(origin, width, height)
-        .into_iter()
-        .filter(|&next| {
-            distance[index(next, width)] == Some(current - 1)
-                && observation
-                    .cells
-                    .iter()
-                    .any(|c| c.pos == next && c.open && c.occupants < 2)
-        })
-        .collect();
-    Ok((
-        choose(&candidates, draws)?.map_or(Navigation::Blocked, Navigation::Move),
-        counts,
-    ))
 }
 
 /// Requires a complete view validated against actual dimensions by Task 4

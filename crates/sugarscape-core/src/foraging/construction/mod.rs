@@ -98,3 +98,8 @@ pub use access::{AccessSummary, FoodAccessRecord};
 pub use metrics::{AccessCompute, ComputeCounts};
 pub use runner::{run, Episode, RunOptions};
 pub use view::{AgentView, FindView, KnowledgeView, Snapshot, Summary, WaypointView};
+
+mod traffic;
+pub use traffic::{
+    TrafficAgentView, TrafficCounts, TrafficPolicy, TrafficSnapshot, TrafficSummary,
+};
