@@ -330,6 +330,14 @@ pub(super) fn decide_with_policies(
         _ => false,
     };
     if !terminal && agent.traffic.hold_pending {
+        if excavation_policy == super::ExcavationPolicy::InformedCostV1 {
+            if let Some(face) = agent.face {
+                // Fresh learning may retire a peer-opened face without reassessing on hold.
+                if agent.map.kind(face)? != (CellKnowledge::KnownSolid { diggable: true }) {
+                    agent.face = None;
+                }
+            }
+        }
         return Ok(Decision {
             agent,
             action: Action::Wait(WaitReason::TrafficHold),

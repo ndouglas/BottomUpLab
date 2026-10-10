@@ -371,3 +371,224 @@ fn assessments_cannot_exceed_paid_opportunities_in_isolation() {
 fn initiated_digs_cannot_exceed_paid_digs_in_isolation() {
     isolated_bound(3);
 }
+
+#[test]
+fn peer_opened_selected_face_is_retired_during_paid_hold_then_public_steps_continue() {
+    use super::decision::{decide_with_policies, Action, Decision, Policy, WaitReason};
+    use super::excavation_state::ExcavationEffect;
+    use super::traffic::TrafficEffect;
+    use traffic_support::{controlled_tick, decision_tick, fixture_tick, view};
+    let mut open: Vec<_> = (3..=8).map(|y| pos(2, y)).collect();
+    open.extend((4..=8).map(|y| pos(4, y)));
+    open.extend([pos(3, 8), pos(3, 3), pos(1, 4)]);
+    let setup = Setup {
+        width: 7,
+        height: 10,
+        open,
+        diggable: vec![pos(3, 4)],
+        nest: vec![pos(2, 3), pos(2, 4), pos(2, 5)],
+        waste: pos(1, 4),
+        workers: vec![pos(2, 3), pos(2, 5), pos(2, 5)],
+        food: vec![Resource {
+            id: 42,
+            pos: pos(4, 4),
+        }],
+        parameters: Parameters {
+            p_search: 0.,
+            p_return: 0.,
+            lambda_fidelity: 0.,
+            lambda_publish: 0.,
+            lambda_waypoint: 0.,
+        },
+    };
+    let mut w = World::new_with_policies(
+        setup,
+        7,
+        TrafficPolicy::LocalYieldingV1,
+        ExcavationPolicy::InformedCostV1,
+    )
+    .unwrap();
+    // Engineering fixture controls: only trip intent is assigned below.
+    // Every position, map, streak, hold and material effect comes from paid actions.
+    // Move peers away temporarily, leaving capacity for paid exploration.
+    fixture_tick(&mut w, 1, Action::Move(pos(2, 6)));
+    fixture_tick(&mut w, 2, Action::Move(pos(2, 6)));
+    // Subject cannot pass that occupied cell; move peers into the separate dead-end.
+    for i in [1, 2] {
+        for p in [pos(2, 5), pos(2, 4), pos(2, 3), pos(3, 3)] {
+            fixture_tick(&mut w, i, Action::Move(p));
+        }
+    }
+    for y in 4..=8 {
+        fixture_tick(&mut w, 0, Action::Move(pos(2, y)));
+    }
+    fixture_tick(&mut w, 0, Action::Move(pos(3, 8)));
+    for y in (4..=8).rev() {
+        fixture_tick(&mut w, 0, Action::Move(pos(4, y)));
+    }
+    for y in 5..=8 {
+        fixture_tick(&mut w, 0, Action::Move(pos(4, y)));
+    }
+    fixture_tick(&mut w, 0, Action::Move(pos(3, 8)));
+    for y in (4..=8).rev() {
+        fixture_tick(&mut w, 0, Action::Move(pos(2, y)));
+    }
+    fixture_tick(&mut w, 0, Action::Move(pos(1, 4)));
+    fixture_tick(&mut w, 0, Action::Move(pos(2, 4)));
+    fixture_tick(&mut w, 0, Action::Move(pos(2, 3)));
+    // Park peers at the approach, then subject learns the yielding pocket and returns.
+    for i in [1, 2] {
+        for p in [pos(2, 3), pos(2, 4)] {
+            fixture_tick(&mut w, i, Action::Move(p));
+        }
+    }
+    fixture_tick(&mut w, 0, Action::Move(pos(3, 3)));
+    fixture_tick(&mut w, 0, Action::Move(pos(2, 3)));
+    controlled_tick(&mut w, 0, Action::Wait(WaitReason::NoNeighbor), |a| {
+        a.site = Some(pos(4, 4));
+        a.frontier = None;
+        a.face = None;
+    });
+    let choose = |w: &World, values: &[f64]| {
+        let mut draws = Scripted::new(values);
+        let d = decide_with_policies(
+            &Policy::from(&w.setup),
+            &w.state.agents[0],
+            &view(w, 0),
+            w.state.traffic_policy,
+            w.state.excavation_policy,
+            w.state.tick + 1,
+            &mut draws,
+        )
+        .unwrap();
+        (d, draws)
+    };
+    for _ in 0..2 {
+        let (d, mut draws) = choose(&w, &[0.]);
+        assert_eq!(d.action, Action::Wait(WaitReason::Congestion));
+        decision_tick(&mut w, 0, d, &mut draws);
+    }
+    let (d, mut draws) = choose(&w, &[0., 0., 0.]);
+    assert_eq!(d.action, Action::Move(pos(3, 3)));
+    assert_eq!(d.traffic_effect, TrafficEffect::YieldMove);
+    assert_eq!(d.excavation_effect, ExcavationEffect::SelectedTravel);
+    let record = d.agent.excavation.last_assessment.as_ref().unwrap();
+    assert_eq!(record.tick, 44);
+    assert_eq!(record.reference_cost, Some(11));
+    assert_eq!(record.candidate_pairs, 3);
+    assert_eq!(
+        record.selected_candidate,
+        Some(ExcavationCandidate {
+            face: pos(3, 4),
+            approach: pos(2, 4),
+            approach_moves: 1,
+            spoil_leg_moves: 1,
+            continuation_moves: 1,
+            pre_opening_distance: Some(10),
+            estimated_cost: 7,
+        })
+    );
+    let o = view(&w, 0);
+    super::actions::apply(&w.setup, &mut w.state, 0, d, &o, &mut draws).unwrap();
+    // Supplemental check: a still-valid face survives a draw-free hold decision.
+    let (valid_hold, valid_draws) = choose(&w, &[]);
+    assert_eq!(valid_hold.action, Action::Wait(WaitReason::TrafficHold));
+    assert_eq!(valid_hold.agent.face, Some(pos(3, 4)));
+    assert_eq!(valid_hold.agent.excavation, w.state.agents[0].excavation);
+    assert_eq!(valid_draws.next, 0);
+    // A later worker legally opens the retained face in the same ascending-ID tick.
+    for i in 1..3 {
+        let o = view(&w, i);
+        let mut a = w.state.agents[i].clone();
+        let delta = a.map.learn(&o).unwrap();
+        a.compute
+            .checked_include(&ComputeCounts {
+                observations: 1,
+                cells_inspected: o.cells.len() as u64,
+                cells_learned: delta.first,
+                observed_revisions: delta.observed_revisions,
+                dig_confirmations: delta.dig_confirmations,
+                ..Default::default()
+            })
+            .unwrap();
+        let d = Decision {
+            agent: a,
+            action: if i == 1 {
+                Action::Dig(pos(3, 4))
+            } else {
+                Action::Wait(WaitReason::NoNeighbor)
+            },
+            traffic_effect: TrafficEffect::Normal,
+            excavation_effect: ExcavationEffect::Ordinary,
+        };
+        super::actions::apply(&w.setup, &mut w.state, i, d, &o, &mut Scripted::new(&[])).unwrap();
+    }
+    w.state.tick += 1;
+    check(&w.setup, &w.state).unwrap();
+    assert!(w.state.agents[0].traffic.hold_pending);
+    assert_eq!(w.state.agents[0].face, Some(pos(3, 4)));
+    assert!(w.state.terrain.is_open(pos(3, 4)).unwrap());
+
+    let before = w.clone();
+    // The public transaction must commit the paid hold after fresh peer-open learning.
+    w.step().unwrap();
+    check(&w.setup, &w.state).unwrap();
+    assert_eq!(w.state.tick, before.state.tick + 1);
+    let old = &before.state.agents[0];
+    assert_eq!(
+        old.map.kind(pos(3, 4)).unwrap(),
+        CellKnowledge::KnownSolid { diggable: true }
+    );
+    let held = &w.state.agents[0];
+    assert_eq!(held.face, None);
+    assert_eq!(held.map.kind(pos(3, 4)).unwrap(), CellKnowledge::KnownOpen);
+    assert_eq!(
+        (
+            held.pos,
+            held.site,
+            held.phase,
+            held.cargo,
+            held.find,
+            held.frontier
+        ),
+        (
+            old.pos,
+            old.site,
+            old.phase,
+            old.cargo,
+            old.find,
+            old.frontier
+        )
+    );
+    assert_eq!(held.excavation, old.excavation);
+    assert!(!held.traffic.hold_pending);
+    let mut expected_work = old.work.clone();
+    expected_work.opportunities += 1;
+    expected_work.waits += 1;
+    expected_work.empty_congestion_waits += 1;
+    assert_eq!(held.work, expected_work);
+    let mut expected_traffic = old.traffic.clone();
+    expected_traffic.hold_pending = false;
+    expected_traffic.counts.hold_waits += 1;
+    assert_eq!(held.traffic, expected_traffic);
+    let mut expected_compute = old.compute;
+    expected_compute.observations += 1;
+    expected_compute.cells_inspected += 5;
+    expected_compute.observed_revisions += 1;
+    assert_eq!(held.compute, expected_compute);
+    // Isolate this worker's decision draw stream: peers in World::step may draw.
+    let (hold, draws) = choose(&before, &[]);
+    assert_eq!(draws.next, 0);
+    assert_eq!(hold.action, Action::Wait(WaitReason::TrafficHold));
+    assert_eq!(hold.traffic_effect, TrafficEffect::Hold);
+    assert_eq!(hold.excavation_effect, ExcavationEffect::Ordinary);
+    let mut expected_agent = old.clone();
+    expected_agent.map = held.map.clone();
+    expected_agent.compute = expected_compute;
+    expected_agent.face = None;
+    assert_eq!(hold.agent, expected_agent);
+    for _ in 0..20 {
+        w.step().unwrap();
+        check(&w.setup, &w.state).unwrap();
+    }
+}
