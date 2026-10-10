@@ -60,7 +60,19 @@ fn parser_rejects_overrides_repeats_missing_empty_and_incompatible_flags() {
     }
 }
 #[test]
-fn collector_rejects_draft_scientific_request_before_output() {
+fn authorized_scientific_preflight_binds_provenance_without_collection_or_output() {
+    let (_tmp, ctx, mut r) = owned_git_context();
+    r.mode = CollectionMode::Scientific;
+    let p = preflight(&ctx, &candidate().unwrap(), &r).unwrap();
+    assert_eq!(
+        p.manifest_sha256,
+        "3a78882035f89758659131da929b32d78d6af0b29f890aeb9bce4f03f0825216"
+    );
+    assert!(!r.out.exists());
+}
+
+#[test]
+fn historical_scientific_preflight_rejects_before_repository_or_output() {
     let tmp = owned_tempdir();
     let r = RunRequest {
         mode: CollectionMode::Scientific,
@@ -68,9 +80,21 @@ fn collector_rejects_draft_scientific_request_before_output() {
         approval_context: "test".into(),
         out: tmp.path().join("new"),
     };
-    let ctx = ExecutionContext::new(tmp.path().to_owned(), tmp.path().join("collector"));
-    assert!(collect(&ctx, &r).unwrap_err().contains("draft"));
-    assert!(!r.out.exists());
+    let ctx = ExecutionContext::new(
+        tmp.path().join("missing-repository"),
+        tmp.path().join("collector"),
+    );
+    for draft in [false, true] {
+        let mut m = candidate().unwrap();
+        m.execution_authorized = false;
+        if draft {
+            m.status = "draft".into();
+        }
+        assert!(preflight(&ctx, &m, &r)
+            .unwrap_err()
+            .contains("execution approval pending"));
+        assert!(!r.out.exists());
+    }
 }
 #[test]
 fn preflight_binds_canonical_commit_manifest_and_executable_bytes() {
@@ -101,7 +125,7 @@ fn preflight_rejects_malformed_nonexistent_and_noncommit_revisions() {
             &ctx.repo,
             &[
                 "rev-parse",
-                "HEAD:docs/superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md",
+                "HEAD:docs/superpowers/specs/2026-10-08-foraging-5-scientific-registration-proposal.md",
             ],
         ),
     ] {
@@ -172,7 +196,7 @@ fn preflight_refuses_dangling_output_and_executable_symlinks() {
     assert!(preflight(&linked_context, &candidate().unwrap(), &r).is_err());
 }
 #[test]
-fn committed_draft_artifact_matches_pure_factory_bytes() {
+fn committed_registered_artifact_matches_pure_factory_bytes() {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(MANIFEST_PATH);
@@ -468,4 +492,72 @@ fn preflight_native_context_has_no_fixture_identity_override() {
         "{error}"
     );
     assert!(!r.out.exists());
+}
+
+#[test]
+fn source_identity_includes_all_current_browser_fixture_inputs() {
+    use super::super::run::source_identity::{fingerprint, selected};
+    for path in [
+        "crates/sugarscape-core/src/browser_experiments/fixtures/audit-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/caching-identities.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/caching-scenes.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/engine-identities.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-identities.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-scenes.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/strategic-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/strategy-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/surface-examples.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/testimony-game-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/testimony-search-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/wink-portability.json",
+    ] {
+        let fixture_fingerprint = |bytes: &[u8]| {
+            fingerprint(
+                [(path.to_owned(), bytes.to_vec())]
+                    .into_iter()
+                    .filter(|(path, _)| selected(path))
+                    .map(Ok),
+            )
+            .unwrap()
+        };
+        assert_ne!(
+            fixture_fingerprint(b"original compiled fixture"),
+            fixture_fingerprint(b"changed compiled fixture"),
+            "compiled fixture changes must affect source identity: {path}"
+        );
+    }
+}
+
+#[test]
+fn source_identity_includes_all_current_discovery_fixture_inputs() {
+    use super::super::run::source_identity::{fingerprint, selected};
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap();
+    let mut unbound = Vec::new();
+    for path in [
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/planning-reference.json",
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/evaluation-reference.json",
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/limits-reference.json",
+    ] {
+        let original = fs::read(root.join(path)).unwrap();
+        let mut changed = original.clone();
+        changed.push(b'\n');
+        let fixture_fingerprint = |bytes: &[u8]| {
+            fingerprint(
+                [(path.to_owned(), bytes.to_vec())]
+                    .into_iter()
+                    .filter(|(path, _)| selected(path))
+                    .map(Ok),
+            )
+            .unwrap()
+        };
+        if fixture_fingerprint(&original) == fixture_fingerprint(&changed) {
+            unbound.push(path);
+        }
+    }
+    assert!(
+        unbound.is_empty(),
+        "compiled discovery fixture changes must affect source identity: {unbound:?}"
+    );
 }

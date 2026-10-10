@@ -26,7 +26,7 @@ fn construction_analysis_keeps_every_zero_and_emits_no_scientific_contrasts() {
         a.rows.iter().map(|r| r.key.clone()).collect::<Vec<_>>(),
         expected_keys(&candidate().unwrap(), CollectionMode::Construction)
     );
-    let text = markdown(&a).unwrap();
+    let text = markdown(&a, &candidate().unwrap()).unwrap();
     assert!(text.contains("Construction engineering checks"));
     assert!(!text.contains("Condition means"));
     assert!(text.contains("sampled physical projection"));
@@ -314,12 +314,12 @@ fn synthetic_reports_are_descriptive_ordered_and_match_existing_student_t_stats(
         rows,
         contrasts,
     };
-    let text = markdown(&a).unwrap();
+    let text = markdown(&a, &candidate().unwrap()).unwrap();
     assert!(text.contains("Condition means (descriptive)"));
     assert!(text.contains("Primary route delivery differences"));
     assert!(text.contains("Secondary route references and sealed access differences"));
     a.rows.reverse();
-    assert_eq!(markdown(&a).unwrap(), text);
+    assert_eq!(markdown(&a, &candidate().unwrap()).unwrap(), text);
 }
 #[test]
 fn saved_analysis_rejects_resigned_cache_clocks_tags_ownership_and_metadata_paths() {
@@ -371,11 +371,22 @@ fn saved_analysis_rejects_resigned_cache_clocks_tags_ownership_and_metadata_path
     }
 }
 #[test]
-fn saved_analysis_rejects_draft_scientific_archives_and_metadata_byte_overflow() {
+fn saved_analysis_rejects_registered_disabled_scientific_archives_and_metadata_byte_overflow() {
     let archive = complete_construction_archive();
-    rewrite_index(&archive, |i| i.mode = CollectionMode::Scientific);
+    rewrite_index(&archive, |i| {
+        i.mode = CollectionMode::Scientific;
+        let bytes = fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../docs/superpowers/specs/2026-10-08-foraging-5-registration-proposal.json"
+        ))
+        .unwrap();
+        i.manifest = serde_json::from_slice(&bytes).unwrap();
+        i.provenance.manifest_sha256 = sha256(&bytes);
+    });
     let out = archive.temp.path().join("analysis");
-    assert!(analyze(&archive.index, &out).unwrap_err().contains("draft"));
+    assert!(analyze(&archive.index, &out)
+        .unwrap_err()
+        .contains("execution approval pending"));
     assert!(!out.exists());
     fs::write(&archive.index, vec![b' '; 4 * 1024 * 1024 + 1]).unwrap();
     assert!(analyze(&archive.index, &out)
@@ -424,4 +435,66 @@ fn saved_analysis_rejects_resigned_event_distances_and_raw_parser_overflow() {
         .unwrap_err()
         .contains("byte limit"));
     assert!(!out.exists());
+}
+
+#[test]
+fn f5_cached_seed_seven_episode_matches_explicit_legacy_traffic_wrapper() {
+    use sugarscape_core::foraging::construction as core;
+    let manifest = candidate().unwrap();
+    let c = condition(&manifest, "route.straight.protected").unwrap();
+    let labeled = core::run_with_traffic(
+        c.setup.clone(),
+        7,
+        c.options.clone(),
+        core::TrafficPolicy::ShortestOnlyV1,
+    )
+    .unwrap();
+    assert_eq!(
+        super::support::cached_candidate_episode(&c.id, 7).unwrap(),
+        labeled.episode
+    );
+    assert_eq!(
+        labeled.traffic_summary.policy,
+        core::TrafficPolicy::ShortestOnlyV1
+    );
+    assert_eq!(
+        (
+            labeled.traffic_summary.counts.yield_attempts,
+            labeled.traffic_summary.counts.yield_moves,
+            labeled.traffic_summary.counts.hold_waits
+        ),
+        (0, 0, 0)
+    );
+}
+
+#[test]
+fn f5_cached_seed_seven_episode_matches_explicit_legacy_excavation() {
+    use sugarscape_core::foraging::construction as core;
+    let manifest = candidate().unwrap();
+    let c = condition(&manifest, "route.straight.protected").unwrap();
+    let labeled = core::run_with_policies(
+        c.setup.clone(),
+        7,
+        c.options.clone(),
+        core::TrafficPolicy::ShortestOnlyV1,
+        core::ExcavationPolicy::ExplorationFirstV1,
+    )
+    .unwrap();
+    assert_eq!(
+        super::support::cached_candidate_episode(&c.id, 7).unwrap(),
+        labeled.episode
+    );
+    assert_eq!(
+        labeled.excavation_policy,
+        core::ExcavationPolicy::ExplorationFirstV1
+    );
+    assert_eq!(
+        labeled.excavation_summary.counts,
+        core::ExcavationCounts::default()
+    );
+    assert!(labeled
+        .excavation_summary
+        .agents
+        .iter()
+        .all(|a| a.last_assessment.is_none()));
 }

@@ -24,6 +24,8 @@ pub(super) struct Agent {
     pub(super) face: Option<Pos>,
     pub(super) work: WorkCounts,
     pub(super) compute: ComputeCounts,
+    pub(super) traffic: super::traffic::TrafficState,
+    pub(super) excavation: super::excavation_state::ExcavationState,
 }
 /// Paid physical actions; computational diagnostics are counted separately.
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize)]

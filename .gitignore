@@ -44,3 +44,6 @@ survey/out/geosim-*
 
 # Democratic-peace scratch, runtime-only and registered evidence.
 survey/out/democratic-peace-*
+
+# Local memoryless-pricing exploratory traces and verification evidence
+survey/out/collusion-memoryless-20261010/

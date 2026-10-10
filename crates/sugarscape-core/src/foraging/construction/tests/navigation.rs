@@ -714,3 +714,141 @@ fn bounded_grid_counts_dequeues_and_unique_queue_peak() {
         (1, 25, 10, 0)
     );
 }
+
+#[test]
+fn private_plan_retains_longer_free_escape_when_nearest_step_is_full() {
+    let s = corridor();
+    let k = learned(&s, &s.open);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        counts,
+    } = plan_route(
+        &k,
+        pos(2, 0),
+        &[pos(1, 0), pos(4, 0)],
+        &fresh(&s, pos(2, 0), &[(pos(1, 0), 2)]),
+    )
+    .unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert!(free_shortest.is_empty());
+    assert_eq!(yield_candidates, vec![pos(3, 0)]);
+    assert_eq!(
+        (counts.route_calls, counts.route_visits, counts.peak_queue),
+        (1, 5, 3)
+    );
+}
+#[test]
+fn private_plan_ranks_free_candidates_and_preserves_cardinal_ties() {
+    let mut s = cross();
+    s.diggable.clear();
+    let k = learned(&s, &s.open);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        ..
+    } = plan_route(
+        &k,
+        pos(2, 2),
+        &[pos(2, 1), pos(2, 3), pos(3, 2), pos(1, 2)],
+        &fresh(&s, pos(2, 2), &[]),
+    )
+    .unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert_eq!(
+        free_shortest,
+        vec![pos(2, 1), pos(2, 3), pos(3, 2), pos(1, 2)]
+    );
+    assert_eq!(yield_candidates, free_shortest);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        ..
+    } = plan_route(
+        &k,
+        pos(2, 2),
+        &[pos(2, 1)],
+        &fresh(&s, pos(2, 2), &[(pos(2, 1), 2)]),
+    )
+    .unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert!(free_shortest.is_empty());
+    assert_eq!(yield_candidates, vec![pos(2, 3), pos(3, 2), pos(1, 2)]);
+}
+#[test]
+fn private_plan_prefers_shortest_free_candidate_and_omits_full_cells() {
+    let s = corridor();
+    let k = learned(&s, &s.open);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        ..
+    } = plan_route(&k, pos(2, 0), &[pos(1, 0)], &fresh(&s, pos(2, 0), &[])).unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert_eq!(free_shortest, vec![pos(1, 0)]);
+    assert_eq!(yield_candidates, vec![pos(1, 0)]);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        ..
+    } = plan_route(
+        &k,
+        pos(2, 0),
+        &[pos(1, 0)],
+        &fresh(&s, pos(2, 0), &[(pos(1, 0), 2), (pos(3, 0), 2)]),
+    )
+    .unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert!(free_shortest.is_empty());
+    assert!(yield_candidates.is_empty());
+}
+#[test]
+fn private_plan_at_goal_has_no_bfs_and_disconnected_goal_has_one() {
+    let mut s = setup();
+    s.open.push(pos(4, 2));
+    let k = learned(&s, &[pos(0, 0), pos(4, 2)]);
+    let o = fresh(&s, pos(0, 0), &[]);
+    assert!(matches!(
+        plan_route(&k, pos(0, 0), &[pos(0, 0)], &o).unwrap(),
+        RoutePlan::AtGoal
+    ));
+    let RoutePlan::Unreachable { counts } = plan_route(&k, pos(0, 0), &[pos(4, 2)], &o).unwrap()
+    else {
+        panic!("expected unreachable")
+    };
+    assert_eq!(
+        (counts.route_calls, counts.route_visits, counts.peak_queue),
+        (1, 1, 1)
+    );
+}
+#[test]
+fn private_plan_never_uses_an_unknown_open_escape() {
+    let s = corridor();
+    let k = learned(&s, &[pos(1, 0)]);
+    let RoutePlan::Reachable {
+        free_shortest,
+        yield_candidates,
+        ..
+    } = plan_route(
+        &k,
+        pos(2, 0),
+        &[pos(1, 0)],
+        &fresh(&s, pos(2, 0), &[(pos(1, 0), 2)]),
+    )
+    .unwrap()
+    else {
+        panic!("expected reachable plan")
+    };
+    assert!(free_shortest.is_empty());
+    assert!(yield_candidates.is_empty());
+}

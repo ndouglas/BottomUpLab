@@ -1,0 +1,85 @@
+{
+  "purpose": "test-only historical authentication; live source changed in reviewed incoming foraging integration",
+  "historical_commit": "83727abd328a363bcb3c9a9215b65081f8a8a0bc",
+  "reviewed_incoming_commit": "e49fdfecbc77c0f2eb8330011380d10e52f0e78e",
+  "sources": [
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/actions.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/actions.rs.txt",
+      "historical_sha256": "91935bbe6e4083c7326120ba22652a5d6356daa060386e7bc4fbfb913b969bf7",
+      "reviewed_sha256": "a3e713bd455119708535252f99a5145e5faf0ec292032a6f08eb82e20dc4561b"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/controller.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/controller.rs.txt",
+      "historical_sha256": "9fa1d0c21c2a3625880163e1140298f9f31db2987305d2ccc1f4a78145b36528",
+      "reviewed_sha256": "ccb1c6b27b83eaeac1d34779027e5713195d87788d03e843d4ccda18f65e18ec"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/decision.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/decision.rs.txt",
+      "historical_sha256": "ee0f6736618825aab49a73741a728c42d2a5f1984913e0a3bbcdce4068b727e0",
+      "reviewed_sha256": "d5a84a9ff6de15b0cdd41c04711738995038ed1fc1a8a7b91aec870698c75340"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/mod.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/mod.rs.txt",
+      "historical_sha256": "5dc95c1cec2c81e8e2e42600ed6d74c656e5beb0acea7e80cfd6b20851b7528c",
+      "reviewed_sha256": "1e2e2354686fc29b80ad4dc1d48f33b6483e65615fb20b8f67762b44edb45dac"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/navigation.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/navigation.rs.txt",
+      "historical_sha256": "63f6760915615a3983aafdfbf846a7155a92a39c6048ebb228055fef5272fc2d",
+      "reviewed_sha256": "e1edb5da8e455ca4480691e4d136d68351c547055078df4d1829488753a7fbc6"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/runner.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/runner.rs.txt",
+      "historical_sha256": "42aae2a55d5438229e2113821519cddbddec4d21b7ca0c92508f5ccbd5058e69",
+      "reviewed_sha256": "06b0182a839813510812c39cf08798f184f6c08ce883a5fdde3cd0f8e916d481"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/state.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/state.rs.txt",
+      "historical_sha256": "58099a0e24087742c18906e9c9789a64d701d10af1ab3c5b3bcae41954784e05",
+      "reviewed_sha256": "662248b07563fb388fe675ab9d7de1783c5a6189916c0aa24e916021baf22399"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/tests/controller.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/tests/controller.rs.txt",
+      "historical_sha256": "6274fbee95ec264981f57b871c62cba6e8b4cf45b7ebdc8ee9b98d6ea2ddbe98",
+      "reviewed_sha256": "f439caf4422a6382e9ce3f546c14cbed97b850c99ff65cdb42a51a0f2c247b37"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/tests/material_access.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/tests/material_access.rs.txt",
+      "historical_sha256": "dc99a8fd795c86692b57a125de3c0347e341fea43ee4df64b38506db72c06f41",
+      "reviewed_sha256": "230e1cfab59addaeb4f3096cc607d2f89bfafaf5beb701bc7b3362455a5ba54f"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/tests/mod.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/tests/mod.rs.txt",
+      "historical_sha256": "990fc93172c594f0e60e9e4e05a4fb1606fddf0e9b984a02b596cd6777ef38e5",
+      "reviewed_sha256": "71496fbc039e1f04598fed178b0a041a1ac1690c24500430220474b6bbc4cafc"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/tests/navigation.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/tests/navigation.rs.txt",
+      "historical_sha256": "107eaf7abf6f3c4249cdd519d2db64e4c55060a6975fa6da1e7e0798bcd4d934",
+      "reviewed_sha256": "6ccd7ead080736463492d6f19ecad2923d4a45dd8eca69c14e2fcbdcc859bcf5"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/tests/runner.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/tests/runner.rs.txt",
+      "historical_sha256": "9ce2e5133d3068bd20e039d4ffa273c418c4d03787d33b63eddd7cf6c5cea82d",
+      "reviewed_sha256": "19beae129a039501a2ed6b34ca1768fe80f52ef1b1368e597afd5a74da840b4b"
+    },
+    {
+      "path": "crates/sugarscape-core/src/foraging/construction/world.rs",
+      "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/world.rs.txt",
+      "historical_sha256": "5dcfc7bd68aee3cae9711c92e304fb8330f4293b54b8b0250cb09182c9fbe6d8",
+      "reviewed_sha256": "d0201e2b09a2b34fba13f06abb2daff11a2646703a970fab2bfa70d42f55d3d0"
+    }
+  ]
+}

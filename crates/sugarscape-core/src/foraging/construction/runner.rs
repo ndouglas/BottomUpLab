@@ -2,7 +2,7 @@ use super::{Setup, Snapshot, Summary, World};
 use crate::config::FieldError;
 use std::io::{self, Write};
 
-const SNAPSHOT_LIMIT: u64 = 64 * 1024 * 1024;
+pub(super) const SNAPSHOT_LIMIT: u64 = 64 * 1024 * 1024;
 
 /// Fixed horizon and observational sampling. The interval must be positive even
 /// when snapshots are disabled; execution never stops at resource exhaustion.
@@ -83,9 +83,9 @@ pub(super) fn validate_options(setup: &Setup, options: &RunOptions) -> Result<()
     }
     Ok(())
 }
-struct CountingWriter {
-    bytes: u64,
-    limit: u64,
+pub(super) struct CountingWriter {
+    pub(super) bytes: u64,
+    pub(super) limit: u64,
 }
 impl Write for CountingWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {

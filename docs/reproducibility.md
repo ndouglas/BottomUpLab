@@ -377,6 +377,8 @@ visible here so the denominator is not only failed claims. IDs below index the d
 | <a id="rr-col-06"></a>RR-COL-06 | Mismatch / Open / L; [record][collusion] | Lambin Theorem 1 mean-field prices 1.6990/1.7377 not typical finite-α outcomes (27%, 13%, .4%, 3.6% across four arms). | Verify limit assumptions and α/noise convergence before theorem versus simulation comparison. |
 | <a id="rr-col-07"></a>RR-COL-07 | Provenance / Blocked on source / D; [record][collusion] | Some follow-up code (Klein 2021 / Calvano 2021) only available on request; wanted 2023 genuine/spurious and Abada–Lambin remain leads. Critics' switches do not certify all source packages. | Retrieve publication-specific packages/inputs before classifying their claims as reproduced or failed. |
 
+An [exploratory memoryless follow-up](studies/2026-10-10-memoryless-pricing-diagnostic.md) completed on 2026-10-10: 32 fixed runs, eight seeds per memory/update configuration, two-million-period limit. Full feedback lowered observed memoryless prices/gains in all eight pairs; recorded scores support stale/selective tracking, including historical bootstrap drift and incomplete adjustment. All memoryless full-feedback sessions are censored. This is additional diagnostic evidence for RR-COL-04/05, not closure of source equivalence, equilibrium or unique causal-mechanism questions.
+
 ### Milestone 35 — Banchio–Skrzypacz 2022, `auctions`
 
 | ID | Category / status / evidence | Target and documented outcome | Next action |

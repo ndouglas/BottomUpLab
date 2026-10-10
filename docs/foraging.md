@@ -282,7 +282,7 @@ merged-tree verification passed 2,852 workspace tests, zero failures and 103
 existing ignored, with formatting and core all-target Clippy clean. The feature
 worktree and branch were retired after evidence preservation. Branch evidence
 is archived at `/tmp/sugarscape-f4-evidence-20261006/sdd/`; integration logs are
-in `/tmp/sugarscape-f4-integration-20261007/`. Scientific evaluation has not started.
+in `/tmp/sugarscape-f4-integration-20261007/`. Scientific evaluation had not started at that integration; the subsequent registered F5 run is recorded below.
 
 
 ## Construction public usage (F4)
@@ -396,7 +396,7 @@ separately deferred and require their own approved design/protocol.
 
 ## F5 saved shortcut comparison harness
 
-The user approved a mechanism-first comparison and collection/analysis architecture around unchanged F4. The [approved F5 specification](superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md) defines supplied straight/detour/twisting geometries, paid/protected/already-open regimes, a separate sealed-access panel, fixed candidate inputs, complete censoring and saved-only native survey analysis. The user approved its complete written geometry/workload/measurement specification on 2026-10-07; the [implementation plan](superpowers/plans/2026-10-07-foraging-5-shortcut-comparison.md) is also approved. The native harness now has construction collection and saved-only reporting; final independent review remains separate. Scientific collection has not begun.
+The user approved a mechanism-first comparison and collection/analysis architecture around unchanged F4. The [approved F5 specification](superpowers/specs/2026-10-07-foraging-5-shortcut-comparison-design.md) defines supplied straight/detour/twisting geometries, paid/protected/already-open regimes, a separate sealed-access panel, fixed candidate inputs, complete censoring and saved-only native survey analysis. The user approved its complete written geometry/workload/measurement specification on 2026-10-07; the [implementation plan](superpowers/plans/2026-10-07-foraging-5-shortcut-comparison.md) is also approved. The native harness supports construction collection and saved-only reporting. Its original draft gate restricted execution to the engineering matrix; the subsequently approved registration and completed scientific run are recorded below.
 
 The [source audit](studies/2026-10-07-foraging-shortcut-reading.md) distinguishes inspected material from inaccessible workbook/figure content. This is a computational mechanism design, not a source-calibrated biological reproduction. Dedicated roles and relay transport remain deferred.
 
@@ -409,13 +409,14 @@ cargo run --manifest-path survey/Cargo.toml -- --foraging-shortcuts
 cargo run --manifest-path survey/Cargo.toml -- --foraging-shortcuts --help
 ```
 
-The [resolved manifest](superpowers/specs/2026-10-07-foraging-5-draft-manifest.json)
-remains `draft`, with `execution_authorized=false`. The only collection allowed
-by this candidate is the explicit engineering matrix: fifteen conditions, seeds
+The [original draft manifest](superpowers/specs/2026-10-07-foraging-5-draft-manifest.json)
+remains an immutable historical `draft`, with `execution_authorized=false`. At
+that stage this candidate permitted only the explicit engineering matrix: fifteen conditions, seeds
 7 and 8, thirty complete episodes and 122,880 worker opportunities. All options
 are fixed (512 ticks, checkpoints 0/128/256/384/512). No tuning or seed override is
-accepted. Scientific seeds 10001..10040 are prospective metadata; synthetic
-statistics tests use those labels without executing those episodes.
+accepted. Scientific seeds 10001..10040 were prospective metadata at that stage; synthetic
+statistics tests used those labels without executing those episodes. The later
+registered run below supersedes the original draft execution gate.
 
 From a clean tracked checkout whose committed protocol and candidate match the
 factory, construction collection requires a full protocol commit and a recorded
@@ -429,8 +430,8 @@ cargo run --manifest-path survey/Cargo.toml -- --foraging-shortcuts --analyze NE
 Saved analysis requires the entire canonical archive and reaches the reader's
 terminal byte-total check before creating `NEW_ANALYSIS`. It never constructs a
 World, invokes the core runner, or queries a current repository/executable to
-replace saved provenance. Draft scientific collection and saved scientific
-archives remain refused. Missing, duplicate or extra keys, unsafe paths,
+replace saved provenance. The historical draft identity refuses scientific collection and saved scientific
+archives; the later registered and authorized identities remain distinct. Missing, duplicate or extra keys, unsafe paths,
 metadata/raw byte excess, mismatched hashes/identities and inconsistent observed
 state cannot become a reduced-denominator report.
 
@@ -460,8 +461,8 @@ The limits are 4 MiB per raw envelope and 1 GiB cumulative raw-envelope JSON;
 metadata has a separate 4 MiB parser limit. Raw totals exclude indexes, progress
 and operational records. F4 independently limits summed compact Snapshot JSON
 to 64 MiB. These are serialized-byte bounds, not RSS guarantees. Analysis streams
-one raw episode and retains bounded projected rows (30 construction, 600 for a
-future registered scientific matrix), without Worlds or complete raw histories.
+one raw episode and retains bounded projected rows (30 construction, 600 for the
+registered scientific matrix), without Worlds or complete raw histories.
 
 `analysis.json` and `results.md` use canonical manifest/seed order, stable numeric
 formatting and relative raw references interpreted against the archive index.
@@ -481,9 +482,44 @@ intervals and positive/zero/negative counts. It produces no pooled efficacy,
 energy conversion, significance-selected verdict or animal uncertainty claim.
 The inaccessible workbook/README and source figure remain prerequisites for a
 source-data or quantitative biological comparison; this harness supplies no
-hidden calibration and scientific execution remains a separate approval.
+hidden calibration. Any revised-policy scientific campaign requires a separate
+registration and execution approval.
+
+
+## F5 registered scientific run — 2026-10-09
+
+The user authorized the full fixed matrix, and all 600 episodes completed at runtime `a129f06`: 15 conditions × seeds 10001..10040, 512 ticks each and 2,457,600 total opportunities. Exact archive validation and two saved-only analyses passed; both reports are byte-identical with raw evidence unchanged. All three primary Paid-minus-Protected route delivery contrasts are zero for every paired seed. Sealed Paid cases have some access and delivery gains; all zeros and censored rows remain. The [full-run record](studies/2026-10-09-foraging-5-full-run.md) retains every contrast, artifact identity, verification result and local evidence path. This computational run does not establish biological calibration. Registration/activation initially lived on `foraging-5-registration`; no merge or push accompanied execution. Its later local integration is recorded below.
+
+The subsequent [saved-only diagnosis](studies/2026-10-09-foraging-5-diagnosis.md) confirms sustained opposing traffic waits under the shortest-step-only rule and late excavation under open-frontier priority. All registered records remain unchanged. Traffic resolution should be addressed in a separately designed controller increment before evaluating a revised shortcut policy. No new stochastic episodes or behavior changes were part of the investigation.
+
+The user approved a traffic-first follow-up. Its [private local-yielding specification](superpowers/specs/2026-10-09-foraging-local-yielding-design.md) defines an explicit revised policy alongside the retained baseline, with seeded local stepping aside, paid holds and separate diagnostics. The written spec was approved on 2026-10-09; the user also approved its [implementation plan](superpowers/plans/2026-10-09-foraging-local-yielding.md), and all four stages plus independent task/whole-plan reviews are complete at runtime `a45d2f6`. Fresh verification passed workspace3184/0/105 and survey435/0/0, formatting and Clippy. [Detailed verification](studies/2026-10-09-foraging-local-yielding-verification.md) records evidence and retained baseline compatibility. The separately approved informed-excavation increment is now complete at corrected runtime `56f7110`, as recorded below; dedicated roles and relay transport remain future choices.
+
+
+### Explicit traffic policies
+
+`construction::World::new` and `construction::run` retain `TrafficPolicy::ShortestOnlyV1`, including the F5 collector. Use `World::new_with_traffic(setup, seed, TrafficPolicy::LocalYieldingV1)` or `run_with_traffic(setup, seed, options, TrafficPolicy::LocalYieldingV1)` for the revised engineering policy. The latter returns a separate `foraging-traffic-episode-v1` wrapper with policy, base episode, traffic summary/checkpoints and traffic snapshot bytes. `traffic_summary()`/`traffic_snapshot()` are observational.
+
+The revised policy uses fresh local capacity and privately learned open routes. After two paid blocked-route waits, it may step aside with a seeded probability of 0.25, then pay one hold unless already at its terminal destination. Cargo and trip intent remain; no swaps or shared maps occur. Base congestion totals include deliberate holds; use `hold_waits` and `blocked_route_opportunities` to distinguish those. Combined compact base/traffic snapshots are capped at64MiB. Legal free bays can relieve a queue; fairness, termination and scientific delivery benefit are not guaranteed. The original 600-episode archive and saved-only reports remain byte-identical. The informed-excavation extension below independently selects excavation behavior; both existing traffic APIs retain exploration-first excavation.
+
+
+### Explicit informed-excavation policies — 2026-10-10
+
+The user approved the [informed-excavation design](superpowers/specs/2026-10-09-foraging-informed-excavation-design.md) and [implementation plan](superpowers/plans/2026-10-09-foraging-informed-excavation.md). All four subagent-driven stages and independent reviews are complete. The final review found a valid yield/peer-Dig/hold history that repeatedly failed the active-face invariant; one consolidated correction retires the newly invalidated face during an informed-cost hold, preserves the paid hold/job/history/counters and introduces no reassessment or draws. Corrected runtime `56f7110` passed scoped re-review with no residual findings. [Detailed verification](studies/2026-10-09-foraging-informed-excavation-verification.md) records fresh workspace 3267/0/105 and survey 436/0/0, both format/Clippy gates, source/native identities and exact original saved-report compatibility.
+
+`World::new`/`run` and `new_with_traffic`/`run_with_traffic` keep `ExcavationPolicy::ExplorationFirstV1`, including F5 collection. Use `World::new_with_policies(setup, seed, traffic_policy, ExcavationPolicy::InformedCostV1)` or `run_with_policies(setup, seed, options, traffic_policy, ExcavationPolicy::InformedCostV1)` to opt into the revised policy independently of traffic. The latter returns `foraging-construction-policy-episode-v1`, with both policy identities, base episode, traffic views and excavation views. `excavation_summary()`/`excavation_snapshot()` are observational. Compact base, traffic and excavation snapshots share a 64 MiB limit; the old runners retain their original output and budgets.
+
+An empty informed Departing worker compares reachable diggable faces using its private classifications. A proposed opening must improve optimistic onward geometry and beat the reference after approach travel, Dig, known spoil haul/disposal, estimated return and entry costs. Unknown continuation is only an estimate; all other remembered solids remain blocked. Loaded jobs finish first, each eligible opportunity reassesses, and cost rejection leaves ordinary pursuit/fallback available. Separate counters distinguish assessments, selected opportunities and proactive Digs; historical last-assessment records survive face opening without remaining active targets.
+
+One-cell lookahead can miss multi-cell tunnels or accept a blocked optimistic continuation; conservative spoil charging can reject useful digs. Engineering acceptance establishes these rules and retained compatibility, while revised scientific delivery benefit requires its own registered comparison. Roles and relay remain future increments. Local integration and feature cleanup completed on 2026-10-10, as recorded below.
 
 
 ## Browser engineering examples
 
 F2 fixed, F3 passage, and F4 construction engineering examples are available in the browser [experiment viewer](experiment-viewer.md#spatial-engineering-demonstrations). The viewer distinguishes private stale topology beliefs from researcher state and sampled completed ticks from actions. F5 and scientific campaign collection remain outside its scope.
+
+
+## Local integration — 2026-10-10
+
+Merge `f130930` integrated the reviewed F5 registration, local yielding and informed excavation into current main `c58e7af`, retaining concurrent browser/minds/war work. The sole documentation conflict retained both branches' additions. A reviewed RED/GREEN correction binds four new native browser fixtures to the F5 source fingerprint without changing controller behavior.
+
+Fresh merged verification passed workspace 3,452/0/106 and corrected survey 468/0/0, both formatting and Clippy checks, and native build/source checking. Two saved-only analyses reproduce the original JSON/Markdown reports byte for byte; all 600 original raw records and four original report files remain exact. The integrated feature worktree/branch were removed normally after preserving remaining files; other worktrees remain. [Detailed integration record](studies/2026-10-10-foraging-integration.md) records the merge parents, correction review, gate evidence, native identity, preservation and cleanup. No push or new scientific campaign accompanied integration. A revised-policy scientific comparison requires its own registration and execution decision; roles and relay remain future work.

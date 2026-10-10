@@ -73,3 +73,6 @@ pub mod geosim;
 pub mod active_surface;
 
 pub mod surface_discovery;
+
+#[cfg(all(feature = "war-benchmarks", not(target_arch = "wasm32")))]
+pub mod war;

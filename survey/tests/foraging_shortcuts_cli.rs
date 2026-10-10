@@ -40,36 +40,33 @@ fn assert_selector_available(directory: &OwnedDir) {
     );
 }
 #[test]
-fn default_shortcut_command_prints_draft_manifest_without_files() {
+fn default_shortcut_command_prints_authorized_manifest_without_files() {
     let dir = owned_dir();
     assert_selector_available(&dir);
     let output = binary(&["--foraging-shortcuts"], &dir);
     assert!(output.status.success());
     let m: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(m["schema"], "foraging-shortcut-manifest-v1");
-    assert_eq!(m["status"], "draft");
-    assert_eq!(m["execution_authorized"], false);
+    assert_eq!(m["status"], "registered");
+    assert_eq!(m["execution_authorized"], true);
+    assert_eq!(
+        output.stdout,
+        fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../docs/superpowers/specs/2026-10-09-foraging-5-authorized-manifest.json"
+        ))
+        .unwrap()
+    );
     assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 0);
 }
 #[test]
-fn help_is_pure_and_draft_scientific_run_rejects_before_output() {
+fn help_is_pure_and_records_current_authorization() {
     let dir = owned_dir();
-    assert_selector_available(&dir);
-    let output = binary(
-        &[
-            "--foraging-shortcuts",
-            "--run",
-            "--protocol-revision",
-            &"a".repeat(40),
-            "--approval-context",
-            "test",
-            "--out",
-            "new",
-        ],
-        &dir,
-    );
-    assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("draft"));
+    let output = binary(&["--foraging-shortcuts", "--help"], &dir);
+    assert!(output.status.success());
+    let help = String::from_utf8_lossy(&output.stdout);
+    assert!(help.contains("execution authorized"));
+    assert!(!help.contains("execution approval pending"));
     assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 0);
 }
 #[test]
@@ -151,9 +148,17 @@ fn digest(bytes: &[u8]) -> String {
 }
 /// Construction-only external fixture; serialize original core Episodes directly,
 /// never reconstruct their numeric tokens through serde_json::Value.
-fn saved_archive(dir: &OwnedDir) -> std::path::PathBuf {
+fn saved_archive(dir: &OwnedDir, historical: bool) -> std::path::PathBuf {
     use sugarscape_core::foraging::construction as core;
-    let manifest_bytes = binary(&["--foraging-shortcuts"], dir).stdout;
+    let manifest_bytes = if historical {
+        fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../docs/superpowers/specs/2026-10-07-foraging-5-draft-manifest.json"
+        ))
+        .unwrap()
+    } else {
+        binary(&["--foraging-shortcuts"], dir).stdout
+    };
     let manifest: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
     let provenance = serde_json::json!({"code_revision":"a".repeat(40),
         "protocol_revision":"b".repeat(40), "manifest_sha256":digest(&manifest_bytes),
@@ -198,16 +203,26 @@ fn saved_archive(dir: &OwnedDir) -> std::path::PathBuf {
             },
         };
         for seed in [7, 8] {
-            let episode = core::run(
-                setup.clone(),
-                seed,
-                core::RunOptions {
-                    ticks: 512,
-                    sample_every: 128,
-                    snapshots: true,
-                },
-            )
-            .unwrap();
+            static CACHE: std::sync::OnceLock<
+                std::sync::Mutex<std::collections::BTreeMap<(String, u64), core::Episode>>,
+            > = std::sync::OnceLock::new();
+            let mut cache = CACHE.get_or_init(Default::default).lock().unwrap();
+            let episode = cache
+                .entry((condition["id"].as_str().unwrap().to_owned(), seed))
+                .or_insert_with(|| {
+                    core::run(
+                        setup.clone(),
+                        seed,
+                        core::RunOptions {
+                            ticks: 512,
+                            sample_every: 128,
+                            snapshots: true,
+                        },
+                    )
+                    .unwrap()
+                })
+                .clone();
+            drop(cache);
             let key = serde_json::json!({"condition": condition["id"], "seed":seed});
             #[derive(serde::Serialize)]
             struct Envelope<'a> {
@@ -243,64 +258,66 @@ fn saved_archive(dir: &OwnedDir) -> std::path::PathBuf {
 }
 #[test]
 fn saved_analysis_cli_reproduces_complete_construction_artifacts_exclusively() {
-    let dir = owned_dir();
-    assert_selector_available(&dir);
-    let index = saved_archive(&dir);
-    for out in ["first", "second"] {
+    for historical in [false, true] {
+        let dir = owned_dir();
+        assert_selector_available(&dir);
+        let index = saved_archive(&dir, historical);
+        for out in ["first", "second"] {
+            let output = binary(
+                &[
+                    "--foraging-shortcuts",
+                    "--analyze",
+                    index.to_str().unwrap(),
+                    "--out",
+                    out,
+                ],
+                &dir,
+            );
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        let a: serde_json::Value =
+            serde_json::from_slice(&fs::read(dir.0.join("first/analysis.json")).unwrap()).unwrap();
+        assert_eq!(a["rows"].as_array().unwrap().len(), 30);
+        assert_eq!(a["contrasts"], serde_json::json!([]));
+        for file in ["analysis.json", "results.md"] {
+            assert_eq!(
+                fs::read(dir.0.join("first").join(file)).unwrap(),
+                fs::read(dir.0.join("second").join(file)).unwrap()
+            );
+        }
         let output = binary(
             &[
                 "--foraging-shortcuts",
                 "--analyze",
                 index.to_str().unwrap(),
                 "--out",
-                out,
+                "first",
             ],
             &dir,
         );
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
+        assert_eq!(output.status.code(), Some(2));
+        let mut raw = fs::read(dir.0.join("saved/raw/access.twisting.protected/8.json")).unwrap();
+        raw.push(b' ');
+        fs::write(
+            dir.0.join("saved/raw/access.twisting.protected/8.json"),
+            raw,
+        )
+        .unwrap();
+        let output = binary(
+            &[
+                "--foraging-shortcuts",
+                "--analyze",
+                index.to_str().unwrap(),
+                "--out",
+                "bad",
+            ],
+            &dir,
         );
+        assert_eq!(output.status.code(), Some(2));
+        assert!(!dir.0.join("bad").exists());
     }
-    let a: serde_json::Value =
-        serde_json::from_slice(&fs::read(dir.0.join("first/analysis.json")).unwrap()).unwrap();
-    assert_eq!(a["rows"].as_array().unwrap().len(), 30);
-    assert_eq!(a["contrasts"], serde_json::json!([]));
-    for file in ["analysis.json", "results.md"] {
-        assert_eq!(
-            fs::read(dir.0.join("first").join(file)).unwrap(),
-            fs::read(dir.0.join("second").join(file)).unwrap()
-        );
-    }
-    let output = binary(
-        &[
-            "--foraging-shortcuts",
-            "--analyze",
-            index.to_str().unwrap(),
-            "--out",
-            "first",
-        ],
-        &dir,
-    );
-    assert_eq!(output.status.code(), Some(2));
-    let mut raw = fs::read(dir.0.join("saved/raw/access.twisting.protected/8.json")).unwrap();
-    raw.push(b' ');
-    fs::write(
-        dir.0.join("saved/raw/access.twisting.protected/8.json"),
-        raw,
-    )
-    .unwrap();
-    let output = binary(
-        &[
-            "--foraging-shortcuts",
-            "--analyze",
-            index.to_str().unwrap(),
-            "--out",
-            "bad",
-        ],
-        &dir,
-    );
-    assert_eq!(output.status.code(), Some(2));
-    assert!(!dir.0.join("bad").exists());
 }
