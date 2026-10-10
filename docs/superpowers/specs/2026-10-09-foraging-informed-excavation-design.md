@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-09
 
-**Status:** the user approved the written specification after commit `981c894`. The user approved the [implementation plan](../plans/2026-10-09-foraging-informed-excavation.md) on 2026-10-10; subagent-driven execution has started.
+**Status:** written specification and [implementation plan](../plans/2026-10-09-foraging-informed-excavation.md) approved; all four subagent-driven stages and independent reviews complete on 2026-10-10. Whole-plan review found the hold/peer-opening interaction F1; one consolidated correction at `56f7110` passed scoped re-review with no residual findings. Fresh workspace 3267/0/105 and survey 436/0/0 gates, formatting/Clippy, native source binding and exact saved reanalysis passed. [Verification and rulings](../../studies/2026-10-09-foraging-informed-excavation-verification.md) retain the evidence. Branch/worktree are preserved for later integration.
 
 **Context:** [F5 diagnosis](../../studies/2026-10-09-foraging-5-diagnosis.md), [local-yielding design](2026-10-09-foraging-local-yielding-design.md), [verified traffic increment](../../studies/2026-10-09-foraging-local-yielding-verification.md), and [F4 construction design](2026-10-06-foraging-4-construction-design.md).
 
@@ -34,7 +34,7 @@ The F5 collector continues calling ordinary `construction::run`. Retain all thre
 
 ## 3. Eligibility and decision order
 
-Keep fresh current/cardinal observation and private learning first. Preserve terminal food/nest/spoil actions and the existing nonterminal traffic hold before controller dispatch.
+Keep fresh current/cardinal observation and private learning first. Preserve terminal food/nest/spoil actions and the existing nonterminal traffic hold before controller dispatch. During an informed-cost hold, retire an active face that fresh learning has invalidated; retain a still-valid face. This reconciles the active commitment without reassessment, replacement selection, navigation or draws. Preserve goal, cargo, phase, historical assessment and excavation counters.
 
 Assess informed excavation only inside the existing `Departing` branch when the worker has `site: Some(site)`, empty hands, and no active food find. A recruited label supplies a destination, not terrain classifications or knowledge of food still being present. Uninformed departure, ordinary searching, empty return, food return, and spoil hauling keep their current controller priorities.
 

@@ -10,7 +10,7 @@
 
 **Spec:** [Cost-aware informed excavation](../specs/2026-10-09-foraging-informed-excavation-design.md), written at `981c894` and approved by the user before this plan was written.
 
-**Status:** the user approved this plan on 2026-10-10. Subagent-driven execution has started; the root tracker and plan-owned ledger record stage progress.
+**Status:** all four subagent-driven tasks and independent task/whole-plan reviews complete on 2026-10-10. The final F1 hold/peer-opening correction at runtime `56f7110` passed scoped re-review and fresh complete verification. [Evidence and chronological rulings](../../studies/2026-10-09-foraging-informed-excavation-verification.md) preserve gates, identities, the reproduction, correction and saved compatibility. Branch/worktree retained for later integration; the completed plan workspace/tracker are archived before retirement.
 
 ## Global Constraints
 
@@ -181,7 +181,7 @@ Task 1 compiles the new private estimator/state modules under `cfg(test)` while 
 
 **Interfaces:** Consume Knowledge classifications/dimensions/known(), setup::neighbors, checked errors, and existing public traffic runner. Produce the Task 1 records, assess, estimated_cost, and checked state helpers above. No production controller behavior changes in this task.
 
-- [ ] **Step 1: Capture the current complete traffic baseline before production edits.** Add a temporary test that writes a JSON record with `traffic_episode_json: String` and `next_rng: u64`, using the existing tests::setup(), seed 7, ticks 40, sample_every 7, snapshots true, and LocalYieldingV1. Capture the wrapper via serde_json::to_string; obtain next_rng by independently stepping World::new_with_traffic 40 times. Keep the exact captured bytes in the new fixture, remove the writer test, and pin them with the test below. Preserve capture log, original HEAD, fixture size/hash, and next RNG value; do not regenerate after production changes. Add the fixture's exact path to the source selector FILES list because .json is not selected by the Rust directory rule.
+- [x] **Step 1: Capture the current complete traffic baseline before production edits.** Add a temporary test that writes a JSON record with `traffic_episode_json: String` and `next_rng: u64`, using the existing tests::setup(), seed 7, ticks 40, sample_every 7, snapshots true, and LocalYieldingV1. Capture the wrapper via serde_json::to_string; obtain next_rng by independently stepping World::new_with_traffic 40 times. Keep the exact captured bytes in the new fixture, remove the writer test, and pin them with the test below. Preserve capture log, original HEAD, fixture size/hash, and next RNG value; do not regenerate after production changes. Add the fixture's exact path to the source selector FILES list because .json is not selected by the Rust directory rule.
 
 ```rust
 #[derive(serde::Deserialize)]
@@ -200,7 +200,7 @@ fn retained_traffic_episode_and_rng_match_pre_excavation_bytes() {
 }
 ```
 
-- [ ] **Step 2: Write estimator/type RED tests and inspect their failure.** Tests must cover explicit policy spellings/unknown identities, cost arithmetic, unavailable reference, strict equality rejection, geometric causality, protected/disconnected faces, and the diggable-site exception. Use complete fresh observations of real Terrain to prepare geometry-only Knowledge; label these as private-map unit fixtures rather than paid World trajectories. Run `cargo test --locked -p sugarscape-core foraging::construction::tests::excavation` with the shared target; disclose missing-module/API compilation errors as scaffold RED.
+- [x] **Step 2: Write estimator/type RED tests and inspect their failure.** Tests must cover explicit policy spellings/unknown identities, cost arithmetic, unavailable reference, strict equality rejection, geometric causality, protected/disconnected faces, and the diggable-site exception. Use complete fresh observations of real Terrain to prepare geometry-only Knowledge; label these as private-map unit fixtures rather than paid World trajectories. Run `cargo test --locked -p sugarscape-core foraging::construction::tests::excavation` with the shared target; disclose missing-module/API compilation errors as scaffold RED.
 
 ```rust
 #[test]
@@ -219,7 +219,7 @@ fn excavation_identity_is_explicit() {
 }
 ```
 
-- [ ] **Step 3: Implement bounded fields and candidate ranking.** Index by y*width+x after dimensions/origin/site/outlet validation. KnownOpen origin is required. A remembered solid outlet is an error; an Unknown outlet has an empty known field. The optimistic site field traverses KnownOpen/Unknown, blocks every KnownSolid, and is empty for a solid site. Count calls/dequeues/queue maxima for actual field computations, including initial seeds. Reuse fields within this assessment rather than calling existing per-face BFS helpers.
+- [x] **Step 3: Implement bounded fields and candidate ranking.** Index by y*width+x after dimensions/origin/site/outlet validation. KnownOpen origin is required. A remembered solid outlet is an error; an Unknown outlet has an empty known field. The optimistic site field traverses KnownOpen/Unknown, blocks every KnownSolid, and is empty for a solid site. Count calls/dequeues/queue maxima for actual field computations, including initial seeds. Reuse fields within this assessment rather than calling existing per-face BFS helpers.
 
 ```rust
 // One shared site field; f itself is remembered solid and excluded.
@@ -242,7 +242,7 @@ let improves_cost = reference.is_none_or(|before| candidate.estimated_cost < bef
 
 Scan all remembered solid entries, including protected/unreachable ones, into faces_scanned. Count every diggable-face/reachable-approach pair before filtering outlet/continuation/geometry. Keep finite geometric candidates, ordered by face then approach; retain only minimum-cost ties. The diagnostic best is first tied minimum even when its full cost loses; tied_candidates is empty on full-cost rejection. Set assessment.tick/site/reference/candidate_pairs/best, with selected_candidate initially None; delta assessments is one, selected/dig counts zero. All arithmetic is checked; estimated_cost is `approach + 2*spoil_leg + onward + 3` with checked operations.
 
-- [ ] **Step 4: Implement checked state helpers and add behavioral field tests.** include_assessment applies computation/candidate deltas and stores the selection/record without incrementing paid selected/dig counts. commit(SelectedTravel) increments selected_opportunities; commit(SelectedDig) increments selected_opportunities and initiated_digs; Ordinary changes neither. Build replacements before assigning on overflow. check enforces the spec inequalities, zero/None legacy diagnostics, coordinates, tick in 1..=completed_ticks, cost formula, strict geometry improvement for both best/selected, strict reference improvement for selected only, best/selected equal costs, and selected implies best. A finite best that beats its reference must be selected in a committed record; a rejected best need not beat the reference. Historical validation does not compare the face with today's map. Aggregate counts use checked sums and peak maximum.
+- [x] **Step 4: Implement checked state helpers and add behavioral field tests.** include_assessment applies computation/candidate deltas and stores the selection/record without incrementing paid selected/dig counts. commit(SelectedTravel) increments selected_opportunities; commit(SelectedDig) increments selected_opportunities and initiated_digs; Ordinary changes neither. Build replacements before assigning on overflow. check enforces the spec inequalities, zero/None legacy diagnostics, coordinates, tick in 1..=completed_ticks, cost formula, strict geometry improvement for both best/selected, strict reference improvement for selected only, best/selected equal costs, and selected implies best. A finite best that beats its reference must be selected in a committed record; a rejected best need not beat the reference. Historical validation does not compare the face with today's map. Aggregate counts use checked sums and peak maximum.
 
 Pin a private U corridor with open route `(2,1)..(2,5)..(4,5)..(4,1)`, outlet `(1,1)`, diggable face `(3,1)`, and KnownOpen site `(4,1)`. Learn complete observations of all open cells. Assert reference 10, winning origin approach `(2,1)`, onward 1, spoil leg 1, cost 6, and geometric pre-opening distance 10. A separate map where unknown continuation is already as short must reject opening credit. A remembered-solid site candidate has onward zero while other solid cells still block. Unknown outlet, full protected barrier, and no known origin route produce the specified empty candidates/errors without changing Knowledge. At 125x125 assert distance_calls<=3, distance_visits<=3N, peak_queue<=N, faces_scanned<=N, candidate_pairs<=4N; no per-face search.
 
@@ -255,7 +255,7 @@ assert_eq!(knowledge, before);
 assert!(plan.counts.distance_calls <= 3);
 ```
 
-- [ ] **Step 5: Verify GREEN, self-review, and commit.** Run all construction tests, `cargo fmt --all --check`, and `cargo clippy --locked -p sugarscape-core --all-targets -- -D warnings` with the shared target for Cargo. Confirm both baseline fixtures remain exact. Commit `feat(foraging): add bounded private informed-excavation estimates`. Independent review checks all filters, bounded fields, exact diagnostics, and baseline capture before Task 2.
+- [x] **Step 5: Verify GREEN, self-review, and commit.** Run all construction tests, `cargo fmt --all --check`, and `cargo clippy --locked -p sugarscape-core --all-targets -- -D warnings` with the shared target for Cargo. Confirm both baseline fixtures remain exact. Commit `feat(foraging): add bounded private informed-excavation estimates`. Independent review checks all filters, bounded fields, exact diagnostics, and baseline capture before Task 2.
 
 ## Task 2: Informed selection and atomic paid controller integration
 
@@ -263,7 +263,7 @@ assert!(plan.counts.distance_calls <= 3);
 
 **Interfaces:** Consume AssessmentPlan/ExcavationState/ExcavationEffect; produce World::new_with_policies and decide_with_policies above. Extend Decision and its internal selected-action carrier with excavation_effect; ordinary conversion always supplies Ordinary. Keep the existing decide/decide_with_traffic test adapters on legacy excavation.
 
-- [ ] **Step 1: Prepare a paid informed fixture and write failing decision tests.** Define `informed_world(traffic_policy, excavation_policy) -> World` in excavation_support.rs using this exact setup:
+- [x] **Step 1: Prepare a paid informed fixture and write failing decision tests.** Define `informed_world(traffic_policy, excavation_policy) -> World` in excavation_support.rs using this exact setup:
 
 ```rust
 fn informed_setup() -> Setup {
@@ -297,7 +297,7 @@ assert_eq!(world.state.agents[0].work.digs, before_digs); // decision is not pai
 
 Run the focused test and record scaffold/behavioral RED accurately. Compare the same prepared legacy-excavation world: it requests ordinary route travel instead of early digging.
 
-- [ ] **Step 2: Wire world policy and controller order without changing legacy draws.** Store excavation_policy in State and ExcavationState in Agent, initialized without draws. new/new_with_traffic delegate to new_with_policies with legacy excavation. In controller::advance pass its already checked `next` tick as opportunity_tick; do not change zero-based material/advice event clocks. Rename the production decision entry point to decide_with_policies; retain test adapters as needed.
+- [x] **Step 2: Wire world policy and controller order without changing legacy draws.** Store excavation_policy in State and ExcavationState in Agent, initialized without draws. new/new_with_traffic delegate to new_with_policies with legacy excavation. In controller::advance pass its already checked `next` tick as opportunity_tick; do not change zero-based material/advice event clocks. Rename the production decision entry point to decide_with_policies; retain test adapters as needed.
 
 Preserve observation, terminal/hold, all cargo branches, at-site/protected-site checks, then enter assessment only for informed Departing. Use draw_index on the ordered pair list (choose currently accepts Pos only); do not alter choose or flatten pair ties into duplicate face choices. include_assessment receives the selected candidate or None. Set frontier None/face Some only on selection; route to exactly its selected approach with the existing traffic selector, or Dig its freshly confirmed adjacent face. Rejection delegates to the unchanged pursuit body without an extra choice draw.
 
@@ -312,15 +312,15 @@ agent.excavation.include_assessment(&plan, selected.clone())?;
 // Selected travel retains its TrafficEffect; selected Dig has TrafficEffect::Normal.
 ```
 
-- [ ] **Step 3: Commit paid effects exactly once and validate invariants.** Ordinary cannot increment selected/dig counts and cannot accompany a newly selected candidate for this opportunity; an older retained selected record remains legal. SelectedDig requires revised policy, informed empty Departing, matching recorded selected face, current approach, and Action::Dig(face). SelectedTravel requires that same eligibility/record and either an ordinary route Move or congestion Wait toward the approach, including an allowed yielding move; TrafficHold is Ordinary and bypasses assessment. Run existing physical transaction first, then commit excavation effect with traffic/work accounting. Controller checks each worker and checked aggregates at completed-tick boundaries. Private fixtures constructing Decision explicitly use Ordinary unless exercising a legitimate selected decision.
+- [x] **Step 3: Commit paid effects exactly once and validate invariants.** Ordinary cannot increment selected/dig counts and cannot accompany a newly selected candidate for this opportunity; an older retained selected record remains legal. SelectedDig requires revised policy, informed empty Departing, matching recorded selected face, current approach, and Action::Dig(face). SelectedTravel requires that same eligibility/record and either an ordinary route Move or congestion Wait toward the approach, including an allowed yielding move; TrafficHold is Ordinary and bypasses assessment. Run existing physical transaction first, then commit excavation effect with traffic/work accounting. Controller checks each worker and checked aggregates at completed-tick boundaries. Private fixtures constructing Decision explicitly use Ordinary unless exercising a legitimate selected decision.
 
 Test each diagnostic inequality and counter overflow in isolation with otherwise valid physical/work state. Preserve tick/worker error prefixes; invalid effect/action combinations fail rather than silently relabeling a Dig. No general fault-injection API, role system, optimistic physical movement, or additional observation is introduced.
 
-- [ ] **Step 4: Cover priorities, reconsideration, fallback, and traffic.** Script singleton/tied selections and ordinary route draws precisely. Pin acceptance versus equal/higher cost rejection without new rejection draws; unavailable known outlet; at-site/search transition; protected-site abandonment; uninformed/search/return bypass; loaded food/spoil bypass; terminal disposal/arrival and pending hold precedence. Use existing paid held_worker support for all modes rather than inventing cargo ownership.
+- [x] **Step 4: Cover priorities, reconsideration, fallback, and traffic.** Script singleton/tied selections and ordinary route draws precisely. Pin acceptance versus equal/higher cost rejection without new rejection draws; unavailable known outlet; at-site/search transition; protected-site abandonment; uninformed/search/return bypass; loaded food/spoil bypass; terminal disposal/arrival and pending hold precedence. Use existing paid held_worker support for all modes rather than inventing cargo ownership.
 
 Drive the winning fixture through Dig, its tagged spoil Move to outlet, DisposeSpoil, and resumed site pursuit. Assert one token/one dig, one disposal, unchanged food intent/trip/publication counts, and no forced return to the old approach. A next-opportunity fresh observation that opens/invalidates a selected face removes it from the comparison; a previously optimistic continuation becoming remembered solid changes the choice. Use legal paid actions/observations for these changes. For rejection followed by exhausted frontiers, demonstrate an ordinary fallback Dig increments work.digs but not initiated_digs. For distant approaches demonstrate normal congestion and both traffic choices; hold opportunities retain last assessment but do not increment assessments or select/dig counts.
 
-- [ ] **Step 5: Verify GREEN and commit.** Run all construction tests, formatter, and core all-target Clippy. Confirm both complete baseline fixtures, zero/None excavation diagnostics under existing constructors, all previous queue/hold tests, and no temporary cfg(test) module gates remain on production estimator/state modules. Commit `feat(foraging): select early informed digs with paid spoil costs`. Independent review checks exact dispatch/draw order, action/effect validation, retained fallback, conservation, and both policies before Task 3.
+- [x] **Step 5: Verify GREEN and commit.** Run all construction tests, formatter, and core all-target Clippy. Confirm both complete baseline fixtures, zero/None excavation diagnostics under existing constructors, all previous queue/hold tests, and no temporary cfg(test) module gates remain on production estimator/state modules. Commit `feat(foraging): select early informed digs with paid spoil costs`. Independent review checks exact dispatch/draw order, action/effect validation, retained fallback, conservation, and both policies before Task 3.
 
 ## Task 3: Observational excavation views and bounded labeled episodes
 
@@ -328,7 +328,7 @@ Drive the winning fixture through Dig, its tagged spoil Move to outlet, DisposeS
 
 **Interfaces:** Consume new World constructor and diagnostic state. Produce World excavation views, run_with_policies/run_with_policies_limit, and checked_policy_snapshot_total above. Define ConstructionPolicyEpisode with exactly the fields/types in spec section 2: schema &'static str, both policy enums, Episode, TrafficSummary, Vec<TrafficSnapshot>, u64 traffic bytes, ExcavationSummary, Vec<ExcavationSnapshot>, u64 excavation bytes.
 
-- [ ] **Step 1: Write public-runner RED tests.** Pin both policy identities and exact schema, serialize-only wrapper, legacy-equivalent inner episode/traffic output for both traffic choices, and read-only excavation views.
+- [x] **Step 1: Write public-runner RED tests.** Pin both policy identities and exact schema, serialize-only wrapper, legacy-equivalent inner episode/traffic output for both traffic choices, and read-only excavation views.
 
 ```rust
 let options = RunOptions { ticks: 40, sample_every: 7, snapshots: true };
@@ -347,9 +347,9 @@ for traffic in [TrafficPolicy::ShortestOnlyV1, TrafficPolicy::LocalYieldingV1] {
 
 Run the focused test, inspect its complete failure, then implement views/recording.
 
-- [ ] **Step 2: Implement checked read-only views.** Call controller::check and clone worker rows in ID order; sums use include_counts with peak max. Validate historical assessment structural fields against its original tick/arithmetic rather than current terrain. Use a paid fixture after its successful recorded Dig to prove the face is now KnownOpen yet its last_assessment remains valid. Subsequent spoil/hold/nonassessment ticks retain that record. Clone State and RNG before calling both views repeatedly; compare complete state and next RNG afterward.
+- [x] **Step 2: Implement checked read-only views.** Call controller::check and clone worker rows in ID order; sums use include_counts with peak max. Validate historical assessment structural fields against its original tick/arithmetic rather than current terrain. Use a paid fixture after its successful recorded Dig to prove the face is now KnownOpen yet its last_assessment remains valid. Subsequent spoil/hold/nonassessment ticks retain that record. Clone State and RNG before calling both views repeatedly; compare complete state and next RNG afterward.
 
-- [ ] **Step 3: Implement full-horizon triple recording.** Add private PolicyRecording with base/traffic/excavation vectors and three byte totals. Its `append(base: Snapshot, traffic: TrafficSnapshot, excavation: ExcavationSnapshot, limit: u64) -> Checked<()>` validates checkpoint alignment, both policy identities across frames, and matching ascending worker IDs across all three streams. Calculate prospective compact byte totals with the existing bounded CountingWriter and check their combined sum before mutating vectors/totals. Ordinary runners must not build excavation frames. Sample initial, scheduled, and final checkpoints once; disabled recording constructs no snapshot views.
+- [x] **Step 3: Implement full-horizon triple recording.** Add private PolicyRecording with base/traffic/excavation vectors and three byte totals. Its `append(base: Snapshot, traffic: TrafficSnapshot, excavation: ExcavationSnapshot, limit: u64) -> Checked<()>` validates checkpoint alignment, both policy identities across frames, and matching ascending worker IDs across all three streams. Calculate prospective compact byte totals with the existing bounded CountingWriter and check their combined sum before mutating vectors/totals. Ordinary runners must not build excavation frames. Sample initial, scheduled, and final checkpoints once; disabled recording constructs no snapshot views.
 
 ```rust
 fn checked_policy_snapshot_total(base: u64, traffic: u64, excavation: u64,
@@ -361,7 +361,7 @@ fn checked_policy_snapshot_total(base: u64, traffic: u64, excavation: u64,
 }
 ```
 
-- [ ] **Step 4: Pin caps, chronology, censoring, and sampling.** Count serialized stream sizes independently and compare reported bytes. Run with exact total (success) and total-minus-one (error); a limit larger than each individual stream but smaller than their sum still fails. Directly test u64 overflow without allocation. A failed append preserves all previous vectors/totals. Mismatched policies/IDs/checkpoints error. A legal final snapshot may retain pending traffic hold or carried spoil and a prior assessment. Use real fixture snapshots in direct append tests; do not disguise prepared history as a new seeded public episode.
+- [x] **Step 4: Pin caps, chronology, censoring, and sampling.** Count serialized stream sizes independently and compare reported bytes. Run with exact total (success) and total-minus-one (error); a limit larger than each individual stream but smaller than their sum still fails. Directly test u64 overflow without allocation. A failed append preserves all previous vectors/totals. Mismatched policies/IDs/checkpoints error. A legal final snapshot may retain pending traffic hold or carried spoil and a prior assessment. Use real fixture snapshots in direct append tests; do not disguise prepared history as a new seeded public episode.
 
 ```rust
 let e = run_with_policies(setup(), 7, options.clone(), TrafficPolicy::LocalYieldingV1,
@@ -376,7 +376,7 @@ assert!(checked_policy_snapshot_total(u64::MAX, 1, 0, u64::MAX).is_err());
 
 Test disabled snapshots, interval zero, interval greater than ticks, exact-divisor final checkpoint, full horizon after depletion, repeated seeded runs, and equal State/RNG/diagnostics across sampling settings. View calls consume no searches or draws. Reject corrupt historical cost/geometry/reference/tick records individually; accept valid historical records after actual face opening.
 
-- [ ] **Step 5: Verify and commit.** Run construction tests, formatter, and core all-target Clippy; keep exact old fixtures and traffic records unchanged. Commit `feat(foraging): record labeled informed-excavation episodes`. Independent review checks provenance, observational purity, historical validation, triple bounds, and errors before Task 4.
+- [x] **Step 5: Verify and commit.** Run construction tests, formatter, and core all-target Clippy; keep exact old fixtures and traffic records unchanged. Commit `feat(foraging): record labeled informed-excavation episodes`. Independent review checks provenance, observational purity, historical validation, triple bounds, and errors before Task 4.
 
 ## Task 4: Privacy, production rollback, and retained F5 acceptance
 
@@ -384,7 +384,7 @@ Test disabled snapshots, interval zero, interval greater than ticks, exact-divis
 
 **Interfaces:** Consume all prior public/private APIs and paid support. No new policy rule, parameter, scientific world, or report schema is added.
 
-- [ ] **Step 1: Audit acceptance coverage and add missing tests before any correction.** Map all ten spec acceptance classes to actual tests. Preserve passing supplemental coverage as GREEN evidence; require behavioral RED for a corrective fix. Compare explicit legacy excavation against both old APIs per tick, including exact snapshots and next RNG, and preserve complete pre-edit serialized fixtures. Check all diagnostic inequalities independently rather than triggering several at once.
+- [x] **Step 1: Audit acceptance coverage and add missing tests before any correction.** Map all ten spec acceptance classes to actual tests. Preserve passing supplemental coverage as GREEN evidence; require behavioral RED for a corrective fix. Compare explicit legacy excavation against both old APIs per tick, including exact snapshots and next RNG, and preserve complete pre-edit serialized fixtures. Check all diagnostic inequalities independently rather than triggering several at once.
 
 ```rust
 use rand::Rng;
@@ -399,9 +399,9 @@ for _ in 0..40 {
 assert_eq!(old.rng.gen::<u64>(), explicit.rng.gen::<u64>());
 ```
 
-- [ ] **Step 2: Prove privacy using independent remote-state changes.** Hold a worker's private agent state and local observation equal while changing valid unseen terrain, hidden/remote food, remote occupancy, or another worker's map. Compare AssessmentPlan, selected Decision, both diagnostics, and consumed draws exactly. Fresh local capacity may affect the next route step but not costs/tied candidates. Unknown optimistic search must leave Knowledge identical. Read the production function signatures to confirm no terrain/access/server/global occupancy leaks into assessment; compare actual valid worlds where practical, not only identical function calls.
+- [x] **Step 2: Prove privacy using independent remote-state changes.** Hold a worker's private agent state and local observation equal while changing valid unseen terrain, hidden/remote food, remote occupancy, or another worker's map. Compare AssessmentPlan, selected Decision, both diagnostics, and consumed draws exactly. Fresh local capacity may affect the next route step but not costs/tied candidates. Unknown optimistic search must leave Knowledge identical. Read the production function signatures to confirm no terrain/access/server/global occupancy leaks into assessment; compare actual valid worlds where practical, not only identical function calls.
 
-- [ ] **Step 3: Prove actual public clone/commit rollback.** Extend the paid informed setup with a second worker at the other nest cell. Prepare both workers through paid moves/waits so worker 0 is eligible for a guaranteed singleton proactive Dig and worker 1 has no cargo. Validate the prepared state. Set only worker 1's compute.observations to u64::MAX, preserving other physical invariants; this passes initial check but fails during its fresh learning.
+- [x] **Step 3: Prove actual public clone/commit rollback.** Extend the paid informed setup with a second worker at the other nest cell. Prepare both workers through paid moves/waits so worker 0 is eligible for a guaranteed singleton proactive Dig and worker 1 has no cargo. Validate the prepared state. Set only worker 1's compute.observations to u64::MAX, preserving other physical invariants; this passes initial check but fails during its fresh learning.
 
 Advance a scratch State using PcgDraws on a cloned RNG to prove worker 0 completed the cost-selected Dig, created spoil, recorded the selection, and consumed a real random value before worker 1's error. Do not commit scratch. Then invoke real World::step on the original injected state and compare complete State and next RNG with their saved copies. Repair the injected counter in source and an untouched control, step both, and compare successful state/RNG. Preserve all diagnostic and material assertions; add a separate malformed scripted selection draw test with no source-state commit.
 
@@ -414,7 +414,7 @@ let mut actual_rng = world.rng.clone();
 assert_eq!(actual_rng.gen::<u64>(), expected_rng.gen::<u64>());
 ```
 
-- [ ] **Step 4: Freeze the final runtime tree and run full gates.** Record the exact tree/input hashes and all outputs; await every command to completion and inspect exits/counts. Stop mutating code while gates run. Run all six commands below; do not reuse prior traffic verification as new-policy acceptance.
+- [x] **Step 4: Freeze the final runtime tree and run full gates.** Record the exact tree/input hashes and all outputs; await every command to completion and inspect exits/counts. Stop mutating code while gates run. Run all six commands below; do not reuse prior traffic verification as new-policy acceptance.
 
 ```bash
 CARGO_TARGET_DIR=/Users/nathan/Projects/ndouglas/SugarScape/target cargo test --workspace --locked
@@ -429,7 +429,7 @@ Audit every literal include against selected native inputs, including the new fi
 
 Commit the tested runtime acceptance tree as `test(foraging): verify informed excavation privacy and retained F5 compatibility` after all full gates and audits pass. Record its SHA and ensure the worktree is clean before the native build in Step 5. If that build or saved compatibility reveals a correction, preserve the failed evidence, fix/review the affected scope, and rerun only checks whose inputs or conclusions changed.
 
-- [ ] **Step 5: Verify saved-only compatibility without rerunning worlds.** Build the native executable from that clean runtime commit, then create an exclusive private copy and verify its embedded source identity against the committed selected inputs. The source and private copy hashes must match; do not overwrite a previous collector.
+- [x] **Step 5: Verify saved-only compatibility without rerunning worlds.** Build the native executable from that clean runtime commit, then create an exclusive private copy and verify its embedded source identity against the committed selected inputs. The source and private copy hashes must match; do not overwrite a previous collector.
 
 ```bash
 CARGO_TARGET_DIR=/Users/nathan/Projects/ndouglas/SugarScape/target cargo build --manifest-path survey/Cargo.toml --locked --bin survey
@@ -461,7 +461,7 @@ Reanalyze the already completed 600-record index twice into fresh owned director
 
 Do not overwrite existing directories. Before and after, verify index SHA `faaa5acbed1397f3451cd670071b97d66fbcc39b1870308e6dc8f2dc97104fa4` and all original raw hashes/sizes. Both report pairs must match each other and original JSON SHA `7bba70c19802bb7b97abe69b84c592fd869bd1a09132912eabf508ab657ce527` / Markdown SHA `2903e4c952e7974a13f17dcd209a0f70b5d9e7086b546f3756e50fc343591c46`. This is retained archive compatibility, not a scientific evaluation of the revised policy.
 
-- [ ] **Step 6: Obtain task/whole-plan review and archive evidence.** Preserve the runtime acceptance commit from Step 4 and the clean native/saved-only evidence from Step 5. After independent Task 4 spec/quality approval, the parent requests final whole-plan review covering all four tasks. Consolidate any corrections through a fresh implementer/scoped review and covering verification. Record actual gate totals, runtime commit, estimator/draw/paid fixture evidence, limits, source/binary identities, and all rulings in the verification study and programme docs. Mark the specification/plan implemented only after acceptance. Hash-preserve this plan's completed SDD evidence and completed tracker before removing only those plan-owned files; commit documentation/tracker cleanup separately. Retain branch/worktree. No scientific benefit, merge, or push is inferred from engineering acceptance.
+- [x] **Step 6: Obtain task/whole-plan review and archive evidence.** Preserve the runtime acceptance commit from Step 4 and the clean native/saved-only evidence from Step 5. After independent Task 4 spec/quality approval, the parent requests final whole-plan review covering all four tasks. Consolidate any corrections through a fresh implementer/scoped review and covering verification. Record actual gate totals, runtime commit, estimator/draw/paid fixture evidence, limits, source/binary identities, and all rulings in the verification study and programme docs. Mark the specification/plan implemented only after acceptance. Hash-preserve this plan's completed SDD evidence and completed tracker before removing only those plan-owned files; commit documentation/tracker cleanup separately. Retain branch/worktree. No scientific benefit, merge, or push is inferred from engineering acceptance.
 
 ## Plan self-review coverage
 
