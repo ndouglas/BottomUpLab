@@ -105,3 +105,7 @@ pub use traffic::{
 };
 
 mod traffic_navigation;
+
+mod traffic_runner;
+mod traffic_view;
+pub use traffic_runner::{run_with_traffic, TrafficEpisode};
