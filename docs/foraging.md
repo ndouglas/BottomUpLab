@@ -282,7 +282,7 @@ merged-tree verification passed 2,852 workspace tests, zero failures and 103
 existing ignored, with formatting and core all-target Clippy clean. The feature
 worktree and branch were retired after evidence preservation. Branch evidence
 is archived at `/tmp/sugarscape-f4-evidence-20261006/sdd/`; integration logs are
-in `/tmp/sugarscape-f4-integration-20261007/`. Scientific evaluation has not started.
+in `/tmp/sugarscape-f4-integration-20261007/`. Scientific evaluation had not started at that integration; the subsequent registered F5 run is recorded below.
 
 
 ## Construction public usage (F4)
@@ -488,7 +488,7 @@ registration and execution approval.
 
 ## F5 registered scientific run — 2026-10-09
 
-The user authorized the full fixed matrix, and all 600 episodes completed at runtime `a129f06`: 15 conditions × seeds 10001..10040, 512 ticks each and 2,457,600 total opportunities. Exact archive validation and two saved-only analyses passed; both reports are byte-identical with raw evidence unchanged. All three primary Paid-minus-Protected route delivery contrasts are zero for every paired seed. Sealed Paid cases have some access and delivery gains; all zeros and censored rows remain. The [full-run record](studies/2026-10-09-foraging-5-full-run.md) retains every contrast, artifact identity, verification result and local evidence path. This computational run does not establish biological calibration. Registration/activation remains on `foraging-5-registration`; no merge or push accompanied execution.
+The user authorized the full fixed matrix, and all 600 episodes completed at runtime `a129f06`: 15 conditions × seeds 10001..10040, 512 ticks each and 2,457,600 total opportunities. Exact archive validation and two saved-only analyses passed; both reports are byte-identical with raw evidence unchanged. All three primary Paid-minus-Protected route delivery contrasts are zero for every paired seed. Sealed Paid cases have some access and delivery gains; all zeros and censored rows remain. The [full-run record](studies/2026-10-09-foraging-5-full-run.md) retains every contrast, artifact identity, verification result and local evidence path. This computational run does not establish biological calibration. Registration/activation initially lived on `foraging-5-registration`; no merge or push accompanied execution. Its later local integration is recorded below.
 
 The subsequent [saved-only diagnosis](studies/2026-10-09-foraging-5-diagnosis.md) confirms sustained opposing traffic waits under the shortest-step-only rule and late excavation under open-frontier priority. All registered records remain unchanged. Traffic resolution should be addressed in a separately designed controller increment before evaluating a revised shortcut policy. No new stochastic episodes or behavior changes were part of the investigation.
 
@@ -510,9 +510,16 @@ The user approved the [informed-excavation design](superpowers/specs/2026-10-09-
 
 An empty informed Departing worker compares reachable diggable faces using its private classifications. A proposed opening must improve optimistic onward geometry and beat the reference after approach travel, Dig, known spoil haul/disposal, estimated return and entry costs. Unknown continuation is only an estimate; all other remembered solids remain blocked. Loaded jobs finish first, each eligible opportunity reassesses, and cost rejection leaves ordinary pursuit/fallback available. Separate counters distinguish assessments, selected opportunities and proactive Digs; historical last-assessment records survive face opening without remaining active targets.
 
-One-cell lookahead can miss multi-cell tunnels or accept a blocked optimistic continuation; conservative spoil charging can reject useful digs. Engineering acceptance establishes these rules and retained compatibility, while revised scientific delivery benefit requires its own registered comparison. Roles and relay remain future increments. This branch/worktree is retained for later integration.
+One-cell lookahead can miss multi-cell tunnels or accept a blocked optimistic continuation; conservative spoil charging can reject useful digs. Engineering acceptance establishes these rules and retained compatibility, while revised scientific delivery benefit requires its own registered comparison. Roles and relay remain future increments. Local integration and feature cleanup completed on 2026-10-10, as recorded below.
 
 
 ## Browser engineering examples
 
 F2 fixed, F3 passage, and F4 construction engineering examples are available in the browser [experiment viewer](experiment-viewer.md#spatial-engineering-demonstrations). The viewer distinguishes private stale topology beliefs from researcher state and sampled completed ticks from actions. F5 and scientific campaign collection remain outside its scope.
+
+
+## Local integration — 2026-10-10
+
+Merge `f130930` integrated the reviewed F5 registration, local yielding and informed excavation into current main `c58e7af`, retaining concurrent browser/minds/war work. The sole documentation conflict retained both branches' additions. A reviewed RED/GREEN correction binds four new native browser fixtures to the F5 source fingerprint without changing controller behavior.
+
+Fresh merged verification passed workspace 3,452/0/106 and corrected survey 468/0/0, both formatting and Clippy checks, and native build/source checking. Two saved-only analyses reproduce the original JSON/Markdown reports byte for byte; all 600 original raw records and four original report files remain exact. The integrated feature worktree/branch were removed normally after preserving remaining files; other worktrees remain. [Detailed integration record](studies/2026-10-10-foraging-integration.md) records the merge parents, correction review, gate evidence, native identity, preservation and cleanup. No push or new scientific campaign accompanied integration. A revised-policy scientific comparison requires its own registration and execution decision; roles and relay remain future work.
