@@ -8,6 +8,7 @@ mod burrow_access;
 mod deduction;
 mod experiment_view;
 mod shared_surface;
+mod surface_discovery;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -38,6 +39,8 @@ enum Command {
     Deduction(deduction::DeductionArgs),
     /// List the presets of every model (id, source, name, title).
     Presets,
+    /// Run the frozen finite surface-discovery diagnostic.
+    SurfaceDiscovery(surface_discovery::SurfaceDiscoveryArgs),
     /// Run the frozen finite active-surface diagnostic.
     ActiveSurface(active_surface::ActiveSurfaceArgs),
     /// Run the frozen finite shared-surface diagnostic.
@@ -190,6 +193,7 @@ fn run(cli: Cli) -> Result<(), Failure> {
     match cli.command {
         Command::ExperimentView(args) => experiment_view::run(args),
         Command::Deduction(args) => deduction::run(args),
+        Command::SurfaceDiscovery(args) => surface_discovery::run(args),
         Command::ActiveSurface(args) => active_surface::run(args),
         Command::SharedSurface(args) => shared_surface::run(args),
         Command::Presets => {

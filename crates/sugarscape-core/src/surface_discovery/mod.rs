@@ -19,3 +19,5 @@ pub use evaluation::*;
 pub use replay::Replay;
 mod metrics;
 pub use metrics::*;
+mod diagnostics;
+pub use diagnostics::*;

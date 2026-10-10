@@ -304,7 +304,7 @@ pub fn predict_target(belief: &Belief) -> Result<bool, Error> {
 **Files:** Diagnostic modules/tests, new CLI module/tests, additive main dispatch.
 **Consumes:** Exact evaluation/reference projections. **Produces:** Fixed census, compact reconstruction/integrity/summary and CLI.
 
-- [ ] **Step 1: Write census/tamper/emitter RED.** Assert 48 settings/40 in-family/eight transfer; five in-family policies per mechanism/role and four per transfer role, no KnownRaw transfer; sequences 0..255 once. A partial report cannot validate:
+- [x] **Step 1: Write census/tamper/emitter RED.** Assert 48 settings/40 in-family/eight transfer; five in-family policies per mechanism/role and four per transfer role, no KnownRaw transfer; sequences 0..255 once. A partial report cannot validate:
 
 ~~~rust
 let mut report = incomplete_reference_report();
@@ -313,8 +313,8 @@ assert!(!report_integrity(&report, &limits).unwrap());
 ~~~
 
 Define incomplete_reference_report() as test-only DiagnosticReport constructor using reviewed compact projections and missing census rows. Add write-error/late-flush-error writers. Run cargo test -p sugarscape-core surface_discovery::tests::diagnostics and cargo test -p sugarscape-cli surface_discovery, without judged collection.
-- [ ] **Step 2: Implement compact authoritative records.** Intern complete histories/prefixes without losing choices/alternative values/failure observations. Check all indexes/rationals/IDs/census entries. Reconstruct episodes, recompute current source behavior and independent reference projections; cached passed flags never validate imports/reports. Summary contains complete declared comparisons and unavailable mass with source/report hashes.
-- [ ] **Step 3: Implement deterministic CLI emission.** surface-discovery diagnose has no tuning flags, uses registered limits, deterministic JSON/newline and checked flush. Exit 0 requires current-payload/reference integrity; invalid report emits failed JSON then exit 2; write/flush failure exit 1. Resource/protocol failure remains contextual, never success with empty panels. Follow existing emitter pattern without editing it. Test parsing/help/emission/flush and rejected flags.
+- [x] **Step 2: Implement compact authoritative records.** Intern complete histories/prefixes without losing choices/alternative values/failure observations. Check all indexes/rationals/IDs/census entries. Reconstruct episodes, recompute current source behavior and independent reference projections; cached passed flags never validate imports/reports. Summary contains complete declared comparisons and unavailable mass with source/report hashes.
+- [x] **Step 3: Implement deterministic CLI emission.** surface-discovery diagnose has no tuning flags, uses registered limits, deterministic JSON/newline and checked flush. Exit 0 requires current-payload/reference integrity; invalid report emits failed JSON then exit 2; write/flush failure exit 1. Resource/protocol failure remains contextual, never success with empty panels. Follow existing emitter pattern without editing it. Test parsing/help/emission/flush and rejected flags.
 
 In the new CLI module define invalid(error: Error) -> crate::Failure using FieldError::new("surface_discovery", error.to_string()). The emitter owns a mutable DiagnosticReport and a std::io::Write sink:
 
@@ -331,8 +331,8 @@ if !report.passed {
 ~~~
 
 Here limits is the registered Limits reference and writer implements Write; the enclosing emit returns Result<(), crate::Failure>. Validation failure clears check flags before serialization. Preserve malformed-report/resource errors contextually rather than converting them into episode evidence or policy outcomes.
-- [ ] **Step 4: GREEN mutations/reconstruction.** Independently tamper observation, prefix, choice, alternative numerator, cost, role, environment, sequence, index and passed; missing/duplicate/reordered settings/sequences reject. Exact compact→complete equality to references. Successful full census CLI integration is the Task 8 gated invocation plus an evidence-side validation harness consuming its retained stdout/status; it does not add an ignored success test or run an unregistered extra scientific series.
-- [ ] **Step 5: Review and commit.** Focused core/CLI tests/scoped fmt/workspace Clippy/release CLI build, independent integrity review. Commit feat(surface): add frozen discovery diagnostic and integrity checks.
+- [x] **Step 4: GREEN mutations/reconstruction.** Independently tamper observation, prefix, choice, alternative numerator, cost, role, environment, sequence, index and passed; missing/duplicate/reordered settings/sequences reject. Exact compact→complete equality to references. Successful full census CLI integration is the Task 8 gated invocation plus an evidence-side validation harness consuming its retained stdout/status; it does not add an ignored success test or run an unregistered extra scientific series.
+- [x] **Step 5: Review and commit.** Focused core/CLI tests/scoped fmt/workspace Clippy/release CLI build, independent integrity review. Commit feat(surface): add frozen discovery diagnostic and integrity checks.
 
 ## Task 6 / Stage 4: Rust Browser Adapter and WASM Feasibility
 
