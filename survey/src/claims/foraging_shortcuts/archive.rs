@@ -1,7 +1,10 @@
 //! Immutable F5 archives; final publication requires every saved observation.
 use super::{
     io::{checked_total, confined_path, directory, encode_metadata, read_bounded, regular_file},
-    manifest::{authorize, candidate, condition, expected_keys, manifest_bytes, Manifest},
+    manifest::{
+        authorize, candidate, canonical_bytes, condition, expected_keys, resolve_saved,
+        wire_manifest, Manifest, SAVED_METADATA_LIMIT,
+    },
     sha256,
     validate::validate_episode,
     wire::{decode_envelope, WireEpisode, WireManifest},
@@ -51,14 +54,10 @@ pub(super) fn limits(m: &Manifest) -> Limits {
 pub(super) fn raw_path(key: &RunKey) -> String {
     format!("raw/{}/{}.json", key.condition, key.seed)
 }
-fn wire_manifest(m: &Manifest) -> Result<WireManifest, String> {
-    serde_json::from_slice(&serde_json::to_vec(m).map_err(|e| e.to_string())?)
-        .map_err(|e| format!("manifest wire representation: {e}"))
-}
-fn validate_provenance(p: &Provenance) -> Result<(), String> {
+fn validate_provenance(p: &Provenance, m: &Manifest) -> Result<(), String> {
     validate_revision(&p.code_revision).map_err(|e| format!("code_revision: {e}"))?;
     validate_revision(&p.protocol_revision).map_err(|e| format!("protocol_revision: {e}"))?;
-    if p.manifest_sha256 != sha256(&manifest_bytes()?) {
+    if p.manifest_sha256 != sha256(&canonical_bytes(m)?) {
         return Err("manifest_sha256 mismatch".into());
     }
     validate_digest(&p.collector_sha256).map_err(|e| format!("collector_sha256: {e}"))
@@ -81,7 +80,7 @@ fn validate_index(index: &Index, m: &Manifest) -> Result<(), String> {
         return Err("complete manifest representation mismatch".into());
     }
     authorize(m, index.mode)?;
-    validate_provenance(&index.provenance)?;
+    validate_provenance(&index.provenance, m)?;
     if index.approval_context.trim().is_empty() {
         return Err("approval_context must be nonempty".into());
     }
@@ -140,12 +139,12 @@ impl ArchiveWriter {
         if serde_json::to_vec(m).map_err(|e| e.to_string())?
             != serde_json::to_vec(&candidate()?).map_err(|e| e.to_string())?
         {
-            return Err("archive manifest differs from frozen candidate".into());
+            return Err("archive manifest differs from active executable registration".into());
         }
         if cap != limits(m) {
             return Err("archive limits differ from frozen candidate".into());
         }
-        validate_provenance(p)?;
+        validate_provenance(p, m)?;
         if approval.trim().is_empty() {
             return Err("approval_context must be nonempty".into());
         }
@@ -297,12 +296,13 @@ impl ArchiveReader {
             .unwrap_or(Path::new("."));
         let root = directory(parent)?;
         let final_path = confined_path(&root, "index.json", true)?;
-        let manifest = candidate()?;
-        let bytes = read_bounded(&final_path, manifest.metadata_limit)?;
+        let bytes = read_bounded(&final_path, SAVED_METADATA_LIMIT)?;
         let text =
             std::str::from_utf8(&bytes).map_err(|e| format!("{} UTF-8: {e}", path.display()))?;
         let index: Index =
             serde_json::from_str(text).map_err(|e| format!("{} JSON: {e}", path.display()))?;
+        let manifest = resolve_saved(&index.manifest, &index.provenance.manifest_sha256)
+            .map_err(|e| format!("{}: {e}", path.display()))?;
         validate_index(&index, &manifest).map_err(|e| format!("{}: {e}", path.display()))?;
         // Inspect the entire exact path set before opening any raw record bytes.
         for reference in &index.runs {
@@ -318,6 +318,9 @@ impl ArchiveReader {
     }
     pub(super) fn index(&self) -> &Index {
         &self.index
+    }
+    pub(super) fn manifest(&self) -> &Manifest {
+        &self.manifest
     }
     pub(super) fn next(&mut self) -> Result<Option<(RunKey, WireEpisode)>, String> {
         let Some(reference) = self.index.runs.get(self.next) else {

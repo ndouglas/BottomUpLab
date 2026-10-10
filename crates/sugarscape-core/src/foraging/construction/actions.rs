@@ -3,11 +3,15 @@ use super::{
     access::EventContext,
     decision::{Action, Decision, WaitReason},
     draws::{checked_uniform, DrawSource},
+    excavation_state::ExcavationEffect,
+    knowledge::CellKnowledge,
     metrics::ComputeCounts,
     observation::Observation,
     setup::neighbors,
+    state::Agent,
+    traffic::TrafficEffect,
     world::State,
-    Cargo, Checked, FoodPhase, Mode, Setup, WorkCounts,
+    Cargo, Checked, ExcavationPolicy, FoodPhase, Mode, Setup, TrafficPolicy, WorkCounts,
 };
 use crate::{
     config::FieldError,
@@ -52,6 +56,87 @@ pub(super) fn apply(
             .collect()
     })
 }
+fn check_excavation_effect(state: &State, previous: &Agent, decision: &Decision) -> Checked<()> {
+    let before = previous.excavation.counts;
+    let after = decision.agent.excavation.counts;
+    if after.selected_opportunities != before.selected_opportunities
+        || after.initiated_digs != before.initiated_digs
+    {
+        return Err(error(
+            "excavation paid counters must change only after the physical action",
+        ));
+    }
+    let opportunity_tick = state
+        .tick
+        .checked_add(1)
+        .ok_or_else(|| error("excavation opportunity tick overflow"))?;
+    let record = decision.agent.excavation.last_assessment.as_ref();
+    if decision.excavation_effect == ExcavationEffect::Ordinary {
+        if record.is_some_and(|r| r.tick == opportunity_tick && r.selected_candidate.is_some()) {
+            return Err(error(
+                "ordinary action cannot accompany this opportunity's excavation selection",
+            ));
+        }
+        return Ok(());
+    }
+    let agent = &decision.agent;
+    let record = record
+        .filter(|r| r.tick == opportunity_tick && agent.site == Some(r.site))
+        .ok_or_else(|| {
+            error("selected excavation action requires the current informed assessment")
+        })?;
+    let selected = record.selected_candidate.as_ref().ok_or_else(|| {
+        error("selected excavation action requires the recorded selected candidate")
+    })?;
+    if state.excavation_policy != ExcavationPolicy::InformedCostV1
+        || previous.mode() != Mode::Departing
+        || agent.mode() != Mode::Departing
+        || previous.find.is_some()
+        || agent.find.is_some()
+        || previous.site != agent.site
+        || record.site == agent.pos
+        || agent.map.kind(record.site)? == (CellKnowledge::KnownSolid { diggable: false })
+        || previous.traffic.hold_pending
+        || before.assessments.checked_add(1) != Some(after.assessments)
+        || agent.frontier.is_some()
+        || agent.face != Some(selected.face)
+        || agent.map.kind(selected.face)? != (CellKnowledge::KnownSolid { diggable: true })
+        || agent.map.kind(selected.approach)? != CellKnowledge::KnownOpen
+    {
+        return Err(error(
+            "selected excavation requires eligible empty informed Departing and its recorded face",
+        ));
+    }
+    let valid = match decision.excavation_effect {
+        ExcavationEffect::SelectedDig => {
+            agent.pos == selected.approach
+                && decision.action == Action::Dig(selected.face)
+                && decision.traffic_effect == TrafficEffect::Normal
+        }
+        // The private route selector establishes direction to this exact approach;
+        // the transaction checks the local paid effect without repeating its BFS.
+        ExcavationEffect::SelectedTravel => {
+            agent.pos != selected.approach
+                && matches!(
+                    (decision.action, decision.traffic_effect),
+                    (
+                        Action::Move(_),
+                        TrafficEffect::Normal | TrafficEffect::YieldMove
+                    ) | (
+                        Action::Wait(WaitReason::Congestion),
+                        TrafficEffect::BlockedWait
+                    )
+                )
+        }
+        ExcavationEffect::Ordinary => unreachable!(),
+    };
+    if !valid {
+        return Err(error(
+            "excavation effect must match the selected approach and paid action",
+        ));
+    }
+    Ok(())
+}
 fn transaction(
     setup: &Setup,
     state: &mut State,
@@ -74,6 +159,29 @@ fn transaction(
             "decision must belong to the current worker with unchanged hands",
         ));
     }
+    let valid_effect = match decision.traffic_effect {
+        TrafficEffect::YieldMove => {
+            state.traffic_policy == TrafficPolicy::LocalYieldingV1
+                && matches!(decision.action, Action::Move(_))
+                && previous.traffic.blocked_wait_streak == 2
+        }
+        TrafficEffect::Hold => {
+            state.traffic_policy == TrafficPolicy::LocalYieldingV1
+                && previous.traffic.hold_pending
+                && decision.action == Action::Wait(WaitReason::TrafficHold)
+        }
+        TrafficEffect::BlockedWait => decision.action == Action::Wait(WaitReason::Congestion),
+        TrafficEffect::Normal => {
+            decision.action != Action::Wait(WaitReason::TrafficHold)
+                && (!decision.agent.traffic.hold_pending || previous.traffic.hold_pending)
+        }
+    };
+    if !valid_effect {
+        return Err(error(
+            "traffic effect must match the paid action and selected policy",
+        ));
+    }
+    check_excavation_effect(state, previous, &decision)?;
     let mode = previous.mode();
     state.agents[index] = decision.agent;
     let mut work = WorkCounts {
@@ -219,7 +327,7 @@ fn transaction(
                     work.transition_waits = 1;
                 }
                 WaitReason::NoNeighbor => work.no_neighbor_waits = 1,
-                WaitReason::Congestion => match mode {
+                WaitReason::Congestion | WaitReason::TrafficHold => match mode {
                     Mode::FoodReturning => work.food_congestion_waits = 1,
                     Mode::SpoilHauling => work.spoil_congestion_waits = 1,
                     _ => work.empty_congestion_waits = 1,
@@ -237,6 +345,12 @@ fn transaction(
         }
     }
     state.agents[index].work.checked_include(&work)?;
+    state.agents[index]
+        .traffic
+        .commit(decision.traffic_effect)?;
+    state.agents[index]
+        .excavation
+        .commit(decision.excavation_effect)?;
     match decision.action {
         Action::Dig(target) => {
             let context = event(state, index)?;

@@ -497,7 +497,12 @@ fn fixture_action(w: &mut World, i: usize, action: super::super::decision::Actio
         &w.setup,
         &mut w.state,
         i,
-        Decision { agent, action },
+        Decision {
+            agent,
+            action,
+            traffic_effect: super::super::traffic::TrafficEffect::Normal,
+            excavation_effect: super::super::excavation_state::ExcavationEffect::Ordinary,
+        },
         &observation,
         &mut Scripted::new(&[]),
     )

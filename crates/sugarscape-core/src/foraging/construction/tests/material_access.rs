@@ -15,6 +15,8 @@ pub(in super::super) fn agent(id: u32, cargo: Option<Cargo>) -> Agent {
         face: None,
         work: WorkCounts::default(),
         compute: ComputeCounts::default(),
+        traffic: super::super::traffic::TrafficState::default(),
+        excavation: super::super::excavation_state::ExcavationState::default(),
     }
 }
 fn context(opportunity: u64, excavated: u32) -> EventContext {

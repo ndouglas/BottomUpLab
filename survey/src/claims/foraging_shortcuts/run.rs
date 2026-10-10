@@ -23,7 +23,7 @@ pub(super) mod source_identity;
 include!(concat!(env!("OUT_DIR"), "/f5_source_identity.rs"));
 
 pub(super) const MANIFEST_PATH: &str =
-    "docs/superpowers/specs/2026-10-07-foraging-5-draft-manifest.json";
+    "docs/superpowers/specs/2026-10-09-foraging-5-authorized-manifest.json";
 
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExecutionContext {

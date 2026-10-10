@@ -35,15 +35,18 @@ pub(super) struct Analysis {
     pub(super) contrasts: Vec<Contrast>,
 }
 
-fn ordered_rows(rows: &[EpisodeRow], mode: CollectionMode) -> Result<Vec<&EpisodeRow>, String> {
-    let manifest = super::manifest::candidate()?;
-    let keys = super::manifest::expected_keys(&manifest, mode);
+fn ordered_rows<'a>(
+    rows: &'a [EpisodeRow],
+    mode: CollectionMode,
+    manifest: &super::manifest::Manifest,
+) -> Result<Vec<&'a EpisodeRow>, String> {
+    let keys = super::manifest::expected_keys(manifest, mode);
     if rows.len() != keys.len() {
         return Err("analysis requires the complete exact seed/condition set".into());
     }
     let mut keyed = std::collections::BTreeMap::new();
     for row in rows {
-        let c = super::manifest::condition(&manifest, &row.key.condition)?;
+        let c = super::manifest::condition(manifest, &row.key.condition)?;
         if (row.panel, row.geometry, row.regime) != (c.panel, c.geometry, c.regime) {
             return Err(format!(
                 "{}/{}: ambiguous row roles",
@@ -67,7 +70,11 @@ fn ordered_rows(rows: &[EpisodeRow], mode: CollectionMode) -> Result<Vec<&Episod
         .collect()
 }
 pub(super) fn build_contrasts(rows: &[EpisodeRow]) -> Result<Vec<Contrast>, String> {
-    let rows = ordered_rows(rows, CollectionMode::Scientific)?;
+    let rows = ordered_rows(
+        rows,
+        CollectionMode::Scientific,
+        &super::manifest::candidate()?,
+    )?;
     let mut contrasts = Vec::with_capacity(15);
     let geometries = [
         (Geometry::Straight, "straight"),
@@ -156,7 +163,7 @@ fn contrast(
 }
 pub(super) fn analyze(index: &Path, out: &Path) -> Result<Analysis, String> {
     let mut reader = super::archive::ArchiveReader::open(index)?;
-    let manifest = super::manifest::candidate()?;
+    let manifest = reader.manifest().clone();
     let mut analysis = Analysis {
         schema: "foraging-shortcut-analysis-v1".into(),
         mode: reader.index().mode,
@@ -175,14 +182,14 @@ pub(super) fn analyze(index: &Path, out: &Path) -> Result<Analysis, String> {
         .map_err(|e| format!("{}/{} projection: {e}", key.condition, key.seed))?;
         analysis.rows.push(row);
     }
-    ordered_rows(&analysis.rows, analysis.mode)?;
+    ordered_rows(&analysis.rows, analysis.mode, &manifest)?;
     if analysis.mode == CollectionMode::Scientific {
         analysis.contrasts = build_contrasts(&analysis.rows)?;
     }
     let mut json =
         serde_json::to_vec_pretty(&analysis).map_err(|e| format!("analysis JSON: {e}"))?;
     json.push(b'\n');
-    let text = markdown(&analysis)?;
+    let text = markdown(&analysis, &manifest)?;
     // All validation/serialization completes before any output path is created.
     super::super::protection_archive::new_directory(out)?;
     super::super::protection_archive::write_new(&out.join("analysis.json"), &json)
@@ -195,8 +202,11 @@ pub(super) fn analyze(index: &Path, out: &Path) -> Result<Analysis, String> {
 fn option_number(value: Option<u32>) -> String {
     value.map_or_else(|| "null".into(), |v| v.to_string())
 }
-pub(super) fn markdown(a: &Analysis) -> Result<String, String> {
-    let rows = ordered_rows(&a.rows, a.mode)?;
+pub(super) fn markdown(
+    a: &Analysis,
+    manifest: &super::manifest::Manifest,
+) -> Result<String, String> {
+    let rows = ordered_rows(&a.rows, a.mode, manifest)?;
     let mut text = String::from("# F5 shortcut comparison saved evidence\n\n");
     match a.mode {
         CollectionMode::Construction => text.push_str("Construction engineering checks. All 30 seed rows, including programmed zeros and censored outcomes, are retained. No condition means or scientific contrasts are estimated.\n\n"),
@@ -245,7 +255,6 @@ pub(super) fn markdown(a: &Analysis) -> Result<String, String> {
     }
     if a.mode == CollectionMode::Scientific {
         text.push_str("## Condition means (descriptive)\n\n| Condition | Episodes | Delivered mean | Accessible mean |\n| --- | ---: | ---: | ---: |\n");
-        let manifest = super::manifest::candidate()?;
         for c in &manifest.conditions {
             let condition_rows = rows
                 .iter()

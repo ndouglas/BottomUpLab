@@ -10,6 +10,8 @@ use super::{
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct State {
     pub(super) tick: u32,
+    pub(super) traffic_policy: super::TrafficPolicy,
+    pub(super) excavation_policy: super::ExcavationPolicy,
     pub(super) terrain: Terrain,
     pub(super) agents: Vec<Agent>,
     pub(super) food: FoodLedger,
@@ -27,6 +29,28 @@ pub struct World {
 impl World {
     /// Validates/normalizes inputs and observes spawn cells without consuming RNG.
     pub fn new(setup: Setup, seed: u64) -> Result<Self, Vec<crate::config::FieldError>> {
+        Self::new_with_traffic(setup, seed, super::TrafficPolicy::ShortestOnlyV1)
+    }
+    /// Constructs an explicitly selected versioned traffic policy without draws.
+    pub fn new_with_traffic(
+        setup: Setup,
+        seed: u64,
+        policy: super::TrafficPolicy,
+    ) -> Result<Self, Vec<crate::config::FieldError>> {
+        Self::new_with_policies(
+            setup,
+            seed,
+            policy,
+            super::ExcavationPolicy::ExplorationFirstV1,
+        )
+    }
+    /// Constructs independently selected traffic and excavation policies without draws.
+    pub fn new_with_policies(
+        setup: Setup,
+        seed: u64,
+        traffic_policy: super::TrafficPolicy,
+        excavation_policy: super::ExcavationPolicy,
+    ) -> Result<Self, Vec<crate::config::FieldError>> {
         let setup = setup.normalized()?;
         let terrain = Terrain::new(&setup)?;
         let food = FoodLedger::new(&setup, &terrain)?;
@@ -52,11 +76,15 @@ impl World {
                         ..Default::default()
                     },
                     compute: super::metrics::ComputeCounts::default(),
+                    traffic: super::traffic::TrafficState::default(),
+                    excavation: super::excavation_state::ExcavationState::default(),
                 })
             })
             .collect::<Result<Vec<_>, Vec<crate::config::FieldError>>>()?;
         let mut state = State {
             tick: 0,
+            traffic_policy,
+            excavation_policy,
             terrain,
             agents,
             food,

@@ -98,3 +98,25 @@ pub use access::{AccessSummary, FoodAccessRecord};
 pub use metrics::{AccessCompute, ComputeCounts};
 pub use runner::{run, Episode, RunOptions};
 pub use view::{AgentView, FindView, KnowledgeView, Snapshot, Summary, WaypointView};
+
+mod traffic;
+pub use traffic::{
+    TrafficAgentView, TrafficCounts, TrafficPolicy, TrafficSnapshot, TrafficSummary,
+};
+
+mod traffic_navigation;
+
+mod traffic_runner;
+mod traffic_view;
+pub use traffic_runner::{run_with_traffic, TrafficEpisode};
+
+mod excavation;
+pub use excavation::{
+    ExcavationAgentView, ExcavationAssessment, ExcavationCandidate, ExcavationCounts,
+    ExcavationPolicy, ExcavationSnapshot, ExcavationSummary,
+};
+mod excavation_navigation;
+mod excavation_state;
+mod excavation_view;
+mod policy_runner;
+pub use policy_runner::{run_with_policies, ConstructionPolicyEpisode};

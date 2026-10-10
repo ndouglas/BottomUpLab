@@ -57,3 +57,24 @@ impl DrawSource for Scripted {
 mod controller;
 
 mod runner;
+
+mod traffic_baseline;
+mod traffic_types;
+
+mod traffic_controller;
+mod traffic_navigation;
+mod traffic_support;
+
+mod traffic_runner;
+
+mod traffic_acceptance;
+
+mod excavation_baseline;
+mod excavation_navigation;
+mod excavation_types;
+
+mod excavation_controller;
+mod excavation_runner;
+mod excavation_support;
+
+mod excavation_acceptance;
