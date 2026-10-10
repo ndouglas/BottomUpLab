@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-09
 
-**Status:** the user approved the cost-aware informed-excavation direction in conversation. This written specification awaits review; no implementation plan or runtime change is approved by that conversational reply.
+**Status:** the user approved the written specification after commit `981c894`. The [implementation plan](../plans/2026-10-09-foraging-informed-excavation.md) awaits review; implementation has not started.
 
 **Context:** [F5 diagnosis](../../studies/2026-10-09-foraging-5-diagnosis.md), [local-yielding design](2026-10-09-foraging-local-yielding-design.md), [verified traffic increment](../../studies/2026-10-09-foraging-local-yielding-verification.md), and [F4 construction design](2026-10-06-foraging-4-construction-design.md).
 
