@@ -10,7 +10,7 @@
 
 **Spec:** [Cost-aware informed excavation](../specs/2026-10-09-foraging-informed-excavation-design.md), written at `981c894` and approved by the user before this plan was written.
 
-**Status:** awaiting user review of this plan. No implementation task has started.
+**Status:** the user approved this plan on 2026-10-10. Subagent-driven execution has started; the root tracker and plan-owned ledger record stage progress.
 
 ## Global Constraints
 
