@@ -10,6 +10,8 @@
 
 **Spec:** [Approved private local-yielding design](../specs/2026-10-09-foraging-local-yielding-design.md), approved by the user on 2026-10-09 after commit `59e1036`.
 
+**Execution status:** approved by the user on 2026-10-09; subagent-driven execution starting.
+
 ## Global Constraints
 
 - `TrafficPolicy` identities are exactly `shortest_only_v1` and `local_yielding_v1`. The latter fixes two consecutive paid blocked-route waits, yield probability 0.25 and one paid hold. The third blocked opportunity may yield; do not tune these choices.

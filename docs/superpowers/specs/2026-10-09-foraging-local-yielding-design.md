@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-09
 
-**Status:** the user approved the traffic-first approach, then this written specification on 2026-10-09. The [implementation plan](../plans/2026-10-09-foraging-local-yielding.md) is prepared for review; engineering implementation has not started.
+**Status:** the user approved the traffic-first approach, then this written specification on 2026-10-09. The user also approved the [implementation plan](../plans/2026-10-09-foraging-local-yielding.md); subagent-driven engineering execution is starting.
 
 **Context:** [F5 saved-only diagnosis](../../studies/2026-10-09-foraging-5-diagnosis.md), [registered results](../../studies/2026-10-09-foraging-5-full-run.md), [F4 construction design](2026-10-06-foraging-4-construction-design.md).
 
