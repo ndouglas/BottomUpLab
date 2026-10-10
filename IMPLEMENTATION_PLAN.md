@@ -20,4 +20,4 @@
 **Goal**: Prove privacy/rollback and retain F5 saved evidence through whole review.
 **Success Criteria**: Both full packages/style/lint pass; source binding and identical saved analysis verified.
 **Tests**: Queue/cargo/privacy/fault tests, cargo test --workspace, full survey, both fmt/Clippy, saved-only reanalysis.
-**Status**: Not Started
+**Status**: In Progress

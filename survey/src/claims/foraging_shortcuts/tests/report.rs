@@ -436,3 +436,33 @@ fn saved_analysis_rejects_resigned_event_distances_and_raw_parser_overflow() {
         .contains("byte limit"));
     assert!(!out.exists());
 }
+
+#[test]
+fn f5_cached_seed_seven_episode_matches_explicit_legacy_traffic_wrapper() {
+    use sugarscape_core::foraging::construction as core;
+    let manifest = candidate().unwrap();
+    let c = condition(&manifest, "route.straight.protected").unwrap();
+    let labeled = core::run_with_traffic(
+        c.setup.clone(),
+        7,
+        c.options.clone(),
+        core::TrafficPolicy::ShortestOnlyV1,
+    )
+    .unwrap();
+    assert_eq!(
+        super::support::cached_candidate_episode(&c.id, 7).unwrap(),
+        labeled.episode
+    );
+    assert_eq!(
+        labeled.traffic_summary.policy,
+        core::TrafficPolicy::ShortestOnlyV1
+    );
+    assert_eq!(
+        (
+            labeled.traffic_summary.counts.yield_attempts,
+            labeled.traffic_summary.counts.yield_moves,
+            labeled.traffic_summary.counts.hold_waits
+        ),
+        (0, 0, 0)
+    );
+}
