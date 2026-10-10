@@ -130,6 +130,68 @@ are investigator checkpoints with responder `BeforeSlot` at the same clock.
 Repeated identical responder prefixes before/after a private selection count
 each original candidate once, never as separate evidence.
 
+### Amendment 1: delivered checkpoints immediately after free selection
+
+This clarification preserves the original active selection/advance contract;
+it changes no action, horizon, setting, price, prior, or tie rule. The original
+handoff bytes are retained in an immutable revision snapshot with an external
+hash receipt. This amended wire chronology requires scoped independent review
+before the source-blind numerical author uses it.
+
+`select_choice` appends the selector's OwnChoice, stores any selected routine,
+and updates a private queued-transition marker. It **does not change either
+role's delivered Prefix.checkpoint**. The selecting Agent therefore retains
+its selecting Boundary checkpoint after selection; the other Agent retains
+its existing checkpoint. Stop additionally appends PublicProbeStop to both
+prefixes atomically, while both delivered Probe checkpoints remain unchanged.
+Credits, fields, and issued bits do not change on any free selection. Only
+`advance_one` executes the queued paid/reset/public transition and changes
+delivered checkpoints. Updating the private queue marker itself is not a public
+clock transition or observation.
+
+In the table, I is the investigator, H is the helper, c is completed calibration
+rounds, p is an owned calibration Position, and q is live trial t's first owned
+position: round 1/slot 1 for I=A, round 1/slot 2 for I=B. These are **delivered**
+checkpoints, separately from the queued internal marker. Each after-selection
+column describes the instant after select_choice returns and before advance_one.
+
+| Free selection | I checkpoint before | H checkpoint before | I checkpoint after selection | H checkpoint after selection | Entries appended by selection | Next advance_one executes |
+| --- | --- | --- | --- | --- | --- | --- |
+| Continue at c<3 | Boundary(Probe { completed: c }) | Boundary(Probe { completed: c }) | Same Probe Boundary | Same Probe Boundary | I only: OwnChoice(Probe(c), Continue) | Enter purchased round c+1, with calibration Reset iff c=0; expose first slot before paying it |
+| Stop at c≤3 | Boundary(Probe { completed: c }) | Boundary(Probe { completed: c }) | Same Probe Boundary | Same Probe Boundary | I: OwnChoice(Probe(c), Stop), then PublicProbeStop(c); H: PublicProbeStop(c) | Enter live trial 0 with own Reset/PrivateBit records; no paid slot yet |
+| Calibration(action) | Boundary(Calibration(p)) | BeforeSlot(p) | Same Calibration Boundary | Same BeforeSlot(p) | I only: OwnChoice(Calibration(p), Calibration(action)) | Pay queued owned action at p; return AfterSlot(p) to both |
+| Inspect at trial t | Boundary(Trial { trial: t }) | BeforeSlot(q) | Same Trial Boundary | Same BeforeSlot(q) | I only: OwnChoice(Trial(t), Inspect) | Pay first owned live slot q under Inspect; return AfterSlot(q) to both |
+| Attempt at trial t | Boundary(Trial { trial: t }) | BeforeSlot(q) | Same Trial Boundary | Same BeforeSlot(q) | I only: OwnChoice(Trial(t), Attempt) | Pay first owned live slot q under Attempt; return AfterSlot(q) to both |
+
+For Continue, the first exposed paid opportunity is calibration round c+1,
+slot 1. With a raw investigator A, that opportunity is its unselected
+Boundary(Calibration(p)) and H sees BeforeSlot(p); with investigator B it is
+helper A's BeforeSlot(p) for both roles. Supplied investigators have BeforeSlot(p)
+for both roles, with no extra slot choice. For Stop, live entry with I=A delivers
+I's unselected Trial Boundary and H's BeforeSlot(live 0, round 1, slot 1); with
+I=B both initially see BeforeSlot(live 0, round 1, slot 1). Helper A's paid action
+then returns AfterSlot to both; the subsequent free advance exposes B's Trial
+Boundary and A's BeforeSlot(live 0, round 1, slot 2). At B's Trial selection,
+the first owned slot q is a paid Wait under both live routines; the routine's
+inspection/send occurs later at round 2/slot 3.
+
+A Boundary checkpoint with its just-appended OwnChoice is a valid **selected,
+queued** prefix, not another decision opportunity. Support must be checked at
+that prefix, but a planner/replay invokes selection only at an unselected
+boundary. Duplicate selection while a transition is queued is invalid even
+though the delivered Boundary is retained. Validation must accept these
+post-selection prefixes without pretending a paid action, reset, or next clock
+has already occurred. The responder's prefix is identical across private
+Continue, Calibration, or Trial selection when no public record is appended;
+Stop is the explicit exception because PublicProbeStop is observable.
+
+The verified original active `select_choice` appends OwnChoice, optionally
+PublicProbeStop, and assigns the internal `state.clock = next`; it never calls
+the checkpoint-update function. Original `advance_one` performs that update
+when it executes the queued transition. Discovery follows this distinction,
+including its new raw Calibration selection, rather than serializing the
+private queue marker as a different delivered checkpoint.
+
 Each purchased calibration round charges each Agent 2. Attempt costs 6 per live
 trial; Inspect costs 9 (one inspection plus five waits). The maximum charge is
 `3×2 + 4×9 = 42`, leaving at least 6 credits under this fixed horizon. Those are
