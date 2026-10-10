@@ -517,6 +517,24 @@ non-scientific-registration delta; never silently claim a different input hash.
 Complete population projections remain ignored and sealed; compact tracked
 fixtures reference them by immutable receipts.
 
+### Amendment 2: reference compilation prior semantics
+
+Every reference-row `prior` identifies the **investigator compilation prior**:
+the OwnPrior passed with that row's Protocol to `CompiledPolicy::build`.
+This applies to InitialValue, PrefixWitness, EpisodeRow, PanelRow, Embedding,
+FeasibilityRun, and any compilation context in reference metadata/receipts that
+uses the same field. In particular, PrefixWitness.prior has this meaning for
+**both** InvestigatorInference and ResponderReplay; it does not switch to the
+witness owner's prior. The owner's prior is always `prefix.own_prior`, so a
+helper witness retains its own nominal PointMass there while the row's prior
+continues to identify the investigator policy being replayed. KnownRaw rows
+identify the matching investigator PointMass compilation explicitly, rather
+than trying to infer it from the helper's witness prior. Protocol plus this
+compilation prior binds inference, continuation, and declared-policy replay
+unambiguously. No field/type name or scientific prior changes in this amendment.
+Previous handoff/amendment bytes are retained by immutable revision receipts;
+these semantic clarifications require scoped independent review before use.
+
 `planning-reference.json` root is
 `{version:"surface-discovery-planning-reference-v1",metadata:Metadata,initial_values:Vec<InitialValue>,prefix_witnesses:Vec<PrefixWitness>,identifiability:Vec<Identifiability>,embedding:Vec<Embedding>}`.
 
@@ -589,6 +607,22 @@ projection field without a production fixture or cached passed flag.
 `FeasibilityRun` is
 `{label:String,protocol:Protocol,prior:OwnPrior,completed:bool,stats:SearchStats,wall_time_ns:u64,peak_rss_bytes:u64,policy_bytes:u64,replay_bytes:u64,full_projection_bytes:u64,receipt:Receipt}`.
 `HostCapacity` is `{available_memory_bytes:u64,check_receipt:Receipt}`.
+
+Host-capacity estimate semantics (Amendment 2): `available_memory_bytes` records
+the named available/reclaimable estimate in the cited **system metadata receipt**,
+not guaranteed free, reserved, or exclusively allocatable bytes. For the retained
+macOS `host-memory-reference-input.json` receipt, use its
+`reclaimable_estimate_bytes`, calculated as
+`page_size_bytes × (pages.free + pages.inactive + pages.speculative)`; its
+`free_bytes = page_size_bytes × pages.free` is recorded separately. The
+check_receipt must retain the command outputs, capture time, formula, component
+counts, estimate's name, and limitations. The estimate is a time-specific
+reclaimability estimate, not a guarantee of availability or permission to evict
+other applications, and it does not establish capacity by itself. Independent
+host-capacity review must assess the registered ceilings and current conditions.
+FeasibilityRun.peak_rss_bytes remains actual measured peak resident memory from
+the reference run, separately from allocation accounting and this system estimate.
+
 Counts, elapsed time, actual peak memory, and serialized sizes are fresh author
 outputs; no run is claimed in this document. Every distinct compilation and
 complete enumeration requirement must be covered; completed references, not
