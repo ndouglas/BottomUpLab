@@ -103,3 +103,5 @@ mod traffic;
 pub use traffic::{
     TrafficAgentView, TrafficCounts, TrafficPolicy, TrafficSnapshot, TrafficSummary,
 };
+
+mod traffic_navigation;

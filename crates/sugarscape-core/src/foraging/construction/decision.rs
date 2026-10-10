@@ -4,12 +4,13 @@ use super::{
     knowledge::CellKnowledge,
     metrics::ComputeCounts,
     navigation::{
-        face_approaches, faces, frontiers, route_step, select_face, select_frontier, wander,
-        Navigation,
+        face_approaches, faces, frontiers, select_face, select_frontier, wander, Navigation,
     },
     observation::Observation,
     state::Agent,
-    Checked, FoodPhase, Mode, Parameters, Pos, Setup, WorkCounts,
+    traffic::TrafficEffect,
+    traffic_navigation::select_route,
+    Checked, FoodPhase, Mode, Parameters, Pos, Setup, TrafficPolicy, WorkCounts,
 };
 use crate::config::FieldError;
 pub(super) struct Policy {
@@ -36,6 +37,7 @@ pub(super) enum WaitReason {
     EmptyArrival,
     NoNeighbor,
     Congestion,
+    TrafficHold,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Action {
@@ -50,11 +52,24 @@ pub(super) enum Action {
 pub(super) struct Decision {
     pub(super) agent: Agent,
     pub(super) action: Action,
+    pub(super) traffic_effect: super::traffic::TrafficEffect,
+}
+struct SelectedAction {
+    action: Action,
+    effect: TrafficEffect,
+}
+impl From<Action> for SelectedAction {
+    fn from(action: Action) -> Self {
+        Self {
+            action,
+            effect: TrafficEffect::Normal,
+        }
+    }
 }
 fn error(message: &str) -> Vec<FieldError> {
     vec![FieldError::new("navigation", message)]
 }
-fn search(agent: &mut Agent, abandoned: bool) -> Checked<Action> {
+fn search(agent: &mut Agent, abandoned: bool) -> Checked<SelectedAction> {
     agent.phase = FoodPhase::Searching;
     agent.site = None;
     agent.frontier = None;
@@ -64,22 +79,37 @@ fn search(agent: &mut Agent, abandoned: bool) -> Checked<Action> {
         abandoned_targets: u64::from(abandoned),
         ..Default::default()
     })?;
-    Ok(Action::Wait(WaitReason::Transition))
+    Ok(Action::Wait(WaitReason::Transition).into())
 }
 fn route(
+    traffic_policy: TrafficPolicy,
     agent: &mut Agent,
     goals: &[Pos],
     observation: &Observation,
     draws: &mut impl DrawSource,
-) -> Checked<Navigation> {
-    let (navigation, counts) = route_step(&agent.map, agent.pos, goals, observation, draws)?;
+) -> Checked<(Navigation, TrafficEffect)> {
+    let (navigation, counts, effect) = select_route(
+        traffic_policy,
+        &mut agent.traffic,
+        &agent.map,
+        agent.pos,
+        goals,
+        observation,
+        draws,
+    )?;
     agent.compute.checked_include(&counts)?;
-    Ok(navigation)
+    Ok((navigation, effect))
 }
-fn movement(navigation: Navigation) -> Checked<Action> {
+fn movement((navigation, effect): (Navigation, TrafficEffect)) -> Checked<SelectedAction> {
     match navigation {
-        Navigation::Move(p) => Ok(Action::Move(p)),
-        Navigation::Blocked => Ok(Action::Wait(WaitReason::Congestion)),
+        Navigation::Move(p) => Ok(SelectedAction {
+            action: Action::Move(p),
+            effect,
+        }),
+        Navigation::Blocked => Ok(SelectedAction {
+            action: Action::Wait(WaitReason::Congestion),
+            effect,
+        }),
         _ => Err(error("expected a reachable travel destination")),
     }
 }
@@ -105,11 +135,12 @@ fn frontier(
     Ok(target)
 }
 fn excavation(
+    traffic_policy: TrafficPolicy,
     agent: &mut Agent,
     site: Option<Pos>,
     observation: &Observation,
     draws: &mut impl DrawSource,
-) -> Checked<Option<Action>> {
+) -> Checked<Option<SelectedAction>> {
     if let Some(target) = agent.face {
         let (candidates, counts) = faces(&agent.map, agent.pos)?;
         agent.compute.checked_include(&counts)?;
@@ -130,19 +161,20 @@ fn excavation(
         .iter()
         .any(|c| c.pos == target && !c.open && c.diggable)
     {
-        return Ok(Some(Action::Dig(target)));
+        return Ok(Some(Action::Dig(target).into()));
     }
     let (approaches, counts) = face_approaches(&agent.map, agent.pos, target)?;
     agent.compute.checked_include(&counts)?;
-    let navigation = route(agent, &approaches, observation, draws)?;
+    let navigation = route(traffic_policy, agent, &approaches, observation, draws)?;
     Ok(Some(movement(navigation)?))
 }
 fn pursue(
+    traffic_policy: TrafficPolicy,
     agent: &mut Agent,
     site: Pos,
     observation: &Observation,
     draws: &mut impl DrawSource,
-) -> Checked<Action> {
+) -> Checked<SelectedAction> {
     if site == agent.pos {
         return search(agent, false);
     }
@@ -152,8 +184,8 @@ fn pursue(
             // Preserve F3's retained frontier field until its normal transition;
             // fresh sensing may invalidate an excavation commitment here.
             agent.face = None;
-            let navigation = route(agent, &[site], observation, draws)?;
-            if navigation == Navigation::Unreachable {
+            let navigation = route(traffic_policy, agent, &[site], observation, draws)?;
+            if navigation.0 == Navigation::Unreachable {
                 search(agent, true)
             } else {
                 movement(navigation)
@@ -161,9 +193,11 @@ fn pursue(
         }
         CellKnowledge::Unknown | CellKnowledge::KnownSolid { diggable: true } => {
             if let Some(target) = frontier(agent, Some(site), draws)? {
-                let navigation = route(agent, &[target], observation, draws)?;
+                let navigation = route(traffic_policy, agent, &[target], observation, draws)?;
                 movement(navigation)
-            } else if let Some(action) = excavation(agent, Some(site), observation, draws)? {
+            } else if let Some(action) =
+                excavation(traffic_policy, agent, Some(site), observation, draws)?
+            {
                 Ok(action)
             } else {
                 search(agent, true)
@@ -171,10 +205,26 @@ fn pursue(
         }
     }
 }
+#[cfg(test)]
 pub(super) fn decide(
     policy: &Policy,
     agent: &Agent,
     observation: &Observation,
+    draws: &mut impl DrawSource,
+) -> Checked<Decision> {
+    decide_with_traffic(
+        policy,
+        agent,
+        observation,
+        TrafficPolicy::ShortestOnlyV1,
+        draws,
+    )
+}
+pub(super) fn decide_with_traffic(
+    policy: &Policy,
+    agent: &Agent,
+    observation: &Observation,
+    traffic_policy: TrafficPolicy,
     draws: &mut impl DrawSource,
 ) -> Checked<Decision> {
     observation.validate(policy.width, policy.height)?;
@@ -194,26 +244,45 @@ pub(super) fn decide(
         dig_confirmations: delta.dig_confirmations,
         ..Default::default()
     })?;
-    let action = match agent.mode() {
+    let terminal = match agent.mode() {
+        Mode::FoodReturning | Mode::EmptyReturning => policy.nest.contains(&agent.pos),
+        Mode::SpoilHauling => agent.pos == policy.waste,
+        _ => false,
+    };
+    if !terminal && agent.traffic.hold_pending {
+        return Ok(Decision {
+            agent,
+            action: Action::Wait(WaitReason::TrafficHold),
+            traffic_effect: TrafficEffect::Hold,
+        });
+    }
+    let selected = match agent.mode() {
         Mode::FoodReturning | Mode::EmptyReturning => {
             if policy.nest.contains(&agent.pos) {
                 if agent.cargo.is_some() {
-                    Action::DepositFood
+                    Action::DepositFood.into()
                 } else {
-                    Action::Wait(WaitReason::EmptyArrival)
+                    Action::Wait(WaitReason::EmptyArrival).into()
                 }
             } else {
-                let navigation = route(&mut agent, &policy.nest, observation, draws)?;
+                let navigation =
+                    route(traffic_policy, &mut agent, &policy.nest, observation, draws)?;
                 movement(navigation)?
             }
         }
         Mode::SpoilHauling => {
             if agent.pos == policy.waste {
-                Action::DisposeSpoil
+                Action::DisposeSpoil.into()
             } else {
                 match agent.map.kind(policy.waste)? {
                     CellKnowledge::KnownOpen => {
-                        let navigation = route(&mut agent, &[policy.waste], observation, draws)?;
+                        let navigation = route(
+                            traffic_policy,
+                            &mut agent,
+                            &[policy.waste],
+                            observation,
+                            draws,
+                        )?;
                         movement(navigation)?
                     }
                     CellKnowledge::Unknown => {
@@ -221,7 +290,8 @@ pub(super) fn decide(
                             frontier(&mut agent, Some(policy.waste), draws)?.ok_or_else(|| {
                                 error("unknown outlet after exhausting private open frontiers")
                             })?;
-                        let navigation = route(&mut agent, &[target], observation, draws)?;
+                        let navigation =
+                            route(traffic_policy, &mut agent, &[target], observation, draws)?;
                         movement(navigation)?
                     }
                     CellKnowledge::KnownSolid { .. } => {
@@ -232,13 +302,13 @@ pub(super) fn decide(
         }
         Mode::Departing => {
             if let Some(site) = agent.site {
-                pursue(&mut agent, site, observation, draws)?
+                pursue(traffic_policy, &mut agent, site, observation, draws)?
             } else if checked_uniform(draws)? < policy.parameters.p_search
                 || agent.frontier == Some(agent.pos)
             {
                 search(&mut agent, false)?
             } else if let Some(target) = frontier(&mut agent, None, draws)? {
-                let navigation = route(&mut agent, &[target], observation, draws)?;
+                let navigation = route(traffic_policy, &mut agent, &[target], observation, draws)?;
                 movement(navigation)?
             } else {
                 search(&mut agent, false)?
@@ -251,26 +321,32 @@ pub(super) fn decide(
                 agent.site = None;
                 agent.frontier = None;
                 agent.face = None;
-                Action::Wait(WaitReason::Transition)
+                Action::Wait(WaitReason::Transition).into()
             } else if observation
                 .cells
                 .iter()
                 .any(|c| c.pos == agent.pos && c.food)
             {
-                Action::PickupFood
+                Action::PickupFood.into()
             } else if let Some(target) = frontier(&mut agent, None, draws)? {
-                let navigation = route(&mut agent, &[target], observation, draws)?;
+                let navigation = route(traffic_policy, &mut agent, &[target], observation, draws)?;
                 movement(navigation)?
-            } else if let Some(action) = excavation(&mut agent, None, observation, draws)? {
+            } else if let Some(action) =
+                excavation(traffic_policy, &mut agent, None, observation, draws)?
+            {
                 action
             } else {
                 match wander(agent.pos, observation, draws)? {
-                    Navigation::Move(p) => Action::Move(p),
-                    Navigation::Blocked => Action::Wait(WaitReason::NoNeighbor),
+                    Navigation::Move(p) => Action::Move(p).into(),
+                    Navigation::Blocked => Action::Wait(WaitReason::NoNeighbor).into(),
                     _ => return Err(error("unexpected wandering result")),
                 }
             }
         }
     };
-    Ok(Decision { agent, action })
+    Ok(Decision {
+        agent,
+        action: selected.action,
+        traffic_effect: selected.effect,
+    })
 }

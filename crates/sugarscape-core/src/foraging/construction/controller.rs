@@ -1,9 +1,9 @@
 use super::{
     actions::apply,
-    decision::{decide, Policy},
+    decision::{decide_with_traffic, Policy},
     knowledge::CellKnowledge,
     observation::observe,
-    Cargo, FoodPhase, WorkCounts,
+    Cargo, FoodPhase, TrafficCounts, WorkCounts,
 };
 use super::{draws::DrawSource, world::State, Checked, Pos, Setup};
 use crate::config::FieldError;
@@ -59,6 +59,7 @@ pub(super) fn check(setup: &Setup, state: &State) -> Checked<()> {
         mask[index(p)] = true;
     }
     let mut work = WorkCounts::default();
+    let mut traffic = TrafficCounts::default();
     for (i, agent) in state.agents.iter().enumerate() {
         let field = format!("agents[{i}]");
         if agent.id as usize != i
@@ -189,11 +190,23 @@ pub(super) fn check(setup: &Setup, state: &State) -> Checked<()> {
                 "face requires empty hands and remembered diggable solid",
             ));
         }
+        agent
+            .traffic
+            .check(state.traffic_policy, &agent.work)
+            .map_err(|e| context(e, field.clone()))?;
+        traffic
+            .checked_include(&agent.traffic.counts)
+            .map_err(|e| context(e, field.clone()))?;
         agent.work.check().map_err(|e| context(e, field.clone()))?;
         work.checked_include(&agent.work)
             .map_err(|e| context(e, field.clone()))?;
     }
     work.check()?;
+    super::traffic::TrafficState {
+        counts: traffic,
+        ..Default::default()
+    }
+    .check(state.traffic_policy, &work)?;
     let food = state.food.inventory();
     let spoil = state.spoil.inventory();
     if work.opportunities > 1_000_000
@@ -261,7 +274,13 @@ pub(super) fn advance(
                 &occupancy(state),
                 &state.food.available(),
             )?;
-            let decision = decide(&p, &state.agents[i], &observation, draws)?;
+            let decision = decide_with_traffic(
+                &p,
+                &state.agents[i],
+                &observation,
+                state.traffic_policy,
+                draws,
+            )?;
             apply(setup, state, i, decision, &observation, draws)
         };
         opportunity()

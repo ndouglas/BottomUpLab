@@ -6,8 +6,9 @@ use super::{
     metrics::ComputeCounts,
     observation::Observation,
     setup::neighbors,
+    traffic::TrafficEffect,
     world::State,
-    Cargo, Checked, FoodPhase, Mode, Setup, WorkCounts,
+    Cargo, Checked, FoodPhase, Mode, Setup, TrafficPolicy, WorkCounts,
 };
 use crate::{
     config::FieldError,
@@ -72,6 +73,28 @@ fn transaction(
     {
         return Err(error(
             "decision must belong to the current worker with unchanged hands",
+        ));
+    }
+    let valid_effect = match decision.traffic_effect {
+        TrafficEffect::YieldMove => {
+            state.traffic_policy == TrafficPolicy::LocalYieldingV1
+                && matches!(decision.action, Action::Move(_))
+                && previous.traffic.blocked_wait_streak == 2
+        }
+        TrafficEffect::Hold => {
+            state.traffic_policy == TrafficPolicy::LocalYieldingV1
+                && previous.traffic.hold_pending
+                && decision.action == Action::Wait(WaitReason::TrafficHold)
+        }
+        TrafficEffect::BlockedWait => decision.action == Action::Wait(WaitReason::Congestion),
+        TrafficEffect::Normal => {
+            decision.action != Action::Wait(WaitReason::TrafficHold)
+                && (!decision.agent.traffic.hold_pending || previous.traffic.hold_pending)
+        }
+    };
+    if !valid_effect {
+        return Err(error(
+            "traffic effect must match the paid action and selected policy",
         ));
     }
     let mode = previous.mode();
@@ -219,7 +242,7 @@ fn transaction(
                     work.transition_waits = 1;
                 }
                 WaitReason::NoNeighbor => work.no_neighbor_waits = 1,
-                WaitReason::Congestion => match mode {
+                WaitReason::Congestion | WaitReason::TrafficHold => match mode {
                     Mode::FoodReturning => work.food_congestion_waits = 1,
                     Mode::SpoilHauling => work.spoil_congestion_waits = 1,
                     _ => work.empty_congestion_waits = 1,
@@ -237,6 +260,9 @@ fn transaction(
         }
     }
     state.agents[index].work.checked_include(&work)?;
+    state.agents[index]
+        .traffic
+        .commit(decision.traffic_effect)?;
     match decision.action {
         Action::Dig(target) => {
             let context = event(state, index)?;

@@ -328,6 +328,7 @@ pub(super) fn plan_route(
 }
 
 /// Legacy selection consumes exactly the original checked step-choice draw.
+#[cfg(test)]
 pub(super) fn route_step(
     knowledge: &Knowledge,
     origin: Pos,

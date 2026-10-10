@@ -41,7 +41,6 @@ pub struct TrafficSnapshot {
     pub agents: Vec<TrafficAgentView>,
 }
 
-#[allow(dead_code)] // Task 2 wires this state into the paid action transaction.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(super) struct TrafficState {
     pub(super) blocked_wait_streak: u8,
@@ -49,7 +48,6 @@ pub(super) struct TrafficState {
     pub(super) counts: TrafficCounts,
 }
 
-#[allow(dead_code)] // Task 2 supplies effects from controller decisions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum TrafficEffect {
     Normal,
@@ -67,7 +65,6 @@ fn add(a: u64, b: u64, field: &str) -> Checked<u64> {
 }
 
 impl TrafficCounts {
-    #[allow(dead_code)] // Task 2 counts route requests; Task 3 aggregates rows.
     pub(super) fn checked_include(&mut self, delta: &Self) -> Checked<()> {
         let candidate = Self {
             blocked_route_opportunities: add(
@@ -84,7 +81,6 @@ impl TrafficCounts {
     }
 }
 
-#[allow(dead_code)] // Task 2 consumes both state methods.
 impl TrafficState {
     pub(super) fn commit(&mut self, effect: TrafficEffect) -> Checked<()> {
         let mut candidate = self.clone();

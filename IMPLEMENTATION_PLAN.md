@@ -8,7 +8,7 @@
 **Goal**: Explicit traffic policy integrated with atomic controller.
 **Success Criteria**: Exact threshold/draws, all cargo modes and terminal precedence; legal queue passage.
 **Tests**: Scripted selector/controller/queue tests, construction suite, fmt/core Clippy.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 3: Labeled bounded recording
 **Goal**: Observational traffic views and separate episode wrapper.
