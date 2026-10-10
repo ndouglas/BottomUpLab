@@ -231,7 +231,7 @@ The enclosing advance_one updates both public checkpoints only after this event 
 **Files:** belief.rs/planner.rs/budget.rs/tests/planner.rs and exports.
 **Consumes:** Kernel and independent fixtures/limits. **Produces:** CompiledPolicy/Decision/SearchStats and budget enforcement.
 
-- [ ] **Step 1: Write exact reference RED tests.**
+- [x] **Step 1: Write exact reference RED tests.**
 
 ~~~rust
 let reference: serde_json::Value = serde_json::from_str(
@@ -246,8 +246,8 @@ for row in reference["initial_values"].as_array().unwrap() {
 ~~~
 
 Run cargo test -p sugarscape-core surface_discovery::tests::planner and retain numerical RED.
-- [ ] **Step 2: Implement joint conditioning.** Keep original IDs/full field/helper/history state; condition mass once. Replay own actions as interventions, future bits latent until issued, helper candidate point prior. Partition by local observations/public events, not actual peer trace. Cache full relevant local decision and candidate-support/state, never model marginals alone.
-- [ ] **Step 3: Implement exact backward induction.** Raw slots enumerate eight paid options in tie order; round boundaries Stop/Continue up to 3; live Inspect/Attempt. SuppliedAdaptive restricts calibration recipe and optimizes live continuation; NoProbe/InspectOnly stop at zero, InspectOnly fixes inspection. KnownRaw has raw menu and matching point prior. Alternatives follow declared continuation. Investigator reward uses own exact target posterior. Numerical fraction ties preserve first declared option; all arithmetic is checked.
+- [x] **Step 2: Implement joint conditioning.** Keep original IDs/full field/helper/history state; condition mass once. Replay own actions as interventions, future bits latent until issued, helper candidate point prior. Partition by local observations/public events, not actual peer trace. Cache full relevant local decision and candidate-support/state, never model marginals alone.
+- [x] **Step 3: Implement exact backward induction.** Raw slots enumerate eight paid options in tie order; round boundaries Stop/Continue up to 3; live Inspect/Attempt. SuppliedAdaptive restricts calibration recipe and optimizes live continuation; NoProbe/InspectOnly stop at zero, InspectOnly fixes inspection. KnownRaw has raw menu and matching point prior. Alternatives follow declared continuation. Investigator reward uses own exact target posterior. Numerical fraction ties preserve first declared option; all arithmetic is checked.
 
 Use this numeric tie helper after constructing alternatives in declared order:
 
@@ -265,8 +265,8 @@ fn maximizing_choice(alternatives: &[ChoiceValue]) -> Result<Choice, Error> {
 ~~~
 
 The recurrence is explicit: for each action subtract all future investigator paid costs, partition original candidate mass by the next local observation, and weight each child optimal remaining value by its exact conditional mass. At prediction add 12 times the larger target posterior mass; at Finished return zero remaining value. Already incurred costs are not charged again. Forced-policy nodes select their prescribed option while reporting alternatives under that same downstream policy. Cache keys include full relevant state/support and public decision clock.
-- [ ] **Step 4: Pin privacy/cache/limits/dominance.** Compare complete continuation witnesses. Equal marginals/different fields or helper histories must preserve different referenced values. Tampered View beliefs/credits/bits reject; own decisions add no likelihood, bits condition once, zero mass stays zero. Check signed rational ordering. Limits { states:1, branches:1, allocation_bytes:1 } must produce ResourceLimit before growth, never UnsupportedHistory. Enforce checked counters/allocation estimates before caches/branches allocate; measure actual memory separately. Check equal-helper embedding before both-role expected Raw≥Supplied; no per-mechanism or transfer assertion.
-- [ ] **Step 5: GREEN engineering/review/commit.** Record compiler counts/time/peak RSS vs registered caps; label engineering, no scientific first output. Independent optimality/information review, focused tests/scoped fmt/core Clippy. Commit feat(surface): optimize raw probes over exact local beliefs.
+- [x] **Step 4: Pin privacy/cache/limits/dominance.** Compare complete continuation witnesses. Equal marginals/different fields or helper histories must preserve different referenced values. Tampered View beliefs/credits/bits reject; own decisions add no likelihood, bits condition once, zero mass stays zero. Check signed rational ordering. Limits { states:1, branches:1, allocation_bytes:1 } must produce ResourceLimit before growth, never UnsupportedHistory. Enforce checked counters/allocation estimates before caches/branches allocate; measure actual memory separately. Check equal-helper embedding before both-role expected Raw≥Supplied; no per-mechanism or transfer assertion.
+- [x] **Step 5: GREEN engineering/review/commit.** Record compiler counts/time/peak RSS vs registered caps; label engineering, no scientific first output. Independent optimality/information review, focused tests/scoped fmt/core Clippy. Commit feat(surface): optimize raw probes over exact local beliefs.
 
 ## Task 4 / Stage 2: Policy Replay, Evaluation and Metrics
 
