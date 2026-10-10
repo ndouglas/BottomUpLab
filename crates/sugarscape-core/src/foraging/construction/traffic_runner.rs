@@ -134,7 +134,7 @@ impl TrafficRecording {
         Ok(())
     }
 }
-fn count_bytes<T: serde::Serialize>(
+pub(super) fn count_bytes<T: serde::Serialize>(
     snapshot: &T,
     bytes: u64,
     limit: u64,

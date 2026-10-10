@@ -1,5 +1,6 @@
 use super::{
-    runner::{validate_options, CountingWriter, SNAPSHOT_LIMIT},
+    runner::{validate_options, SNAPSHOT_LIMIT},
+    traffic_runner::count_bytes,
     Checked, Episode, ExcavationPolicy, ExcavationSnapshot, ExcavationSummary, RunOptions, Setup,
     Snapshot, TrafficPolicy, TrafficSnapshot, TrafficSummary, World,
 };
@@ -194,20 +195,4 @@ impl PolicyRecording {
         self.excavation_snapshots.push(excavation);
         Ok(())
     }
-}
-fn count_bytes<T: serde::Serialize>(
-    snapshot: &T,
-    bytes: u64,
-    limit: u64,
-    field: &str,
-    tick: u32,
-) -> Checked<u64> {
-    let mut writer = CountingWriter { bytes, limit };
-    serde_json::to_writer(&mut writer, snapshot).map_err(|error| {
-        vec![FieldError::new(
-            field,
-            format!("completed tick {tick}: {error}; limit {limit} bytes"),
-        )]
-    })?;
-    Ok(writer.bytes)
 }
