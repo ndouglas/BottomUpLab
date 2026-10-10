@@ -10,7 +10,7 @@
 
 **Spec:** [Approved written design](../specs/2026-10-08-surface-experiment-discovery-design.md), committed as 108b4aa and approved by the user “LGTM!” on October 10, 2026.
 
-**Status:** Written plan awaiting user review. No product implementation or scientific collection has started. After plan review use the preserved subagent method; do not ask the user to select it again.
+**Status:** Written plan approved by the user “LGTM!” on October 10, 2026; subagent-driven execution authorized. Task status and immutable approval digest are recorded in the owned evidence ledger. Scientific collection still requires the independent precollection gate.
 
 ## Global Constraints
 
