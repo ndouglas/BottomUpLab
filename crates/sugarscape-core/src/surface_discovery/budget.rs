@@ -41,6 +41,7 @@ impl Limits {
 pub(crate) struct Budget {
     pub(crate) limits: Limits,
     pub(crate) stats: SearchStats,
+    live_bytes: u64,
 }
 impl Budget {
     pub(crate) fn new(limits: &Limits) -> Result<Self, Error> {
@@ -48,16 +49,25 @@ impl Budget {
         Ok(Self {
             limits: limits.clone(),
             stats: SearchStats::default(),
+            live_bytes: 0,
         })
     }
     pub(crate) fn allocate(&mut self, bytes: u64) -> Result<(), Error> {
         let next = checked_limit(
-            self.stats.allocation_bytes,
+            self.live_bytes,
             bytes,
             self.limits.allocation_bytes,
             "allocation_bytes",
         )?;
-        self.stats.allocation_bytes = next;
+        self.live_bytes = next;
+        self.stats.allocation_bytes = self.stats.allocation_bytes.max(next);
+        Ok(())
+    }
+    pub(crate) fn release(&mut self, bytes: u64) -> Result<(), Error> {
+        self.live_bytes = self
+            .live_bytes
+            .checked_sub(bytes)
+            .ok_or(Error::ArithmeticOverflow)?;
         Ok(())
     }
     pub(crate) fn state(&mut self, bytes: u64) -> Result<(), Error> {

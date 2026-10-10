@@ -273,7 +273,7 @@ The recurrence is explicit: for each action subtract all future investigator pai
 **Files:** replay.rs/evaluation.rs/metrics.rs and replay/evaluation tests.
 **Consumes:** Compiled investigator policy. **Produces:** Replay/Episode/Panel and full-population metrics.
 
-- [ ] **Step 1: Write independent episode/replay RED tests.** Parse each reviewed evaluation row into protocol/prior/environment/sequence and build registered limits:
+- [x] **Step 1: Write independent episode/replay RED tests.** Parse each reviewed evaluation row into protocol/prior/environment/sequence and build registered limits:
 
 ~~~rust
 let policy = CompiledPolicy::build(&protocol, prior, &limits).unwrap();
@@ -283,7 +283,7 @@ assert_eq!(serde_json::to_value(&actual).unwrap(), row["episode"]);
 ~~~
 
 Run cargo test -p sugarscape-core surface_discovery::tests::replay and evaluation filters; include counterfactual investigator-inference prefixes, while responder replay rejects prefixes inconsistent with the declared policy. Do not substitute off-policy replay for declared-policy likelihoods.
-- [ ] **Step 2: Implement candidate-local responder replay.** Re-execute original worlds under declared compiled policy, not actual peer history or fixed Ensemble likelihood. Deduplicate a world's contribution when private selection gives identical peer prefix. Public stopping informs; private selections do not. B boundary and issued bit chronology remain exact. Predictions use own posterior majority; rewards/lineage stay evaluator-only.
+- [x] **Step 2: Implement candidate-local responder replay.** Re-execute original worlds under declared compiled policy, not actual peer history or fixed Ensemble likelihood. Deduplicate a world's contribution when private selection gives identical peer prefix. Public stopping informs; private selections do not. B boundary and issued bit chronology remain exact. Predictions use own posterior majority; rewards/lineage stay evaluator-only.
 
 Task 4 defines the shared terminal prediction helper used by the host, never by physical transitions:
 
@@ -295,9 +295,9 @@ pub fn predict_target(belief: &Belief) -> Result<bool, Error> {
         == std::cmp::Ordering::Greater)
 }
 ~~~
-- [ ] **Step 3: Implement actual chronological host.** Infer both histories after each paid observation/public transition before advancing. Halt at first unsupported owner/prefix with partial costs/last supported belief; no subsequent wait/reset/bit/prediction. DataFlip helper stays nominal SP. Resource errors propagate separately; completed wrong prediction is a valid supported outcome.
-- [ ] **Step 4: GREEN whole-population and legacy equality.** Panels contain all 256 sequences once. Exact valid/failed/unavailable mass, spent and optional terminal reward/net/accuracy/group utility; three primary contrasts per eight strata and role-specific uniform expectations. No survivor means/unavailable paired terminal differences. Explicitly map new policy/choice names and compare SuppliedAdaptive full histories/clocks/actions/predictions/decisions/alternatives/costs to all original active comparator exports. Test first own/peer contradiction, earlier raw DataFlip, no mutation after halt, partial prediction retention, and supplied versus observed certainty.
-- [ ] **Step 5: Independent review and commit.** Resolve reference/privacy/population discrepancies; focused tests/scoped fmt/core Clippy. Commit feat(surface): evaluate policy-conditioned discovery and transfer.
+- [x] **Step 3: Implement actual chronological host.** Infer both histories after each paid observation/public transition before advancing. Halt at first unsupported owner/prefix with partial costs/last supported belief; no subsequent wait/reset/bit/prediction. DataFlip helper stays nominal SP. Resource errors propagate separately; completed wrong prediction is a valid supported outcome.
+- [x] **Step 4: GREEN whole-population and legacy equality.** Panels contain all 256 sequences once. Exact valid/failed/unavailable mass, spent and optional terminal reward/net/accuracy/group utility; three primary contrasts per eight strata and role-specific uniform expectations. No survivor means/unavailable paired terminal differences. Explicitly map new policy/choice names and compare SuppliedAdaptive full histories/clocks/actions/predictions/decisions/alternatives/costs to all original active comparator exports. Test first own/peer contradiction, earlier raw DataFlip, no mutation after halt, partial prediction retention, and supplied versus observed certainty.
+- [x] **Step 5: Independent review and commit.** Resolve reference/privacy/population discrepancies; focused tests/scoped fmt/core Clippy. Commit feat(surface): evaluate policy-conditioned discovery and transfer.
 
 ## Task 5 / Stage 3: Diagnostic and Checked CLI
 
