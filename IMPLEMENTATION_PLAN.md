@@ -14,7 +14,7 @@
 **Goal**: Observational traffic views and separate episode wrapper.
 **Success Criteria**: Aligned snapshots, unchanged base output, checked combined64MiB cap.
 **Tests**: Views/RNG/bytes/cutoff/replay tests, construction suite, fmt/core Clippy.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 4: Complete acceptance and compatibility
 **Goal**: Prove privacy/rollback and retain F5 saved evidence through whole review.
