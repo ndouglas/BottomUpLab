@@ -1,9 +1,9 @@
 # Surface experiment discovery: declarative protocol 1
 
-**Date:** 2026-10-10. **Status:** source-informed declarative handoff;
-independent numerical derivation, review, and feasibility registration are pending.
-This document contains rules and output contracts, not measured findings, raw
-optimal values, derived identifiability classes, or registered numerical caps.
+**Date:** 2026-10-10. **Status:** declarative handoff and independent numerical
+reference gates complete; native/browser feasibility and precollection review remain pending.
+This document contains rules, output contracts and reviewed engineering caps,
+without production measurements, raw optimal values or derived identifiability classes.
 Production implementation and judged collection require the remaining Task 1
 gates in the [approved implementation plan](../plans/2026-10-10-surface-experiment-discovery.md).
 The [approved design](../specs/2026-10-08-surface-experiment-discovery-design.md)
@@ -245,11 +245,64 @@ Raw and KnownRaw paid-slot tie order is Wait, Read, Write(Probe0), Write(Ack0),
 Write(Probe1), Write(Ack1), Write(Data0), Write(Data1). Calibration inspection,
 blank write, arbitrary live actions, and mid-round Stop are excluded. Round
 ties select Stop before Continue; live ties select Inspect before Attempt.
-At three rounds only Stop remains. Constrained controls expose only legal
-choices, not extra alternatives evaluated with a stronger policy. Predictions
+At three rounds only Stop remains. Constrained controls report all mechanically
+legal current-intervention alternatives with their declared downstream policy;
+their selected choice still follows the prescribed control law below. Predictions
 choose one iff exact target probability is strictly greater than 1/2; ties choose
 zero. Numeric rational comparison is by exact value, not float epsilon or the
 structural order of numerator/denominator pairs.
+
+### Amendment 3: reported alternatives and prescribed control choices
+
+The mechanically legal **current-intervention menu** and the policy's **on-policy
+selected choice** are distinct. At an unselected Probe boundary with completed
+0..2, every policy's Decision.alternatives reports Stop then Continue; at
+completed 3 it reports only Stop. At an unselected Trial boundary, every policy
+reports Inspect then Attempt. At a raw Calibration boundary, RawAdaptive and
+KnownRaw report the eight paid actions in the declared tie order. Supplied
+controls have no raw Calibration boundary or synthetic slot-choice alternatives.
+
+RawAdaptive, SuppliedAdaptive, and KnownRaw maximize their current legal menu
+with the declared tie order. NoProbe always selects Stop at Probe boundaries
+and maximizes Inspect/Attempt at Trial boundaries. InspectOnly always selects
+Stop at Probe boundaries and Inspect at Trial boundaries, **even if a reported
+counterfactual alternative has greater value**. Continue at a NoProbe or
+InspectOnly Probe boundary is therefore a reported legal current intervention,
+not its on-policy calibration purchase. Likewise, InspectOnly's reported
+Attempt value does not change its on-policy inspection behavior. Initial values,
+continuation values, and evaluated episodes use the selected adaptive optimum
+or prescribed control choice, rather than automatically taking the largest
+reported value for a forced control.
+
+For each alternative, force **only this current intervention**, then evaluate
+all future decisions under the **same declared PolicyKind**. A forced Continue
+for NoProbe/InspectOnly executes the purchased supplied-recipe round and then
+resumes that control's prescribed Stop at its next Probe boundary; it does not
+enable raw slots or adaptive future probing. A forced Attempt for InspectOnly
+uses that live routine for the current trial and resumes prescribed Inspect
+on later trials. Alternative reporting therefore does not substitute a stronger
+downstream policy or alter the actual controls. Every ChoiceValue and selected
+Decision retains the declared continuation_policy. The selected continuation
+value is the value of Decision.choice, which need not be the maximum alternative
+for a forced control.
+
+Investigator inference permits these own legal counterfactual interventions and
+conditions their resulting own histories without treating the selection as
+evidence. Such witnesses are InvestigatorInference. ResponderReplay remains
+replay of the actual declared on-policy investigator choice law; a mechanically
+legal forced control deviation is not made an on-policy responder history by
+including its value in alternatives. Preserve this distinction in candidate
+support and witness labels. The original active planner verifies this contract:
+it computes the full legal alternative vector first, selects forced controls
+separately, and rolls each alternative onward through the same policy's solver.
+
+This source-informed reporting correction preserves canonical NoProbe and
+InspectOnly legacy decision fields/order/values. It changes no on-policy action,
+horizon, symbol, prior, price, setting, tie order, or utility objective. Preserve
+the prior reviewed handoff and registered cap bytes by immutable receipts;
+independently rederive affected reporting and recheck feasibility/cap registration
+before treating the prior engineering ceilings as current. Scoped independent
+review precedes that source-blind rederivation.
 
 The objective is expected **investigator** terminal reward minus future paid
 costs. Correct prediction pays 12, incorrect prediction 0, with four targets.
@@ -550,7 +603,8 @@ these semantic clarifications require scoped independent review before use.
 witness belief equals the support's exact model/target projection; unsupported
 witnesses have null belief, empty support, and null decision/value. Investigator
 decision witnesses include every legal alternative in tie order, the declared
-continuation policy, chosen optimum, and its exact continuation value. Responder
+continuation policy, adaptive maximizing or prescribed control choice as
+appropriate, and that selected choice's exact continuation value. Responder
 witnesses have null decision/value and must be on declared-policy replay; own
 counterfactual intervention witnesses are explicitly InvestigatorInference.
 
@@ -800,3 +854,21 @@ This registration appends engineering metadata to the reviewed declarative
 handoff without changing actions, priors, prices, horizon, ties or numerical
 results. Independent derivation metadata continues to identify its immutable
 reviewed input bytes rather than silently claiming the appended document hash.
+
+## Reviewed Amendment 3 engineering registration
+
+The corrected full-menu reference series passed independent review before
+production planning and scientific collection. Actual actions, histories,
+predictions, beliefs, costs, rewards, failures, discoveries and all scalar panel
+projections are unchanged from the preserved original reference. Counterfactual
+decision reporting expanded as Amendment 3 requires; first reference source and
+outputs, earlier receipts and cap registration remain retained with explicit
+immutable aliases. No production scientific report has been collected.
+
+Fresh complete-reference maxima are 180,152 states, 496,529 branches and
+721,813,504 allocation bytes. The revised ceilings are exactly twice those
+requirements: 360,304 states, 993,058 branches and 1,443,627,008 allocation bytes.
+The boundary remains one compilation plus its applicable actual environments,
+taking the maximum across the 16 compilations. Strict limits-reference now binds
+the actual Amendment 3 independent reviewer receipt; native accounting, browser
+feasibility and final precollection source freeze remain separate later gates.

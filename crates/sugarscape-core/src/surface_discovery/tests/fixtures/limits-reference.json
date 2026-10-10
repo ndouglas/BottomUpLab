@@ -2,7 +2,7 @@
   "version": "surface-discovery-limits-reference-v1",
   "metadata": {
     "protocol_version": 1,
-    "protocol_sha256": "95abee7703ca95b3244d7c9b10d0267ce20e7c668abc5400a381447d1e4923de",
+    "protocol_sha256": "11b1c8af8320fa729720d72e74a6d29fd5245bf961cafbf174827b5ba6c3de84",
     "author": "source-blind discovery_reference_author; independent Python Fraction derivation",
     "inputs": [
       {
@@ -49,69 +49,64 @@
         "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v2/inputs/protocol-amendment2.md",
         "bytes": 54833,
         "sha256": "95abee7703ca95b3244d7c9b10d0267ce20e7c668abc5400a381447d1e4923de"
+      },
+      {
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/amendment3-inputs/protocol.md",
+        "bytes": 59978,
+        "sha256": "11b1c8af8320fa729720d72e74a6d29fd5245bf961cafbf174827b5ba6c3de84"
+      },
+      {
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/amendment3-inputs/host-memory.json",
+        "bytes": 1960,
+        "sha256": "f8e5be5e75979b582f725e8d4357fa6a1b2b47fae2d7a0f143948d1e624284f6"
       }
     ],
     "program": {
-      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/reference.py",
-      "bytes": 22900,
-      "sha256": "abc49606eb91be374173204a5e3f7dc48ebd612d090cc6e0062d5d17bc56c15e"
+      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/reference.py",
+      "bytes": 23352,
+      "sha256": "0764b41a343e04e2a50ad213fa3338f6602aa8f13590207af8d7406b006d05b8"
     },
     "tests": {
-      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/test_reference.py",
-      "bytes": 12128,
-      "sha256": "aac7e14f506e8296df34641e1f1c4942a7d2093a48824860604fddc07865a92d"
+      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/test_reference.py",
+      "bytes": 12146,
+      "sha256": "c2857c5701a4fbb9b07324779ba6e3cf2312b280640d9a92913b925e2886ec6d"
     },
     "derivation_receipts": [
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/derivation.md",
-        "bytes": 10617,
-        "sha256": "1dda833dca75d9cd7482e86328d99655d0c35c36823dcb1ef312f6c24e9e6049"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/derivation-amendment3.md",
+        "bytes": 13232,
+        "sha256": "0759f6c4b24864f83e5bc2fb8d1491f3cdd0be0bb4bc182482a66bb52a7e2a56"
       },
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/derive.py",
-        "bytes": 19674,
-        "sha256": "2e10c1dbfcac1a2a4a176a68caf099360afb7a116338d1b8d1de6c478c709238"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/derive.py",
+        "bytes": 22625,
+        "sha256": "b70a36955c91bcabf60d4090a9e5d8d058e919293e14899a62bc5971e1cd107d"
       },
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/input-read-log-revision-1.json",
-        "bytes": 1954,
-        "sha256": "0e3a54efdf0baca36711aa6943be4139b5d079bfe7deaa2e07514f3d3489c4f5"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/test_amendment3_reporting.py",
+        "bytes": 4430,
+        "sha256": "96d1bc1c1e165ad37adc5878576e4b78adee4d372916bbd89cf8c27adb594c4f"
       },
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v2/registration-delta.json",
-        "bytes": 1181,
-        "sha256": "b5951d3c35e7ce3ee3cbb46986d10776b3ceb3fe08bd750283286ab424cb58e0"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/sealed-source/input-read-log-amendment3.json",
+        "bytes": 3918,
+        "sha256": "206abcc99d9539e6ac3d70564e7932df009e44b027a0d58d8456f0137de4215d"
       },
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v2/additional-read-log.json",
-        "bytes": 1449,
-        "sha256": "925f0dc13c529742702c0b7cacc9f6a7dea831cab2ca22ce659dc0c9c1340c7e"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/immutable-registration/historical-alias-map.json",
+        "bytes": 108144,
+        "sha256": "a023ff26be76def4bfa03bddb236807759ba83be87eb6c40688d7ec57e413499"
       },
       {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/package.py",
-        "bytes": 8211,
-        "sha256": "be2cf1740405f876573e43fd5f2a67da0c525bc598d1e5080acbdaf4019a3085"
-      },
-      {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v3/registration-delta.json",
-        "bytes": 2517,
-        "sha256": "552d5fa84f8e0a697304062daf888036bfa6bcbd3c68251706fe9594c51be08d"
-      },
-      {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v3/witness-validation.json",
-        "bytes": 1494,
-        "sha256": "f2fc7b5c9ac403144a2ae760b1f8b53bf4abe5ee878750aad542a6d717c656c4"
-      },
-      {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/package_v3.py",
-        "bytes": 8531,
-        "sha256": "24631037702cdb103ee4b2e0b327db69ae977bcf5ddf6bc150df9d5d96b671c5"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/immutable-registration/registration-delta.json",
+        "bytes": 5253,
+        "sha256": "86a447a13c72dfeeabd69abca67bf18a5826fafe800d8cea72e7688854623c75"
       }
     ],
     "full_projection": {
-      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v3/full-projection-manifest.json",
-      "bytes": 1317,
-      "sha256": "c8c7422be84fe062f8b1633deb14b164c33dae592ed0998f170161be9684ad9a"
+      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/full-projection-manifest.json",
+      "bytes": 219838,
+      "sha256": "55c20eab830f7425ac92ac3cfc75977f90a7ad99c3b41823df0041ade97eb657"
     }
   },
   "counter_definition": "candidate_worlds=all original catalog candidates enumerated; decision_states=cal/live memo keys+all retained actual chronological checkpoints+distinct helper replay keys; branches=all memo alternative evaluations+actual paid transitions+two local validation visits per checkpoint+nominal replay insertion visits. Full accounting per compilation in run receipts.",
@@ -136,17 +131,17 @@
         "candidate_worlds": 1024,
         "decision_states": 180152,
         "branches": 496529,
-        "allocation_bytes": 537395200
+        "allocation_bytes": 523059200
       },
-      "wall_time_ns": 15240541708,
-      "peak_rss_bytes": 537395200,
+      "wall_time_ns": 14816972708,
+      "peak_rss_bytes": 523059200,
       "policy_bytes": 13549,
       "replay_bytes": 325406,
       "full_projection_bytes": 1849348,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-RawAdaptive-accounting.json",
-        "bytes": 811,
-        "sha256": "68e5304c862a98af826dfa473ffaaeb7befe9e08ba317bdb5e51f6a781f1ed4e"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-RawAdaptive-accounting.json",
+        "bytes": 833,
+        "sha256": "1f9dc0c30572c2a9d9f5ffa09394498fd4198b4f434f13de459a1b3df77f2fbe"
       }
     },
     {
@@ -168,17 +163,17 @@
         "candidate_worlds": 1024,
         "decision_states": 176408,
         "branches": 485991,
-        "allocation_bytes": 566886400
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 14726729500,
-      "peak_rss_bytes": 566886400,
+      "wall_time_ns": 14275302541,
+      "peak_rss_bytes": 572424192,
       "policy_bytes": 970,
       "replay_bytes": 325406,
       "full_projection_bytes": 1190208,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-SuppliedAdaptive-accounting.json",
-        "bytes": 821,
-        "sha256": "7613f371f984b4a660f03a4dfe414a6ff56b2082ea764b39cb1b3106bfb5d92f"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-SuppliedAdaptive-accounting.json",
+        "bytes": 843,
+        "sha256": "b7ecb0e7ef102473921e39b3f9a56f82a7dda164ac4c7ab15ea1c155d7569258"
       }
     },
     {
@@ -198,19 +193,19 @@
       "completed": true,
       "stats": {
         "candidate_worlds": 1024,
-        "decision_states": 157389,
-        "branches": 444961,
-        "allocation_bytes": 583221248
+        "decision_states": 157452,
+        "branches": 445031,
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 12977319792,
-      "peak_rss_bytes": 583221248,
-      "policy_bytes": 376,
+      "wall_time_ns": 12583345000,
+      "peak_rss_bytes": 572424192,
+      "policy_bytes": 967,
       "replay_bytes": 249392,
-      "full_projection_bytes": 504386,
+      "full_projection_bytes": 505223,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-NoProbe-accounting.json",
-        "bytes": 793,
-        "sha256": "e382a5640df98fee4fad1f0c3ce2089c109770fe8449b500eb20484b1ec06381"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-NoProbe-accounting.json",
+        "bytes": 816,
+        "sha256": "9d9714f4b42f4d4579ed199a5563d8172591e467f4bd7ac43514bf821e7234c8"
       }
     },
     {
@@ -234,17 +229,17 @@
         "candidate_worlds": 256,
         "decision_states": 34485,
         "branches": 95040,
-        "allocation_bytes": 583221248
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 1454828416,
-      "peak_rss_bytes": 583221248,
+      "wall_time_ns": 1352951416,
+      "peak_rss_bytes": 572424192,
       "policy_bytes": 1745,
       "replay_bytes": 78670,
       "full_projection_bytes": 111855,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-KnownRaw-SharedPersistent-accounting.json",
-        "bytes": 840,
-        "sha256": "def8be83950c28b5fe103ded9b470304092968a59d718fcbb2b6f6fb555006f0"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-KnownRaw-SharedPersistent-accounting.json",
+        "bytes": 862,
+        "sha256": "632bf2f8c4b7ce4468c7c13dc770a9e1afadabe10fddc0253f78a1544e7ffcea"
       }
     },
     {
@@ -268,17 +263,17 @@
         "candidate_worlds": 256,
         "decision_states": 34097,
         "branches": 94842,
-        "allocation_bytes": 583221248
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 1405241333,
-      "peak_rss_bytes": 583221248,
+      "wall_time_ns": 1363848583,
+      "peak_rss_bytes": 572424192,
       "policy_bytes": 1468,
       "replay_bytes": 79073,
       "full_projection_bytes": 105459,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-KnownRaw-SharedResetting-accounting.json",
-        "bytes": 837,
-        "sha256": "8ec15050ebee45454bfb264d8063a7d2783113d8a7d4abef69d10a51533f9c67"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-KnownRaw-SharedResetting-accounting.json",
+        "bytes": 859,
+        "sha256": "9754a7e2f764ab9115984e78170489f19093c16bc7a203e2ab08b02bd254a455"
       }
     },
     {
@@ -302,17 +297,17 @@
         "candidate_worlds": 256,
         "decision_states": 34070,
         "branches": 94861,
-        "allocation_bytes": 583221248
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 1442926750,
-      "peak_rss_bytes": 583221248,
+      "wall_time_ns": 1317693958,
+      "peak_rss_bytes": 572424192,
       "policy_bytes": 1234,
       "replay_bytes": 80547,
       "full_projection_bytes": 105403,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-KnownRaw-PrivatePersistent-accounting.json",
-        "bytes": 843,
-        "sha256": "710992c4420eef1ecf3f312b45ab202cd3331f14f6e59643db56f0b2754c7179"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-KnownRaw-PrivatePersistent-accounting.json",
+        "bytes": 865,
+        "sha256": "7b1f5739fbebc974840c6f56579482083e2fcc13a2b23877f30bc52c0fde3e09"
       }
     },
     {
@@ -336,17 +331,17 @@
         "candidate_worlds": 256,
         "decision_states": 33960,
         "branches": 94527,
-        "allocation_bytes": 583221248
+        "allocation_bytes": 572424192
       },
-      "wall_time_ns": 1370847542,
-      "peak_rss_bytes": 583221248,
+      "wall_time_ns": 1373470375,
+      "peak_rss_bytes": 572424192,
       "policy_bytes": 462,
       "replay_bytes": 80843,
       "full_projection_bytes": 104353,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-KnownRaw-Inert-accounting.json",
-        "bytes": 804,
-        "sha256": "ede5398c171e09753f34939f388c497ac80ff5e3bb2fa6576b556faf83001175"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-KnownRaw-Inert-accounting.json",
+        "bytes": 826,
+        "sha256": "551dc07642dcd3cf563667234fd2aaeefac71645d712db86e78a74b863e7811e"
       }
     },
     {
@@ -366,19 +361,19 @@
       "completed": true,
       "stats": {
         "candidate_worlds": 1024,
-        "decision_states": 157377,
-        "branches": 444933,
-        "allocation_bytes": 623263744
+        "decision_states": 157452,
+        "branches": 445031,
+        "allocation_bytes": 608419840
       },
-      "wall_time_ns": 13025946166,
-      "peak_rss_bytes": 623263744,
-      "policy_bytes": 221,
+      "wall_time_ns": 12672528583,
+      "peak_rss_bytes": 608419840,
+      "policy_bytes": 809,
       "replay_bytes": 249392,
-      "full_projection_bytes": 496995,
+      "full_projection_bytes": 510801,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/A-InspectOnly-accounting.json",
-        "bytes": 803,
-        "sha256": "750ee61b38a1eda5000940d6460123515b4aa5148ab584acd07f04f335250fd6"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/A-InspectOnly-accounting.json",
+        "bytes": 828,
+        "sha256": "3cb7a52ffcc03d832152ed855fe855463df156d075d76ff15f02dd1c4f7d43ce"
       }
     },
     {
@@ -400,17 +395,17 @@
         "candidate_worlds": 1024,
         "decision_states": 169729,
         "branches": 448477,
-        "allocation_bytes": 656949248
+        "allocation_bytes": 649805824
       },
-      "wall_time_ns": 13835397708,
-      "peak_rss_bytes": 656949248,
+      "wall_time_ns": 13389132625,
+      "peak_rss_bytes": 649805824,
       "policy_bytes": 11143,
       "replay_bytes": 377405,
       "full_projection_bytes": 539463,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-RawAdaptive-accounting.json",
-        "bytes": 811,
-        "sha256": "baca472a2d9d53f1c52a7c2edd8f50ce62352b2889c18e6bd1f6e0379ad8a25b"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-RawAdaptive-accounting.json",
+        "bytes": 833,
+        "sha256": "6582a813a3577d2a5db85fd40ea17d0a4cc001e7cea15c68f8341a6585ccb861"
       }
     },
     {
@@ -432,17 +427,17 @@
         "candidate_worlds": 1024,
         "decision_states": 168663,
         "branches": 445021,
-        "allocation_bytes": 688865280
+        "allocation_bytes": 683851776
       },
-      "wall_time_ns": 13882680500,
-      "peak_rss_bytes": 688865280,
+      "wall_time_ns": 13473200375,
+      "peak_rss_bytes": 683851776,
       "policy_bytes": 897,
       "replay_bytes": 377405,
       "full_projection_bytes": 532885,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-SuppliedAdaptive-accounting.json",
-        "bytes": 820,
-        "sha256": "6d0a8376358b198ea2fa0ff3ba102dbbc43a9e46c3a21e3a223030f8d0a47047"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-SuppliedAdaptive-accounting.json",
+        "bytes": 842,
+        "sha256": "d7809fee5c12330b0894bdf8662bbe5787560d196dfe221bf17c292a37a2255a"
       }
     },
     {
@@ -462,19 +457,19 @@
       "completed": true,
       "stats": {
         "candidate_worlds": 1024,
-        "decision_states": 168603,
-        "branches": 444949,
-        "allocation_bytes": 709984256
+        "decision_states": 168663,
+        "branches": 445021,
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 13833149125,
-      "peak_rss_bytes": 709984256,
-      "policy_bytes": 322,
+      "wall_time_ns": 13463489875,
+      "peak_rss_bytes": 721813504,
+      "policy_bytes": 897,
       "replay_bytes": 377405,
-      "full_projection_bytes": 536093,
+      "full_projection_bytes": 537960,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-NoProbe-accounting.json",
-        "bytes": 793,
-        "sha256": "c208f6f16533230a0e79c3618705f69f48e11d2be1c88df4a79cb07c8d49ff53"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-NoProbe-accounting.json",
+        "bytes": 815,
+        "sha256": "18a4e468d12a1e0ad1222d9c4652f8a6ea80c3cd3eb008b6683aebcd9f4361d8"
       }
     },
     {
@@ -498,17 +493,17 @@
         "candidate_worlds": 256,
         "decision_states": 33454,
         "branches": 95090,
-        "allocation_bytes": 709984256
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 1444862541,
-      "peak_rss_bytes": 709984256,
+      "wall_time_ns": 1390010500,
+      "peak_rss_bytes": 721813504,
       "policy_bytes": 1675,
       "replay_bytes": 67593,
       "full_projection_bytes": 110190,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-KnownRaw-SharedPersistent-accounting.json",
-        "bytes": 840,
-        "sha256": "b89835ad431c27d7129c6af7eb843d7daa2e3f70152645f908d850d716166f5c"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-KnownRaw-SharedPersistent-accounting.json",
+        "bytes": 862,
+        "sha256": "9a9e9b3f3d132b69e8143b71ca231f60f491475fe9a3bf967bffcc06dff1579b"
       }
     },
     {
@@ -532,17 +527,17 @@
         "candidate_worlds": 256,
         "decision_states": 36108,
         "branches": 94922,
-        "allocation_bytes": 709984256
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 1393951417,
-      "peak_rss_bytes": 709984256,
+      "wall_time_ns": 1366157209,
+      "peak_rss_bytes": 721813504,
       "policy_bytes": 1215,
       "replay_bytes": 102021,
       "full_projection_bytes": 106108,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-KnownRaw-SharedResetting-accounting.json",
-        "bytes": 838,
-        "sha256": "68200ff4e56e6c9eec136d1137c55f71950dfe795f5789df989830854318b0fb"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-KnownRaw-SharedResetting-accounting.json",
+        "bytes": 860,
+        "sha256": "9444f1ce617609867af50389ff9884bf87f8f41fe97c4cc16fba61d1493a29ce"
       }
     },
     {
@@ -566,17 +561,17 @@
         "candidate_worlds": 256,
         "decision_states": 36078,
         "branches": 94797,
-        "allocation_bytes": 709984256
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 1654769541,
-      "peak_rss_bytes": 709984256,
+      "wall_time_ns": 1371608084,
+      "peak_rss_bytes": 721813504,
       "policy_bytes": 1020,
       "replay_bytes": 103381,
       "full_projection_bytes": 104531,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-KnownRaw-PrivatePersistent-accounting.json",
-        "bytes": 843,
-        "sha256": "3f7507d8a6c959ffd2529d5f40fda7dc59c0ff2c199f45a89ba2801aa3e0cddb"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-KnownRaw-PrivatePersistent-accounting.json",
+        "bytes": 865,
+        "sha256": "2671fa6f2aaec5f5568dbe3b42199dceaec6779a4da634fff9c22a6808705005"
       }
     },
     {
@@ -600,17 +595,17 @@
         "candidate_worlds": 256,
         "decision_states": 36000,
         "branches": 94527,
-        "allocation_bytes": 709984256
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 1416410750,
-      "peak_rss_bytes": 709984256,
+      "wall_time_ns": 1414999542,
+      "peak_rss_bytes": 721813504,
       "policy_bytes": 450,
       "replay_bytes": 103736,
       "full_projection_bytes": 105485,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-KnownRaw-Inert-accounting.json",
-        "bytes": 805,
-        "sha256": "7a1c897ddcbab4c83a70ae0c44860cac6179782f46f8ab51f1a8f8248baf2f3f"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-KnownRaw-Inert-accounting.json",
+        "bytes": 827,
+        "sha256": "35c68c3399a0a3e057a770a7612f04317356089c45993c961a2b5432aa23bb1d"
       }
     },
     {
@@ -630,44 +625,44 @@
       "completed": true,
       "stats": {
         "candidate_worlds": 1024,
-        "decision_states": 141481,
-        "branches": 390917,
-        "allocation_bytes": 709984256
+        "decision_states": 141547,
+        "branches": 391005,
+        "allocation_bytes": 721813504
       },
-      "wall_time_ns": 11664793208,
-      "peak_rss_bytes": 709984256,
-      "policy_bytes": 221,
+      "wall_time_ns": 11378890875,
+      "peak_rss_bytes": 721813504,
+      "policy_bytes": 724,
       "replay_bytes": 318287,
-      "full_projection_bytes": 441361,
+      "full_projection_bytes": 445095,
       "receipt": {
-        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/B-InspectOnly-accounting.json",
-        "bytes": 803,
-        "sha256": "ba9939309cee97936d002ee142550fb75b46fd0f03779fd2aed5439819051470"
+        "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/B-InspectOnly-accounting.json",
+        "bytes": 827,
+        "sha256": "9b7d9d8a7336d2c4d5434ed0de5c9150cce33495be0e25980a0fb4afeab07990"
       }
     }
   ],
   "maximum_requirements": {
     "states": 180152,
     "branches": 496529,
-    "allocation_bytes": 709984256
+    "allocation_bytes": 721813504
   },
   "registered_limits": {
     "states": 360304,
     "branches": 993058,
-    "allocation_bytes": 1419968512
+    "allocation_bytes": 1443627008
   },
   "rounding": "Exactly twice each largest completed independent reference requirement; integral counts/bytes need no further rounding.",
   "host_capacity": {
-    "available_memory_bytes": 15457959936,
+    "available_memory_bytes": 17543479296,
     "check_receipt": {
-      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v1/capacity-check.json",
-      "bytes": 559,
-      "sha256": "e824794af57a549f844f47da48da30169fc99c722704de90c8f43d73e5e912dc"
+      "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/reference/census-v4-amendment3/capacity-check.json",
+      "bytes": 556,
+      "sha256": "69e44889e67c5d085349b625f8711e5d1a82d014c6329e31092939e45b01f288"
     }
   },
   "review_receipt": {
-    "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/numerical-fix-1-review.md",
-    "bytes": 9243,
-    "sha256": "d38cc9eb6321acb136db47a58911b5ac772aa70eaf8f764bac4d7d3259176a06"
+    "path": ".superpowers/sdd/2026-10-10-surface-experiment-discovery/numerical-amendment-3-review.md",
+    "bytes": 14511,
+    "sha256": "87ef4965953442c6e2318a62a712d2e917888ed9d76a0a9f56007c702535e7af"
   }
 }
