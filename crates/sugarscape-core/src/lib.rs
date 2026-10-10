@@ -71,3 +71,5 @@ pub mod geosim;
 
 /// Paid active experiments on the frozen shared surface.
 pub mod active_surface;
+
+pub mod surface_discovery;

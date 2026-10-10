@@ -182,7 +182,7 @@ Add reset/PP separation, Inspect 9/Attempt 6, no calibration bit, exact tie/inte
 **Files:** Laboratory mod.rs/types.rs/kernel.rs/tests/mod.rs/tests/kernel.rs; additive core lib.rs.
 **Consumes:** Task 1 and frozen World/controller. **Produces:** Protocol/Prefix/View/Choice/State/Step contracts.
 
-- [ ] **Step 1: Write RED local chronology/cost tests.**
+- [x] **Step 1: Write RED local chronology/cost tests.**
 
 ~~~rust
 #[test]
@@ -199,7 +199,7 @@ fn stop_zero_does_not_charge_or_issue_a_bit() {
 ~~~
 
 Run cargo test -p sugarscape-core surface_discovery::tests::kernel; retain missing API then genuine behavioral RED.
-- [ ] **Step 2: Implement strict local records and queued transitions.** Check completed 0..3/trial 0..3, ownership/phase/choice, symbols, reconstructible budgets/bits/priors and missing/unknown wire fields. Use World for physics. Raw choice queues one paid slot privately; Continue commits entire round, no mid-round Stop. Public Stop appears once; no skipped waits, duplicate resets or early bits. Helper uses candidate-local original physical controller; privileged state is never View input.
+- [x] **Step 2: Implement strict local records and queued transitions.** Check completed 0..3/trial 0..3, ownership/phase/choice, symbols, reconstructible budgets/bits/priors and missing/unknown wire fields. Use World for physics. Raw choice queues one paid slot privately; Continue commits entire round, no mid-round Stop. Public Stop appears once; no skipped waits, duplicate resets or early bits. Helper uses candidate-local original physical controller; privileged state is never View input.
 
 Implement From<shared_surface::Error> for the new Error, preserving ArithmeticOverflow separately. The privileged paid-event seam is:
 
@@ -223,8 +223,8 @@ fn pay(state: &mut EpisodeState, role: Role, position: Position,
 ~~~
 
 The enclosing advance_one updates both public checkpoints only after this event and returns before the next reset/bit/slot. It captures evaluator read lineage at this event without giving it to a controller.
-- [ ] **Step 3: GREEN boundary matrix.** Test purchased round costs [2,2], A/B/B/A, B consecutive slots and live boundary after unobserved A, mandatory stop at three, after-slot before reset/next bit, six legal symbols, generic acceptance, DataFlip effects, Inspect 9/Attempt 6 and maximum 42 credits. Wrong phase/ownership/insufficient credits leaves state unchanged. Serde tampered bit/credit/role/unknown fields, blank write and calibration inspection reject. Compare supplied physical transitions to original active kernel.
-- [ ] **Step 4: Review and commit.** Focused tests, edited-file rustfmt --edition 2021 --config skip_children=true, core Clippy; independent spec/quality reviews and scoped fixes. Commit feat(surface): add owned calibration decision kernel.
+- [x] **Step 3: GREEN boundary matrix.** Test purchased round costs [2,2], A/B/B/A, B consecutive slots and live boundary after unobserved A, mandatory stop at three, after-slot before reset/next bit, six legal symbols, generic acceptance, DataFlip effects, Inspect 9/Attempt 6 and maximum 42 credits. Wrong phase/ownership/insufficient credits leaves state unchanged. Serde tampered bit/credit/role/unknown fields, blank write and calibration inspection reject. Compare supplied physical transitions to original active kernel.
+- [x] **Step 4: Review and commit.** Focused tests, edited-file rustfmt --edition 2021 --config skip_children=true, core Clippy; independent spec/quality reviews and scoped fixes. Commit feat(surface): add owned calibration decision kernel.
 
 ## Task 3 / Stage 2: Joint Inference and Exact Planner
 
