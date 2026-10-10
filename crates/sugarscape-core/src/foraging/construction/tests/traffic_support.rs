@@ -94,6 +94,7 @@ pub(super) fn controlled_tick(
                 agent,
                 action,
                 traffic_effect: TrafficEffect::Normal,
+                excavation_effect: super::super::excavation_state::ExcavationEffect::Ordinary,
             },
             &o,
             &mut Scripted::new(&[]),
@@ -155,6 +156,7 @@ fn selected_tick(w: &mut World, i: usize, values: &[f64]) -> usize {
                 agent: learn(w, j, &o),
                 action: Action::Wait(WaitReason::NoNeighbor),
                 traffic_effect: TrafficEffect::Normal,
+                excavation_effect: super::super::excavation_state::ExcavationEffect::Ordinary,
             }
         };
         let before = w.state.agents[j].clone();
@@ -250,6 +252,7 @@ pub(super) fn decision_tick(w: &mut World, i: usize, decision: Decision, draws: 
                 agent: learn(w, j, &o),
                 action: Action::Wait(WaitReason::NoNeighbor),
                 traffic_effect: TrafficEffect::Normal,
+                excavation_effect: super::super::excavation_state::ExcavationEffect::Ordinary,
             }
         };
         apply(&w.setup, &mut w.state, j, selected, &o, draws).unwrap();

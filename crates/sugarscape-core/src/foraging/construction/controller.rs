@@ -1,9 +1,9 @@
 use super::{
     actions::apply,
-    decision::{decide_with_traffic, Policy},
+    decision::{decide_with_policies, Policy},
     knowledge::CellKnowledge,
     observation::observe,
-    Cargo, FoodPhase, TrafficCounts, WorkCounts,
+    Cargo, ExcavationCounts, FoodPhase, TrafficCounts, WorkCounts,
 };
 use super::{draws::DrawSource, world::State, Checked, Pos, Setup};
 use crate::config::FieldError;
@@ -60,6 +60,7 @@ pub(super) fn check(setup: &Setup, state: &State) -> Checked<()> {
     }
     let mut work = WorkCounts::default();
     let mut traffic = TrafficCounts::default();
+    let mut excavation = ExcavationCounts::default();
     for (i, agent) in state.agents.iter().enumerate() {
         let field = format!("agents[{i}]");
         if agent.id as usize != i
@@ -197,11 +198,24 @@ pub(super) fn check(setup: &Setup, state: &State) -> Checked<()> {
         traffic
             .checked_include(&agent.traffic.counts)
             .map_err(|e| context(e, field.clone()))?;
+        agent
+            .excavation
+            .check(
+                state.excavation_policy,
+                &agent.work,
+                setup.width,
+                setup.height,
+                state.tick,
+            )
+            .map_err(|e| context(e, field.clone()))?;
+        super::excavation_state::include_counts(&mut excavation, &agent.excavation.counts)
+            .map_err(|e| context(e, field.clone()))?;
         agent.work.check().map_err(|e| context(e, field.clone()))?;
         work.checked_include(&agent.work)
             .map_err(|e| context(e, field.clone()))?;
     }
     work.check()?;
+    super::excavation_state::check_counts(&excavation, &work)?;
     super::traffic::TrafficState {
         counts: traffic,
         ..Default::default()
@@ -274,11 +288,13 @@ pub(super) fn advance(
                 &occupancy(state),
                 &state.food.available(),
             )?;
-            let decision = decide_with_traffic(
+            let decision = decide_with_policies(
                 &p,
                 &state.agents[i],
                 &observation,
                 state.traffic_policy,
+                state.excavation_policy,
+                next,
                 draws,
             )?;
             apply(setup, state, i, decision, &observation, draws)
@@ -286,7 +302,8 @@ pub(super) fn advance(
         opportunity()
             .map_err(|e| context(e, format!("tick[{}].agents[{i}].{material}", state.tick)))?;
     }
-    check(setup, state).map_err(|e| context(e, format!("tick[{}]", state.tick)))?;
+    let completed_tick = state.tick;
     state.tick = next;
+    check(setup, state).map_err(|e| context(e, format!("tick[{completed_tick}]")))?;
     Ok(())
 }

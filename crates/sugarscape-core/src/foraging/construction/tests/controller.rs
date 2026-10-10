@@ -52,6 +52,7 @@ fn action(w: &mut World, i: usize, a: Action, values: &[f64]) -> Checked<()> {
             agent,
             action: a,
             traffic_effect: super::super::traffic::TrafficEffect::Normal,
+            excavation_effect: super::super::excavation_state::ExcavationEffect::Ordinary,
         },
         &o,
         &mut d,

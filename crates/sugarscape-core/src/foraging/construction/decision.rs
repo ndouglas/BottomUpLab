@@ -1,6 +1,8 @@
 //! Worker decisions receive only private knowledge, destination labels and local sensing.
 use super::{
-    draws::{checked_uniform, DrawSource},
+    draws::{checked_uniform, draw_index, DrawSource},
+    excavation_navigation::assess,
+    excavation_state::ExcavationEffect,
     knowledge::CellKnowledge,
     metrics::ComputeCounts,
     navigation::{
@@ -53,16 +55,19 @@ pub(super) struct Decision {
     pub(super) agent: Agent,
     pub(super) action: Action,
     pub(super) traffic_effect: super::traffic::TrafficEffect,
+    pub(super) excavation_effect: ExcavationEffect,
 }
 struct SelectedAction {
     action: Action,
     effect: TrafficEffect,
+    excavation_effect: ExcavationEffect,
 }
 impl From<Action> for SelectedAction {
     fn from(action: Action) -> Self {
         Self {
             action,
             effect: TrafficEffect::Normal,
+            excavation_effect: ExcavationEffect::Ordinary,
         }
     }
 }
@@ -105,10 +110,12 @@ fn movement((navigation, effect): (Navigation, TrafficEffect)) -> Checked<Select
         Navigation::Move(p) => Ok(SelectedAction {
             action: Action::Move(p),
             effect,
+            excavation_effect: ExcavationEffect::Ordinary,
         }),
         Navigation::Blocked => Ok(SelectedAction {
             action: Action::Wait(WaitReason::Congestion),
             effect,
+            excavation_effect: ExcavationEffect::Ordinary,
         }),
         _ => Err(error("expected a reachable travel destination")),
     }
@@ -205,6 +212,59 @@ fn pursue(
         }
     }
 }
+fn informed_pursuit(
+    traffic_policy: TrafficPolicy,
+    agent: &mut Agent,
+    site: Pos,
+    outlet: Pos,
+    opportunity_tick: u32,
+    observation: &Observation,
+    draws: &mut impl DrawSource,
+) -> Checked<SelectedAction> {
+    let plan = assess(&agent.map, agent.pos, site, outlet, opportunity_tick)?;
+    let selected = if plan.tied_candidates.is_empty() {
+        None
+    } else {
+        let length = u32::try_from(plan.tied_candidates.len())
+            .map_err(|_| vec![FieldError::new("excavation.candidates", "exceeds u32")])?;
+        Some(plan.tied_candidates[draw_index(draws, length)? as usize].clone())
+    };
+    agent
+        .excavation
+        .include_assessment(&plan, selected.clone())?;
+    let Some(candidate) = selected else {
+        return pursue(traffic_policy, agent, site, observation, draws);
+    };
+    agent.frontier = None;
+    agent.face = Some(candidate.face);
+    if agent.pos == candidate.approach {
+        if !observation
+            .cells
+            .iter()
+            .any(|c| c.pos == candidate.face && !c.open && c.diggable)
+        {
+            return Err(error(
+                "selected dig requires a fresh adjacent eligible face",
+            ));
+        }
+        Ok(SelectedAction {
+            action: Action::Dig(candidate.face),
+            effect: TrafficEffect::Normal,
+            excavation_effect: ExcavationEffect::SelectedDig,
+        })
+    } else {
+        let navigation = route(
+            traffic_policy,
+            agent,
+            &[candidate.approach],
+            observation,
+            draws,
+        )?;
+        let mut selected = movement(navigation)?;
+        selected.excavation_effect = ExcavationEffect::SelectedTravel;
+        Ok(selected)
+    }
+}
 #[cfg(test)]
 pub(super) fn decide(
     policy: &Policy,
@@ -220,11 +280,31 @@ pub(super) fn decide(
         draws,
     )
 }
+#[cfg(test)]
 pub(super) fn decide_with_traffic(
     policy: &Policy,
     agent: &Agent,
     observation: &Observation,
     traffic_policy: TrafficPolicy,
+    draws: &mut impl DrawSource,
+) -> Checked<Decision> {
+    decide_with_policies(
+        policy,
+        agent,
+        observation,
+        traffic_policy,
+        super::ExcavationPolicy::ExplorationFirstV1,
+        1,
+        draws,
+    )
+}
+pub(super) fn decide_with_policies(
+    policy: &Policy,
+    agent: &Agent,
+    observation: &Observation,
+    traffic_policy: TrafficPolicy,
+    excavation_policy: super::ExcavationPolicy,
+    opportunity_tick: u32,
     draws: &mut impl DrawSource,
 ) -> Checked<Decision> {
     observation.validate(policy.width, policy.height)?;
@@ -254,6 +334,7 @@ pub(super) fn decide_with_traffic(
             agent,
             action: Action::Wait(WaitReason::TrafficHold),
             traffic_effect: TrafficEffect::Hold,
+            excavation_effect: ExcavationEffect::Ordinary,
         });
     }
     let selected = match agent.mode() {
@@ -302,7 +383,26 @@ pub(super) fn decide_with_traffic(
         }
         Mode::Departing => {
             if let Some(site) = agent.site {
-                pursue(traffic_policy, &mut agent, site, observation, draws)?
+                if site == agent.pos {
+                    search(&mut agent, false)?
+                } else if agent.map.kind(site)? == (CellKnowledge::KnownSolid { diggable: false }) {
+                    search(&mut agent, true)?
+                } else if excavation_policy == super::ExcavationPolicy::InformedCostV1
+                    && agent.cargo.is_none()
+                    && agent.find.is_none()
+                {
+                    informed_pursuit(
+                        traffic_policy,
+                        &mut agent,
+                        site,
+                        policy.waste,
+                        opportunity_tick,
+                        observation,
+                        draws,
+                    )?
+                } else {
+                    pursue(traffic_policy, &mut agent, site, observation, draws)?
+                }
             } else if checked_uniform(draws)? < policy.parameters.p_search
                 || agent.frontier == Some(agent.pos)
             {
@@ -348,5 +448,6 @@ pub(super) fn decide_with_traffic(
         agent,
         action: selected.action,
         traffic_effect: selected.effect,
+        excavation_effect: selected.excavation_effect,
     })
 }

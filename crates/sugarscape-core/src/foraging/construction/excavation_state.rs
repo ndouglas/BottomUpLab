@@ -113,13 +113,7 @@ impl ExcavationState {
             ));
         }
         let c = self.counts;
-        if c.initiated_digs > c.selected_opportunities
-            || c.selected_opportunities > c.assessments
-            || c.assessments > work.opportunities
-            || c.initiated_digs > work.digs
-        {
-            return Err(error("counts", "exceeds assessment or paid-work bound"));
-        }
+        check_counts(&c, work)?;
         if (c.assessments == 0) != self.last_assessment.is_none() {
             return Err(error(
                 "last_assessment",
@@ -180,6 +174,16 @@ impl ExcavationState {
         }
         Ok(())
     }
+}
+pub(super) fn check_counts(c: &ExcavationCounts, work: &WorkCounts) -> Checked<()> {
+    if c.initiated_digs > c.selected_opportunities
+        || c.selected_opportunities > c.assessments
+        || c.assessments > work.opportunities
+        || c.initiated_digs > work.digs
+    {
+        return Err(error("counts", "exceeds assessment or paid-work bound"));
+    }
+    Ok(())
 }
 fn coordinate(p: Pos, width: u32, height: u32) -> Checked<()> {
     if p.x >= width || p.y >= height {

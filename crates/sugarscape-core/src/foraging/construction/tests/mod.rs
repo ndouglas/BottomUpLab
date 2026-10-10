@@ -72,3 +72,6 @@ mod traffic_acceptance;
 mod excavation_baseline;
 mod excavation_navigation;
 mod excavation_types;
+
+mod excavation_controller;
+mod excavation_support;
