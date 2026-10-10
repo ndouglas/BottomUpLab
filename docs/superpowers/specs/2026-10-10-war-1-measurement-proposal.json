@@ -1,0 +1,2611 @@
+{
+  "schema": "war1-measurement-proposal-v1",
+  "purpose": "prospective_design",
+  "registered": false,
+  "collection_authorized": false,
+  "seed_lists_generated": false,
+  "base_revision": "fd06370b5e0f40670faafab10e155044ef493f65",
+  "horizon": 8,
+  "observation_times": [
+    1,
+    2,
+    4,
+    8
+  ],
+  "seed_sampling": {
+    "population": "all unsigned 64-bit seeds",
+    "design": "independent OS-uniform draws with replacement, frozen before outcomes",
+    "engineering_seeds": [
+      7,
+      8
+    ],
+    "duplicates": "retain with distinct arm/trial identifiers"
+  },
+  "uncertainty": {
+    "scalar_slots": 924,
+    "cdf_slots": 198,
+    "scalar_alpha": 0.025,
+    "cdf_alpha": 0.025,
+    "scalar_radii": {
+      "512": 0.10463262883960382,
+      "2048": 0.05231631441980191
+    },
+    "cdf_radii": {
+      "512": 0.09717842434196156,
+      "2048": 0.04858921217098078
+    },
+    "radius_decimals_status": "display_only; derive outward-certified bounds from normative formulas"
+  },
+  "budgets": {
+    "compact_outcome_bytes": 32768,
+    "attempt_start_bytes": 1024,
+    "audit_frame_bytes": 32768,
+    "diagnostic_replicate_index": 0,
+    "archive_uncompressed_bytes": 4294967296,
+    "rss_bytes": 2147483648,
+    "wall_seconds": 43200,
+    "workers": 1
+  },
+  "census": {
+    "core": {
+      "arms": 36,
+      "attempts": 18432,
+      "max_settlements": 5505024,
+      "initial_actor_steps": 884473856
+    },
+    "scale": {
+      "arms": 8,
+      "attempts": 4096,
+      "max_settlements": 2097152,
+      "initial_actor_steps": 713031680
+    },
+    "mirror": {
+      "arms": 10,
+      "attempts": 5120,
+      "max_settlements": 2621440,
+      "initial_actor_steps": 438304768
+    },
+    "oracle": {
+      "arms": 12,
+      "attempts": 24576,
+      "max_settlements": 7340032,
+      "initial_actor_steps": 18350080
+    },
+    "total": {
+      "arms": 66,
+      "attempts": 52224,
+      "max_settlements": 17563648,
+      "initial_actor_steps": 2054160384
+    }
+  },
+  "arms": [
+    {
+      "arm_id": "core.E.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.E.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.E.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.E.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.E.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.E.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "E",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.E.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "core.NC.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.NC.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.NC.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.NC.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.NC.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.NC.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 68,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NC.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "core.NR.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.NR.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.NR.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.NR.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.NR.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.NR.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 0.9375,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.NR.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "core.C.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.C.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.C.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.C.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.C.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.C.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "C",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.C.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "core.L.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.L.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.L.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.L.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.L.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.L.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "L",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.5,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.L.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "core.S.N64.aimed_fire.dt1-16",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "core.S.N64.aimed_fire.dt1-32",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "core.S.N64.aimed_fire.dt1-64",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "core.S.N64.duel_contact.dt1-16",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "core.S.N64.duel_contact.dt1-32",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "core.S.N64.duel_contact.dt1-64",
+      "group": "core",
+      "profile": "S",
+      "scale": 64,
+      "mirror": false,
+      "config": {
+        "blue": 128,
+        "red": 64,
+        "blue_rate": 0.25,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/core/core.S.N64.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "scale.E.N16.aimed_fire.dt1-64",
+      "group": "scale",
+      "profile": "E",
+      "scale": 16,
+      "mirror": false,
+      "config": {
+        "blue": 16,
+        "red": 16,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.E.N16.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "scale.E.N16.duel_contact.dt1-64",
+      "group": "scale",
+      "profile": "E",
+      "scale": 16,
+      "mirror": false,
+      "config": {
+        "blue": 16,
+        "red": 16,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.E.N16.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "scale.E.N256.aimed_fire.dt1-64",
+      "group": "scale",
+      "profile": "E",
+      "scale": 256,
+      "mirror": false,
+      "config": {
+        "blue": 256,
+        "red": 256,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.E.N256.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "scale.E.N256.duel_contact.dt1-64",
+      "group": "scale",
+      "profile": "E",
+      "scale": 256,
+      "mirror": false,
+      "config": {
+        "blue": 256,
+        "red": 256,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.E.N256.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "scale.C.N16.aimed_fire.dt1-64",
+      "group": "scale",
+      "profile": "C",
+      "scale": 16,
+      "mirror": false,
+      "config": {
+        "blue": 32,
+        "red": 16,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.C.N16.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "scale.C.N16.duel_contact.dt1-64",
+      "group": "scale",
+      "profile": "C",
+      "scale": 16,
+      "mirror": false,
+      "config": {
+        "blue": 32,
+        "red": 16,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.C.N16.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "scale.C.N256.aimed_fire.dt1-64",
+      "group": "scale",
+      "profile": "C",
+      "scale": 256,
+      "mirror": false,
+      "config": {
+        "blue": 512,
+        "red": 256,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.C.N256.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "scale.C.N256.duel_contact.dt1-64",
+      "group": "scale",
+      "profile": "C",
+      "scale": 256,
+      "mirror": false,
+      "config": {
+        "blue": 512,
+        "red": 256,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/scale/scale.C.N256.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 68,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.NC.N64.aimed_fire.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "NC",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 68,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.NC.N64.duel_contact.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 0.9375,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.NR.N64.aimed_fire.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "NR",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 64,
+        "blue_rate": 0.9375,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.NR.N64.duel_contact.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "C",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.C.N64.aimed_fire.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "C",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.C.N64.duel_contact.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "L",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 0.5,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.L.N64.aimed_fire.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "L",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 0.5,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.L.N64.duel_contact.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "S",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 0.25,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.S.N64.aimed_fire.dt1-64.mirror"
+    },
+    {
+      "arm_id": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "group": "mirror",
+      "profile": "S",
+      "scale": 64,
+      "mirror": true,
+      "config": {
+        "blue": 64,
+        "red": 128,
+        "blue_rate": 1,
+        "red_rate": 0.25,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 512,
+      "seed_namespace": "war1-measurement-v1/mirror/mirror.S.N64.duel_contact.dt1-64.mirror"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.duel_contact.dt1-16",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.duel_contact.dt1-32",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "oracle.1v1.N1.duel_contact.dt1-64",
+      "group": "oracle",
+      "profile": "1v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 1,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.1v1.N1.duel_contact.dt1-64"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.aimed_fire.dt1-16",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.aimed_fire.dt1-16"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.aimed_fire.dt1-32",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.aimed_fire.dt1-32"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.aimed_fire.dt1-64",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "aimed_fire"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.aimed_fire.dt1-64"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.duel_contact.dt1-16",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.0625,
+        "max_steps": 128,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.duel_contact.dt1-16"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.duel_contact.dt1-32",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.03125,
+        "max_steps": 256,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.duel_contact.dt1-32"
+    },
+    {
+      "arm_id": "oracle.2v1.N1.duel_contact.dt1-64",
+      "group": "oracle",
+      "profile": "2v1",
+      "scale": 1,
+      "mirror": false,
+      "config": {
+        "blue": 2,
+        "red": 1,
+        "blue_rate": 1,
+        "red_rate": 1,
+        "dt": 0.015625,
+        "max_steps": 512,
+        "geometry": "duel_contact"
+      },
+      "replicates": 2048,
+      "seed_namespace": "war1-measurement-v1/oracle/oracle.2v1.N1.duel_contact.dt1-64"
+    }
+  ],
+  "scalar_endpoint_ids": [
+    "population.blue.t1",
+    "population.red.t1",
+    "population.blue.t2",
+    "population.red.t2",
+    "population.blue.t4",
+    "population.red.t4",
+    "population.blue.t8",
+    "population.red.t8",
+    "ending.blue_survivor",
+    "ending.red_survivor",
+    "ending.double_extinction",
+    "ending.rate_zero",
+    "ending.horizon",
+    "duration.restricted_mean_over_H"
+  ],
+  "cdf_endpoints": [
+    {
+      "id": "duration.U_over_H",
+      "support": "{j/K: j=1..K}; right-continuous empirical CDF, including combined extinction/censor atom at1; use censor flag separately for P(T>H)"
+    },
+    {
+      "id": "survivors.blue_fraction",
+      "support": "{j/B0: j=0..B0}"
+    },
+    {
+      "id": "survivors.red_fraction",
+      "support": "{j/R0: j=0..R0}"
+    }
+  ],
+  "contrast_groups": [
+    {
+      "contrast_id": "geometry:core.E.N64.aimed_fire.dt1-16-minus-core.E.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.E.N64.aimed_fire.dt1-32-minus-core.E.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.E.N64.aimed_fire.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NC.N64.aimed_fire.dt1-16-minus-core.NC.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-16",
+      "right_arm": "core.NC.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NC.N64.aimed_fire.dt1-32-minus-core.NC.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-32",
+      "right_arm": "core.NC.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NC.N64.aimed_fire.dt1-64-minus-core.NC.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "core.NC.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NR.N64.aimed_fire.dt1-16-minus-core.NR.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-16",
+      "right_arm": "core.NR.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NR.N64.aimed_fire.dt1-32-minus-core.NR.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-32",
+      "right_arm": "core.NR.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.NR.N64.aimed_fire.dt1-64-minus-core.NR.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "core.NR.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.C.N64.aimed_fire.dt1-16-minus-core.C.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.C.N64.aimed_fire.dt1-16",
+      "right_arm": "core.C.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.C.N64.aimed_fire.dt1-32-minus-core.C.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.C.N64.aimed_fire.dt1-32",
+      "right_arm": "core.C.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.C.N64.aimed_fire.dt1-64-minus-core.C.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.L.N64.aimed_fire.dt1-16-minus-core.L.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.L.N64.aimed_fire.dt1-16",
+      "right_arm": "core.L.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.L.N64.aimed_fire.dt1-32-minus-core.L.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.L.N64.aimed_fire.dt1-32",
+      "right_arm": "core.L.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.L.N64.aimed_fire.dt1-64-minus-core.L.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "core.L.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.S.N64.aimed_fire.dt1-16-minus-core.S.N64.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "core.S.N64.aimed_fire.dt1-16",
+      "right_arm": "core.S.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.S.N64.aimed_fire.dt1-32-minus-core.S.N64.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "core.S.N64.aimed_fire.dt1-32",
+      "right_arm": "core.S.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:core.S.N64.aimed_fire.dt1-64-minus-core.S.N64.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "core.S.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:scale.E.N16.aimed_fire.dt1-64-minus-scale.E.N16.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N16.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:scale.E.N256.aimed_fire.dt1-64-minus-scale.E.N256.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N256.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:scale.C.N16.aimed_fire.dt1-64-minus-scale.C.N16.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "scale.C.N16.aimed_fire.dt1-64",
+      "right_arm": "scale.C.N16.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:scale.C.N256.aimed_fire.dt1-64-minus-scale.C.N256.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "scale.C.N256.aimed_fire.dt1-64",
+      "right_arm": "scale.C.N256.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:mirror.NC.N64.aimed_fire.dt1-64.mirror-minus-mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "kind": "geometry",
+      "left_arm": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "right_arm": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:mirror.NR.N64.aimed_fire.dt1-64.mirror-minus-mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "kind": "geometry",
+      "left_arm": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "right_arm": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:mirror.C.N64.aimed_fire.dt1-64.mirror-minus-mirror.C.N64.duel_contact.dt1-64.mirror",
+      "kind": "geometry",
+      "left_arm": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "right_arm": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:mirror.L.N64.aimed_fire.dt1-64.mirror-minus-mirror.L.N64.duel_contact.dt1-64.mirror",
+      "kind": "geometry",
+      "left_arm": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "right_arm": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:mirror.S.N64.aimed_fire.dt1-64.mirror-minus-mirror.S.N64.duel_contact.dt1-64.mirror",
+      "kind": "geometry",
+      "left_arm": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "right_arm": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.1v1.N1.aimed_fire.dt1-16-minus-oracle.1v1.N1.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.1v1.N1.aimed_fire.dt1-32-minus-oracle.1v1.N1.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.1v1.N1.aimed_fire.dt1-64-minus-oracle.1v1.N1.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.2v1.N1.aimed_fire.dt1-16-minus-oracle.2v1.N1.duel_contact.dt1-16",
+      "kind": "geometry",
+      "left_arm": "oracle.2v1.N1.aimed_fire.dt1-16",
+      "right_arm": "oracle.2v1.N1.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.2v1.N1.aimed_fire.dt1-32-minus-oracle.2v1.N1.duel_contact.dt1-32",
+      "kind": "geometry",
+      "left_arm": "oracle.2v1.N1.aimed_fire.dt1-32",
+      "right_arm": "oracle.2v1.N1.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "geometry:oracle.2v1.N1.aimed_fire.dt1-64-minus-oracle.2v1.N1.duel_contact.dt1-64",
+      "kind": "geometry",
+      "left_arm": "oracle.2v1.N1.aimed_fire.dt1-64",
+      "right_arm": "oracle.2v1.N1.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.E.N64.aimed_fire.dt1-32-minus-core.E.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.E.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.E.N64.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.E.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.E.N64.duel_contact.dt1-32-minus-core.E.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.E.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.E.N64.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.E.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NC.N64.aimed_fire.dt1-32-minus-core.NC.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-32",
+      "right_arm": "core.NC.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NC.N64.aimed_fire.dt1-64-minus-core.NC.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "core.NC.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NC.N64.duel_contact.dt1-32-minus-core.NC.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.NC.N64.duel_contact.dt1-32",
+      "right_arm": "core.NC.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NC.N64.duel_contact.dt1-64-minus-core.NC.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "core.NC.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NR.N64.aimed_fire.dt1-32-minus-core.NR.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-32",
+      "right_arm": "core.NR.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NR.N64.aimed_fire.dt1-64-minus-core.NR.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "core.NR.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NR.N64.duel_contact.dt1-32-minus-core.NR.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.NR.N64.duel_contact.dt1-32",
+      "right_arm": "core.NR.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.NR.N64.duel_contact.dt1-64-minus-core.NR.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "core.NR.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.C.N64.aimed_fire.dt1-32-minus-core.C.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.C.N64.aimed_fire.dt1-32",
+      "right_arm": "core.C.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.C.N64.aimed_fire.dt1-64-minus-core.C.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.C.N64.duel_contact.dt1-32-minus-core.C.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.C.N64.duel_contact.dt1-32",
+      "right_arm": "core.C.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.C.N64.duel_contact.dt1-64-minus-core.C.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.L.N64.aimed_fire.dt1-32-minus-core.L.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.L.N64.aimed_fire.dt1-32",
+      "right_arm": "core.L.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.L.N64.aimed_fire.dt1-64-minus-core.L.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "core.L.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.L.N64.duel_contact.dt1-32-minus-core.L.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.L.N64.duel_contact.dt1-32",
+      "right_arm": "core.L.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.L.N64.duel_contact.dt1-64-minus-core.L.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "core.L.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.S.N64.aimed_fire.dt1-32-minus-core.S.N64.aimed_fire.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.S.N64.aimed_fire.dt1-32",
+      "right_arm": "core.S.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.S.N64.aimed_fire.dt1-64-minus-core.S.N64.aimed_fire.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "core.S.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.S.N64.duel_contact.dt1-32-minus-core.S.N64.duel_contact.dt1-16",
+      "kind": "mesh",
+      "left_arm": "core.S.N64.duel_contact.dt1-32",
+      "right_arm": "core.S.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "mesh:core.S.N64.duel_contact.dt1-64-minus-core.S.N64.duel_contact.dt1-32",
+      "kind": "mesh",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "core.S.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.E.N16.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.E.N16.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.E.N16.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.E.N256.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.E.N256.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.E.N256.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.C.N16.aimed_fire.dt1-64-minus-core.C.N64.aimed_fire.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.C.N16.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.C.N16.duel_contact.dt1-64-minus-core.C.N64.duel_contact.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.C.N16.duel_contact.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.C.N256.aimed_fire.dt1-64-minus-core.C.N64.aimed_fire.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.C.N256.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "scale:scale.C.N256.duel_contact.dt1-64-minus-core.C.N64.duel_contact.dt1-64",
+      "kind": "scale",
+      "left_arm": "scale.C.N256.duel_contact.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "side_swap:core.NC.N64.aimed_fire.dt1-64-minus-mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.NC.N64.duel_contact.dt1-64-minus-mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.NR.N64.aimed_fire.dt1-64-minus-mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.NR.N64.duel_contact.dt1-64-minus-mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.C.N64.aimed_fire.dt1-64-minus-mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.C.N64.duel_contact.dt1-64-minus-mirror.C.N64.duel_contact.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.L.N64.aimed_fire.dt1-64-minus-mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.L.N64.duel_contact.dt1-64-minus-mirror.L.N64.duel_contact.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.S.N64.aimed_fire.dt1-64-minus-mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "side_swap:core.S.N64.duel_contact.dt1-64-minus-mirror.S.N64.duel_contact.dt1-64.mirror",
+      "kind": "side_swap",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.aimed_fire.dt1-16-minus-core.E.N64.aimed_fire.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.aimed_fire.dt1-32-minus-core.E.N64.aimed_fire.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.duel_contact.dt1-16-minus-core.E.N64.duel_contact.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.duel_contact.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.duel_contact.dt1-32-minus-core.E.N64.duel_contact.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NC.N64.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.aimed_fire.dt1-16-minus-core.E.N64.aimed_fire.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.aimed_fire.dt1-32-minus-core.E.N64.aimed_fire.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.duel_contact.dt1-16-minus-core.E.N64.duel_contact.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.duel_contact.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.duel_contact.dt1-32-minus-core.E.N64.duel_contact.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.NR.N64.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.aimed_fire.dt1-16-minus-core.E.N64.aimed_fire.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.C.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.aimed_fire.dt1-32-minus-core.E.N64.aimed_fire.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.C.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.aimed_fire.dt1-64-minus-core.E.N64.aimed_fire.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.duel_contact.dt1-16-minus-core.E.N64.duel_contact.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.C.N64.duel_contact.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.duel_contact.dt1-32-minus-core.E.N64.duel_contact.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.C.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.C.N64.duel_contact.dt1-64-minus-core.E.N64.duel_contact.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.aimed_fire.dt1-16-minus-core.C.N64.aimed_fire.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.L.N64.aimed_fire.dt1-16",
+      "right_arm": "core.C.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.aimed_fire.dt1-32-minus-core.C.N64.aimed_fire.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.L.N64.aimed_fire.dt1-32",
+      "right_arm": "core.C.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.aimed_fire.dt1-64-minus-core.C.N64.aimed_fire.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.duel_contact.dt1-16-minus-core.C.N64.duel_contact.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.L.N64.duel_contact.dt1-16",
+      "right_arm": "core.C.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.duel_contact.dt1-32-minus-core.C.N64.duel_contact.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.L.N64.duel_contact.dt1-32",
+      "right_arm": "core.C.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.L.N64.duel_contact.dt1-64-minus-core.C.N64.duel_contact.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.aimed_fire.dt1-16-minus-core.C.N64.aimed_fire.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.S.N64.aimed_fire.dt1-16",
+      "right_arm": "core.C.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.aimed_fire.dt1-32-minus-core.C.N64.aimed_fire.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.S.N64.aimed_fire.dt1-32",
+      "right_arm": "core.C.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.aimed_fire.dt1-64-minus-core.C.N64.aimed_fire.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "core.C.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.duel_contact.dt1-16-minus-core.C.N64.duel_contact.dt1-16",
+      "kind": "profile",
+      "left_arm": "core.S.N64.duel_contact.dt1-16",
+      "right_arm": "core.C.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.duel_contact.dt1-32-minus-core.C.N64.duel_contact.dt1-32",
+      "kind": "profile",
+      "left_arm": "core.S.N64.duel_contact.dt1-32",
+      "right_arm": "core.C.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "profile:core.S.N64.duel_contact.dt1-64-minus-core.C.N64.duel_contact.dt1-64",
+      "kind": "profile",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "core.C.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "identity"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.aimed_fire.dt1-16",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.aimed_fire.dt1-32",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.aimed_fire.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.duel_contact.dt1-16",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.duel_contact.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.duel_contact.dt1-32",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:core.E.N64.duel_contact.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "core.E.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:scale.E.N16.aimed_fire.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:scale.E.N16.duel_contact.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "scale.E.N16.duel_contact.dt1-64",
+      "right_arm": "scale.E.N16.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:scale.E.N256.aimed_fire.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:scale.E.N256.duel_contact.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "scale.E.N256.duel_contact.dt1-64",
+      "right_arm": "scale.E.N256.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.aimed_fire.dt1-16",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.aimed_fire.dt1-32",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.aimed_fire.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.duel_contact.dt1-16",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-16",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-16",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.duel_contact.dt1-32",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-32",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-32",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    },
+    {
+      "contrast_id": "equality:oracle.1v1.N1.duel_contact.dt1-64",
+      "kind": "within_arm_symmetry",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-64",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-64",
+      "direction": "left_minus_right",
+      "right_endpoint_mapping": "swap_blue_red"
+    }
+  ],
+  "side_swap_endpoint_mapping": {
+    "population.blue.t1": "population.red.t1",
+    "population.red.t1": "population.blue.t1",
+    "population.blue.t2": "population.red.t2",
+    "population.red.t2": "population.blue.t2",
+    "population.blue.t4": "population.red.t4",
+    "population.red.t4": "population.blue.t4",
+    "population.blue.t8": "population.red.t8",
+    "population.red.t8": "population.blue.t8",
+    "ending.blue_survivor": "ending.red_survivor",
+    "ending.red_survivor": "ending.blue_survivor",
+    "ending.double_extinction": "ending.double_extinction",
+    "ending.rate_zero": "ending.rate_zero",
+    "ending.horizon": "ending.horizon",
+    "duration.restricted_mean_over_H": "duration.restricted_mean_over_H"
+  },
+  "cdf_comparisons": [
+    {
+      "comparison_id": "side_swap:core.NC.N64.aimed_fire.dt1-64-minus-mirror.NC.N64.aimed_fire.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.NC.N64.aimed_fire.dt1-64-minus-mirror.NC.N64.aimed_fire.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NC.N64.aimed_fire.dt1-64-minus-mirror.NC.N64.aimed_fire.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.NC.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NC.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NC.N64.duel_contact.dt1-64-minus-mirror.NC.N64.duel_contact.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.NC.N64.duel_contact.dt1-64-minus-mirror.NC.N64.duel_contact.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NC.N64.duel_contact.dt1-64-minus-mirror.NC.N64.duel_contact.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.NC.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NC.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.aimed_fire.dt1-64-minus-mirror.NR.N64.aimed_fire.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.aimed_fire.dt1-64-minus-mirror.NR.N64.aimed_fire.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.aimed_fire.dt1-64-minus-mirror.NR.N64.aimed_fire.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.NR.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.NR.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.duel_contact.dt1-64-minus-mirror.NR.N64.duel_contact.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.duel_contact.dt1-64-minus-mirror.NR.N64.duel_contact.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.NR.N64.duel_contact.dt1-64-minus-mirror.NR.N64.duel_contact.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.NR.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.NR.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.aimed_fire.dt1-64-minus-mirror.C.N64.aimed_fire.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.aimed_fire.dt1-64-minus-mirror.C.N64.aimed_fire.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.aimed_fire.dt1-64-minus-mirror.C.N64.aimed_fire.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.C.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.C.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.duel_contact.dt1-64-minus-mirror.C.N64.duel_contact.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.duel_contact.dt1-64-minus-mirror.C.N64.duel_contact.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.C.N64.duel_contact.dt1-64-minus-mirror.C.N64.duel_contact.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.C.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.C.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.aimed_fire.dt1-64-minus-mirror.L.N64.aimed_fire.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.aimed_fire.dt1-64-minus-mirror.L.N64.aimed_fire.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.aimed_fire.dt1-64-minus-mirror.L.N64.aimed_fire.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.L.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.L.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.duel_contact.dt1-64-minus-mirror.L.N64.duel_contact.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.duel_contact.dt1-64-minus-mirror.L.N64.duel_contact.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.L.N64.duel_contact.dt1-64-minus-mirror.L.N64.duel_contact.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.L.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.L.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.aimed_fire.dt1-64-minus-mirror.S.N64.aimed_fire.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.aimed_fire.dt1-64-minus-mirror.S.N64.aimed_fire.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.aimed_fire.dt1-64-minus-mirror.S.N64.aimed_fire.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.S.N64.aimed_fire.dt1-64",
+      "right_arm": "mirror.S.N64.aimed_fire.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.duel_contact.dt1-64-minus-mirror.S.N64.duel_contact.dt1-64.mirror/duration.U_over_H",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "duration.U_over_H",
+      "right_endpoint": "duration.U_over_H"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.duel_contact.dt1-64-minus-mirror.S.N64.duel_contact.dt1-64.mirror/survivors.blue_fraction",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "side_swap:core.S.N64.duel_contact.dt1-64-minus-mirror.S.N64.duel_contact.dt1-64.mirror/survivors.red_fraction",
+      "left_arm": "core.S.N64.duel_contact.dt1-64",
+      "right_arm": "mirror.S.N64.duel_contact.dt1-64.mirror",
+      "left_endpoint": "survivors.red_fraction",
+      "right_endpoint": "survivors.blue_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.aimed_fire.dt1-16/survivors",
+      "left_arm": "core.E.N64.aimed_fire.dt1-16",
+      "right_arm": "core.E.N64.aimed_fire.dt1-16",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.aimed_fire.dt1-32/survivors",
+      "left_arm": "core.E.N64.aimed_fire.dt1-32",
+      "right_arm": "core.E.N64.aimed_fire.dt1-32",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.aimed_fire.dt1-64/survivors",
+      "left_arm": "core.E.N64.aimed_fire.dt1-64",
+      "right_arm": "core.E.N64.aimed_fire.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.duel_contact.dt1-16/survivors",
+      "left_arm": "core.E.N64.duel_contact.dt1-16",
+      "right_arm": "core.E.N64.duel_contact.dt1-16",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.duel_contact.dt1-32/survivors",
+      "left_arm": "core.E.N64.duel_contact.dt1-32",
+      "right_arm": "core.E.N64.duel_contact.dt1-32",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:core.E.N64.duel_contact.dt1-64/survivors",
+      "left_arm": "core.E.N64.duel_contact.dt1-64",
+      "right_arm": "core.E.N64.duel_contact.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:scale.E.N16.aimed_fire.dt1-64/survivors",
+      "left_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N16.aimed_fire.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:scale.E.N16.duel_contact.dt1-64/survivors",
+      "left_arm": "scale.E.N16.duel_contact.dt1-64",
+      "right_arm": "scale.E.N16.duel_contact.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:scale.E.N256.aimed_fire.dt1-64/survivors",
+      "left_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "right_arm": "scale.E.N256.aimed_fire.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:scale.E.N256.duel_contact.dt1-64/survivors",
+      "left_arm": "scale.E.N256.duel_contact.dt1-64",
+      "right_arm": "scale.E.N256.duel_contact.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.aimed_fire.dt1-16/survivors",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-16",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.aimed_fire.dt1-32/survivors",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-32",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.aimed_fire.dt1-64/survivors",
+      "left_arm": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "right_arm": "oracle.1v1.N1.aimed_fire.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.duel_contact.dt1-16/survivors",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-16",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-16",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.duel_contact.dt1-32/survivors",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-32",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-32",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    },
+    {
+      "comparison_id": "equality:oracle.1v1.N1.duel_contact.dt1-64/survivors",
+      "left_arm": "oracle.1v1.N1.duel_contact.dt1-64",
+      "right_arm": "oracle.1v1.N1.duel_contact.dt1-64",
+      "left_endpoint": "survivors.blue_fraction",
+      "right_endpoint": "survivors.red_fraction"
+    }
+  ]
+}
