@@ -24,4 +24,4 @@ Plan: [approved implementation plan](docs/superpowers/plans/2026-10-09-foraging-
 **Goal**: Verify privacy/production rollback and retained F5 compatibility, then archive the evidence.
 **Success Criteria**: Full gates and task/whole-plan reviews pass; saved reports remain exact; evidence preserved.
 **Tests**: Workspace/survey suites and format/Clippy, source identity audit, two saved-only reanalyses.
-**Status**: Not Started
+**Status**: In Progress

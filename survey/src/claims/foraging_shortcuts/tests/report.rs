@@ -466,3 +466,35 @@ fn f5_cached_seed_seven_episode_matches_explicit_legacy_traffic_wrapper() {
         (0, 0, 0)
     );
 }
+
+#[test]
+fn f5_cached_seed_seven_episode_matches_explicit_legacy_excavation() {
+    use sugarscape_core::foraging::construction as core;
+    let manifest = candidate().unwrap();
+    let c = condition(&manifest, "route.straight.protected").unwrap();
+    let labeled = core::run_with_policies(
+        c.setup.clone(),
+        7,
+        c.options.clone(),
+        core::TrafficPolicy::ShortestOnlyV1,
+        core::ExcavationPolicy::ExplorationFirstV1,
+    )
+    .unwrap();
+    assert_eq!(
+        super::support::cached_candidate_episode(&c.id, 7).unwrap(),
+        labeled.episode
+    );
+    assert_eq!(
+        labeled.excavation_policy,
+        core::ExcavationPolicy::ExplorationFirstV1
+    );
+    assert_eq!(
+        labeled.excavation_summary.counts,
+        core::ExcavationCounts::default()
+    );
+    assert!(labeled
+        .excavation_summary
+        .agents
+        .iter()
+        .all(|a| a.last_assessment.is_none()));
+}

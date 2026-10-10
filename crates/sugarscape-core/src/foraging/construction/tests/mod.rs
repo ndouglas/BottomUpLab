@@ -76,3 +76,5 @@ mod excavation_types;
 mod excavation_controller;
 mod excavation_runner;
 mod excavation_support;
+
+mod excavation_acceptance;
