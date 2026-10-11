@@ -1,6 +1,6 @@
 # Costly gate assistance with private payoffs
 
-**Status:** written design proposal for user review. The user approved the conversational scope: known gate mechanics, individual payoffs, an information-matched team benchmark, explicit assistance costs, and a web visualization shipped with the experiment. No implementation plan, production code, numerical reference, or measured result exists for this increment.
+**Status:** written design approved by the user's “LGTM!” on 2026-10-11. The approved scope is known gate mechanics, individual payoffs, an information-matched team benchmark, explicit assistance costs, and a web visualization shipped with the experiment. The implementation plan is being prepared for its separate review; no production code, numerical reference or measured result exists for this increment.
 
 ## Question and scope
 
@@ -119,4 +119,4 @@ Publish corrected results in a new product guide, record stable campaign claim I
 
 Execution uses the existing crowd worktree and branch, fresh subagent-driven implementation and independent reviews under standing commit/merge/push authorization. Inspect Git before edits; preserve concurrent work and the complete prior evidence directory. Never stage .claude/, papers/, survey/out/ or ignored evidence. Format only edited Rust files with child traversal disabled; never run cargo fmt in survey. Run appropriate full project, actual WASM/web/studio and affected collector checks; retain notices/skips precisely. Finish with safe main integration and exact-commit CI/Pages verification.
 
-This committed spec requests user review of the committed-schedule assumption, timing and zero-cost waiting, public reward allocation, complete equilibrium reporting, census, team information parity and web delivery together. Written-spec approval permits writing an implementation plan. Implementation and scientific execution remain separate later approval/gate stages.
+The user approved this written spec's committed-schedule assumption, timing and zero-cost waiting, public reward allocation, complete equilibrium reporting, census, team information parity and web delivery together. Written-spec approval permits writing the implementation plan. Plan review precedes implementation; independent numerical, feasibility and precollection gates precede scientific execution.
