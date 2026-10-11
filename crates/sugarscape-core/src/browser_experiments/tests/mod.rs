@@ -25,3 +25,5 @@ mod caching_protection;
 mod caching_deception;
 
 mod discovery;
+
+mod gate;

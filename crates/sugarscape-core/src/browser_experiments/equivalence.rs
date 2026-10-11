@@ -4,6 +4,9 @@ use serde_json::{Number, Value};
 const LEGACY_FLOAT_TOLERANCE: f64 = 1e-12;
 
 pub(super) fn records_equivalent(left: &EpisodeRecord, right: &EpisodeRecord) -> bool {
+    if left.study == StudyId::GateAssistance || right.study == StudyId::GateAssistance {
+        return left == right;
+    }
     if left.kind != right.kind
         || left.version != right.version
         || left.study != right.study

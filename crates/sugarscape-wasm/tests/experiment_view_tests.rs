@@ -5,7 +5,7 @@ use sugarscape_wasm::{
     experiment_catalog_json, experiment_recorded_json, experiment_run_json,
     experiment_validate_json,
 };
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_test::*;
 fn errors(result: Result<String, JsValue>, field: &str) {
     let errors: Vec<Value> =
@@ -79,7 +79,7 @@ use spatial_test_support::{
 
 #[wasm_bindgen_test]
 fn runnable_catalog_and_five_legacy_spatial_defaults() {
-    assert_eq!(core::catalog().len(), 16);
+    assert_eq!(core::catalog().len(), 17);
     assert_eq!(spatial_defaults().len(), 5);
     for input in default_seed_cases() {
         let text = input.to_string();
@@ -295,4 +295,71 @@ fn discovery_wasm_registered_compilation_resource_receipts() {
         );
         assert!(replay.stats().decision_states <= limits.states);
     }
+}
+
+fn gate_input() -> Value {
+    json!({"study":"gate_assistance","stratum":{"holding_cost":1,"holder_share":3,"distance":0},"selector":"SuppliedHelp","ids":{"holder":"Agent-A","retriever":"Agent-B"}})
+}
+#[wasm_bindgen_test]
+fn gate_actual_wasm_native_capture_complete_roundtrip_and_resource_receipt() {
+    let input = gate_input();
+    let start = js_sys::Date::now();
+    let text = experiment_run_json(&input.to_string()).unwrap();
+    let run_ms = js_sys::Date::now() - start;
+    let record: Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(
+        record["payload"]["episode"]["profile"],
+        json!({"holder":"540","retriever":"60"})
+    );
+    assert_eq!(record["payload"]["episode"]["outcome"]["group_net"], "6");
+    assert_eq!(
+        record["checkpoints"][0]["local"]["Agent-A"]["map"]["observed_at"]["round"],
+        "0"
+    );
+    let start = js_sys::Date::now();
+    assert_eq!(experiment_validate_json(&text).unwrap(), text);
+    let import_ms = js_sys::Date::now() - start;
+    let memory: js_sys::WebAssembly::Memory = wasm_bindgen::memory().unchecked_into();
+    console_log!(
+        "GATE_WASM_RESOURCES {}",
+        json!({"run_ms":run_ms,"import_ms":import_ms,"wire_bytes":text.len(),"checkpoints":record["checkpoints"].as_array().unwrap().len(),"compiler_stats":record["payload"]["compiler_stats"],"wasm_linear_memory_bytes":js_sys::Uint8Array::new(&memory.buffer()).length(),"product_timeout_ms":60000})
+    );
+    assert!(
+        run_ms < 60000.0 && import_ms < 60000.0,
+        "Gate request exceeds product worker limit"
+    );
+    let duplicate = text.replacen("\"group_net\":", "\"group_net\":\"0\",\"group_net\":", 1);
+    errors(experiment_validate_json(&duplicate), "episode");
+    let mut forged = record;
+    forged["rules_identity"] = json!("stale");
+    errors(
+        experiment_validate_json(&forged.to_string()),
+        "rules_identity",
+    );
+}
+#[wasm_bindgen_test]
+fn gate_actual_wasm_strict_raw_inputs_and_raw_duplicate_keys() {
+    let input = gate_input();
+    for (pointer, value) in [
+        ("/stratum/holding_cost", json!(true)),
+        ("/stratum/distance", json!(2)),
+        ("/ids/holder", json!("")),
+        ("/selector", json!(null)),
+    ] {
+        let mut bad = input.clone();
+        *bad.pointer_mut(pointer).unwrap() = value;
+        errors(experiment_run_json(&bad.to_string()), "input");
+    }
+    let duplicate = input.to_string().replace(
+        "\"holding_cost\":1",
+        "\"holding_cost\":1,\"holding_cost\":1",
+    );
+    errors(experiment_run_json(&duplicate), "input");
+    let mut both = input.clone();
+    both["profile"] = json!({"holder":0,"retriever":0});
+    errors(experiment_run_json(&both.to_string()), "gate_assistance");
+    errors(
+        experiment_run_json(&format!("{}{}", " ".repeat(core::MAX_INPUT_BYTES), input)),
+        "input",
+    );
 }

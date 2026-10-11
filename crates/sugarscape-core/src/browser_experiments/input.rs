@@ -39,6 +39,22 @@ pub enum WinkMode {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "study", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
+    GateAssistance {
+        stratum: crate::gate_assistance::Stratum,
+        #[serde(
+            default,
+            deserialize_with = "super::gate::present",
+            skip_serializing_if = "Option::is_none"
+        )]
+        selector: Option<crate::gate_assistance::Selector>,
+        #[serde(
+            default,
+            deserialize_with = "super::gate::present",
+            skip_serializing_if = "Option::is_none"
+        )]
+        profile: Option<crate::gate_assistance::Profile>,
+        ids: crate::gate_assistance::Ids,
+    },
     ProtectionRecaching {
         lab: super::caching::ProtectionInput,
         #[serde(deserialize_with = "spatial::input::deserialize_seed")]
@@ -133,6 +149,7 @@ pub enum Input {
 impl Input {
     pub fn study(&self) -> StudyId {
         match self {
+            Self::GateAssistance { .. } => StudyId::GateAssistance,
             Self::ProtectionRecaching { .. } => StudyId::ProtectionRecaching,
             Self::DeceptionGestures { .. } => StudyId::DeceptionGestures,
             Self::BurrowExcavation { .. } => StudyId::BurrowExcavation,
@@ -157,10 +174,12 @@ pub fn normalize_input(json: &str) -> Result<Input, Vec<FieldError>> {
     if json.len() > MAX_INPUT_BYTES {
         return Err(super::error("input", "input exceeds 64 KiB"));
     }
+    super::gate::duplicate::check(json, "input")?;
     let input: Input =
         serde_json::from_str(json).map_err(|e| super::error("input", e.to_string()))?;
     record::serialized_size(&input, MAX_INPUT_BYTES, "input")?;
     match &input {
+        Input::GateAssistance { .. } => super::gate::validate_input(&input)?,
         Input::ProtectionRecaching { .. } | Input::DeceptionGestures { .. } => {
             super::caching::validate_input(&input)?
         }

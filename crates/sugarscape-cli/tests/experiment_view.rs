@@ -163,6 +163,7 @@ fn runnable_catalog_and_five_legacy_spatial_defaults() {
             core::StudyId::ProtectionRecaching,
             core::StudyId::DeceptionGestures,
             core::StudyId::SurfaceDiscovery,
+            core::StudyId::GateAssistance,
         ]
     );
     assert_eq!(spatial_defaults().len(), 5);

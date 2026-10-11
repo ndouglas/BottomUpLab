@@ -3,6 +3,7 @@ pub mod caching;
 mod catalog;
 pub mod discovery;
 mod equivalence;
+mod gate;
 mod input;
 mod record;
 mod recorded;
@@ -45,12 +46,14 @@ pub enum StudyId {
     SharedSurface,
     ActiveSurface,
     SurfaceDiscovery,
+    GateAssistance,
 }
 
 pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
     // Revalidate typed inputs too as other adapters acquire bounded selectors.
     let input = normalize_input(&record::bounded_json(input, MAX_INPUT_BYTES, "input")?)?;
     match input {
+        Input::GateAssistance { .. } => gate::run(&input),
         Input::ProtectionRecaching { .. } | Input::DeceptionGestures { .. } => caching::run(&input),
         Input::BurrowExcavation { .. }
         | Input::BurrowAccess { .. }

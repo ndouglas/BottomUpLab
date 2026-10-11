@@ -114,6 +114,7 @@ pub fn validate_episode(json: &str) -> Result<EpisodeRecord, Vec<FieldError>> {
     if json.len() > MAX_EPISODE_BYTES {
         return Err(super::error("episode", "episode exceeds 16 MiB"));
     }
+    super::gate::duplicate::check(json, "episode")?;
     let saved: EpisodeRecord =
         serde_json::from_str(json).map_err(|e| super::error("episode", e.to_string()))?;
     if saved.version != EPISODE_VERSION {
