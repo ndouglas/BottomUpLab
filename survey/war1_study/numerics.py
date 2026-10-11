@@ -226,3 +226,8 @@ def probability_certificate(row: Json) -> Json:
                 ).wire(),
             }
     raise ValueError("p-star binary64 rounding unresolved at 400 digits")
+
+
+def difference(a: Interval, b: Interval) -> Interval:
+    """Outward interval for left minus right; no independence assumption."""
+    return Interval(a.lo - b.hi, a.hi - b.lo)
