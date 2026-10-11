@@ -29,26 +29,28 @@ it('only actual prefix events appear and public stop adds no paid waits',()=>{
  expect(obj(list(display.agents)[0]).events).toEqual(obj(local.prefix).entries);
  expect(display.probeStop).toBe('1');
 });
+// These four cases evaluate real WASM episodes; allow the same local deadline
+// as other episode integration tests on slower CI hosts.
 it('Researcher preserves stored inversion and distinct original write lineage',()=>{
  const r=run('active_surface',{environment:'DataFlip'});
  const at=r.checkpoints.find(c=>list(obj(c.researcher).fields).some(f=>obj(f).lineage!==null&&obj(f).symbol!==obj(obj(f).lineage).symbol))!;
  expect(obj(surfaceDisplay(at)).researcher).toEqual(at.researcher);
-});
+}, 30_000);
 it('reset projection uses exact native field clocks while Agent retains dated observation',()=>{
  const r=run('active_surface',{environment:{InFamily:'SharedResetting'}});
  const at=r.checkpoints.find(c=>list(obj(c.researcher).fields).every(f=>obj(f).symbol==='Blank')&&obj(obj(c.local['Agent-A']).surface).last_observation!==null)!;
  const d=obj(surfaceDisplay(at));
  expect(obj(d.researcher).fields).toEqual(obj(at.researcher).fields);
  expect(obj(list(d.agents)[0]).observation).toEqual(obj(obj(at.local['Agent-A']).surface).last_observation);
-});
+}, 30_000);
 it('unsupported history keeps A5/B7 costs and unavailable terminal values',()=>{
  const r=run('active_surface',{environment:'DataFlip',protocol:{experimenter:'B',policy:'InspectOnly'}});
  expect(surfaceSummary(r.payload)).toEqual({status:'unsupported history',spent:['5','7'],net:[null,null],reward:[null,null],correct:[null,null]});
-});
+}, 30_000);
 it('supported wrong inversion remains complete with wrong realized performance',()=>{
  const r=run('active_surface',{environment:'DataFlip'});
  expect(surfaceSummary(r.payload)).toMatchObject({status:'complete',net:['-26','-26'],correct:['0','0']});
-});
+}, 30_000);
 it('names native model masses in the original catalog order without numerical conversion', async()=>{
  const {surfaceBelief}=await import('./surface-projection');
  const belief={models:[{numerator:'1',denominator:'3'}, {numerator:'1',denominator:'6'}, {numerator:'1',denominator:'2'}, {numerator:'0',denominator:'1'}],target:null};
