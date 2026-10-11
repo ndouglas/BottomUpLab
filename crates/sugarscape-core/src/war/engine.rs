@@ -11,7 +11,6 @@ use crate::{
     rng::{self, SimRng},
 };
 use rand::{seq::SliceRandom, RngCore};
-use std::collections::HashSet;
 
 #[derive(Clone)]
 pub struct Engagement {
@@ -121,8 +120,12 @@ impl Engagement {
     ) -> Result<Frame, NumericIssue> {
         let start = self.counts();
         let duel = self.config.geometry == Geometry::DuelContact;
-        let mut matched_blue = HashSet::new();
-        let mut matched_red = HashSet::new();
+        // Initial IDs are bounded by validated config, even after sparse restores.
+        // Reuse one per-attempt allocation for living, matched and dead membership.
+        const LIVING: u8 = 1;
+        const MATCHED: u8 = 2;
+        const DEAD: u8 = 4;
+        let mut membership = vec![0_u8; (self.config.blue + self.config.red) as usize];
         if duel {
             let pairs = if let Some(pairs) = supplied_matching {
                 pairs.to_vec()
@@ -133,22 +136,27 @@ impl Engagement {
                 red.shuffle(&mut self.contact_rng);
                 blue.into_iter().zip(red).collect()
             };
-            let living_blue: HashSet<_> = self.blue_alive.iter().copied().collect();
-            let living_red: HashSet<_> = self.red_alive.iter().copied().collect();
+            for id in self.blue_alive.iter().chain(&self.red_alive) {
+                membership[*id as usize] = LIVING;
+            }
             if pairs.len() != start[0].min(start[1]) as usize {
                 return Err(issue("matching", "must contain min(B,R) disjoint pairs"));
             }
             for (blue, red) in pairs {
-                if !living_blue.contains(&blue)
-                    || !living_red.contains(&red)
-                    || !matched_blue.insert(blue)
-                    || !matched_red.insert(red)
+                // Check side and bounded lookup before indexing supplied IDs.
+                // A matched living fighter no longer has exactly the LIVING flag.
+                if blue >= self.config.blue
+                    || red < self.config.blue
+                    || membership.get(blue as usize) != Some(&LIVING)
+                    || membership.get(red as usize) != Some(&LIVING)
                 {
                     return Err(issue(
                         "matching",
                         "pair has nonliving, mis-sided or duplicate IDs",
                     ));
                 }
+                membership[blue as usize] |= MATCHED;
+                membership[red as usize] |= MATCHED;
             }
         }
         let sources = if duel {
@@ -204,14 +212,14 @@ impl Engagement {
                 target_probability[side] = Some(
                     math::probability(hazards[side], self.config.dt).map_err(|mut error| {
                         error.field = format!("target_probability[{side}].{}", error.field);
-                        let (ids, matched) = if side == 0 {
-                            (&self.blue_alive, &matched_blue)
+                        let ids = if side == 0 {
+                            &self.blue_alive
                         } else {
-                            (&self.red_alive, &matched_red)
+                            &self.red_alive
                         };
                         let target = ids
                             .iter()
-                            .find(|id| !duel || matched.contains(id))
+                            .find(|id| !duel || membership[**id as usize] & MATCHED != 0)
                             .expect("validated nonempty exposure");
                         error.detail = format!(
                             "{}; target_side={}; target_count={}; target_id={target}; {}",
@@ -250,13 +258,10 @@ impl Engagement {
         }
         let mut casualties = Vec::new();
         let mut word_index = 0;
-        for (side, ids, matched) in [
-            (0, &self.blue_alive, &matched_blue),
-            (1, &self.red_alive, &matched_red),
-        ] {
+        for (side, ids) in [(0, &self.blue_alive), (1, &self.red_alive)] {
             if let Some(p) = &target_probability[side] {
                 for id in ids {
-                    if duel && !matched.contains(id) {
+                    if duel && membership[*id as usize] & MATCHED == 0 {
                         continue;
                     }
                     let word = if let Some(words) = supplied_words {
@@ -274,15 +279,22 @@ impl Engagement {
                 }
             }
         }
-        let dead: HashSet<_> = casualties.iter().map(|c| c.id).collect();
-        if dead.len() != casualties.len() || word_index != (exposed[0] + exposed[1]) as usize {
+        let mut unique_deaths = 0;
+        for casualty in &casualties {
+            let marker = &mut membership[casualty.id as usize];
+            unique_deaths += usize::from(*marker & DEAD == 0);
+            *marker |= DEAD;
+        }
+        if unique_deaths != casualties.len() || word_index != (exposed[0] + exposed[1]) as usize {
             return Err(issue(
                 "settlement",
                 "casualty uniqueness or exposure reconciliation failed",
             ));
         }
-        self.blue_alive.retain(|id| !dead.contains(id));
-        self.red_alive.retain(|id| !dead.contains(id));
+        self.blue_alive
+            .retain(|id| membership[*id as usize] & DEAD == 0);
+        self.red_alive
+            .retain(|id| membership[*id as usize] & DEAD == 0);
         let survivors = self.counts();
         for (side, identity) in [(0, Side::Blue), (1, Side::Red)] {
             let deaths = casualties.iter().filter(|c| c.side == identity).count() as u32;

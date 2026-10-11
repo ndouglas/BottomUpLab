@@ -34,3 +34,9 @@ mod reference_tests;
 
 #[cfg(test)]
 mod runner_tests;
+
+#[cfg(test)]
+#[path = "test_support/frozen_engine.rs"]
+mod frozen_engine;
+#[cfg(test)]
+mod membership_tests;
