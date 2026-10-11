@@ -76,3 +76,6 @@ pub mod surface_discovery;
 
 #[cfg(all(feature = "war-benchmarks", not(target_arch = "wasm32")))]
 pub mod war;
+
+/// Six-round paid gate assistance with local histories.
+pub mod gate_assistance;
