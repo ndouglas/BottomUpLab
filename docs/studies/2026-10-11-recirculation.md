@@ -90,13 +90,63 @@ Holland's chain, one link at a time:
 
 ## Sources to read first
 
-John H. Holland, *Signals and Boundaries: Building Blocks for Complex Adaptive Systems* (MIT Press,
-2012), and *Hidden Order* (1995), whose Echo model has resource-string agents, trade, combat and
-mating and is the nearest existing design (wanted: a paper version with stated rules; Echo's own
-reproducibility is in doubt). Kristian Lindgren and Mats Nordahl, "Artificial food webs," in
-*Artificial Life III* (1994), on evolved trophic structure. Robert Ulanowicz, *Growth and
-Development: Ecosystems Phenomenology* (1986) and J. T. Finn (1976, *J. Theor. Biol.*) for cycling
-and throughput measures. Theraulaz, Bonabeau and Deneubourg (1998) in `papers/multi-agent-coordination/`
-for specialization by response thresholds. Epstein and Axtell, Chapter II (pollution) and Chapter IV
-footnote 7 (N goods and pollutants). Search for an agent-based test of recycling and carrying capacity
-before building; none is cited here, and nothing in `papers/` covers it.
+Searched 2026-10-11. Local copies are in `papers/ecology/` (gitignored, personal copies). Nothing
+found is an agent-based test of recycling against carrying capacity with specialization as the
+switch; the closest are Yamamura et al. 2001 (analytic, producer and decomposer coevolve) and Echo.
+
+**Holland and Echo (the framing and the nearest model).**
+Holland, *Signals and Boundaries* (MIT Press, 2012) and *Hidden Order* (1995), both books, wanted
+in paper form. Hraber, Jones and Forrest, "The ecology of Echo," *Artificial Life* 3 (1997): the
+only full description of Echo's rules; tests relative species abundance and the species–area
+relation against a neutral shadow. Smith and Bedau, "Is Echo a complex adaptive system?"
+*Evolutionary Computation* 8 (2000): finds Echo's evolutionary activity bounded, with Bedau, Snyder
+and Packard's 1998 classification and Standish's 2000 Ecolab critique. Holland's "Echoing emergence"
+(SFI WP 93-04-023) and Forrest and Jones's "Modeling complex adaptive systems with Echo" (SFI WP
+94-12-064) are wanted; neither is online.
+
+**Recycling and throughput in ecosystem theory (the claim itself).**
+Finn, *J. Theor. Biol.* 56 (1976): the cycling index; Allesina and Ulanowicz, *Comput. Biol. Chem.*
+28 (2004) revise it; Ulanowicz, *J. Theor. Biol.* 85 (1980) on ascendency, wanted. DeAngelis,
+*Ecology* 61 (1980): tighter cycling lowers resilience; Loreau, *Am. Nat.* 143 (1994) finds the
+opposite for resistance, wanted (JSTOR 2462743; not on the mirrors); Quévreux, Barot and Thébault
+(bioRxiv 2018) and Theis, Quévreux and Loreau (*Funct. Ecol.* 2022, wanted) on why they differ.
+Loreau, *Am. Nat.* 145 (1995), consumers as maximizers of matter and energy flow. Harte and Kinzig,
+*Am. Nat.* 141 (1993): plants and decomposers as mutualists and competitors. Yamamura, Yachi and
+Higashi, *Ecol. Res.* 16 (2001): producer and decomposer coevolve and diversity rises at the
+ecosystem level, the closest analytic statement of Holland's chain. Szwabiński (arXiv 1212.5538,
+2012): a food-web model with a closed nutrient cycle. Kaiser et al., *Nat. Commun.* 6 (2015):
+cheaters in decomposer communities and nitrogen retention.
+
+**Evolved food webs and digital ecosystems (does a web self-organize?).**
+Lindgren and Nordahl, "Cooperation and community structure in artificial ecosystems," *Artificial
+Life* 1 (1994); their "Artificial food webs" (*Artificial Life III*, 1994) is wanted. Caldarelli,
+Higgs and McKane (1998), Drossel, Higgs and McKane (2001) and Quince, Higgs and McKane (2001): the
+Webworld lineage, where food-web structure emerges under coevolution. Loeuille and Loreau, *PNAS* 102
+(2005): size-structured webs from one trait. Ray, Tierra (1991): parasites and hyperparasites
+emerge, our only cited case of coevolved relational types. Chow et al., *Science* 305 (2004):
+adaptive radiation from resource competition in Avida; Olson et al. (ECAL 2013): evolved digital
+ecosystems as dynamic steady states; Lehman et al. (2018) for the anecdotes.
+
+**Specialization and division of labor (Holland's pin factory).**
+Theraulaz, Bonabeau and Deneubourg (1998), already in `papers/multi-agent-coordination/`, and
+Beshers and Fewell, *Annu. Rev. Entomol.* 46 (2001), the review. Rueffler, Hermisson and Wagner,
+*PNAS* 109 (2012) and Cooper and West, *Nat. Ecol. Evol.* 2 (2018): when specialization is
+favored (accelerating returns, low conflict). Gavrilets, *PLoS Comput. Biol.* 6 (2010). Yang and
+Ng's survey of specialization in economics; Jaffe (arXiv 1509.04264): in an agent-based economy
+the gains from division of labor vanish in a homogeneous environment, a direct warning for our
+step 2. Kaneko and Yomo (1997) and Furusawa and Kaneko (1998): differentiation from dynamical
+instability alone, a mechanism for niches without a fitness function.
+
+**Cross-feeding and the black queen (one agent's waste as another's input).**
+Pfeiffer and Bonhoeffer, *Am. Nat.* 163 (2004); Doebeli, *Popul. Ecol.* 44 (2002); Morris, Lenski
+and Zinser, *mBio* 3 (2012); Meijer, van Dijk and Hogeweg, *Commun. Biol.* 3 (2020): whether
+cross-feeding evolves is contingent; Vessman, Gerlee and Lundh (2016); Smith et al. (*Front. Ecol.
+Evol.* 2019), the classification.
+
+**Niche construction (the environment as the agents' product).**
+Laland, Odling-Smee and Feldman, *PNAS* 96 (1999); Krakauer, Page and Erwin, *Am. Nat.* 173 (2009):
+a shared constructed resource is a commons, stabilized by monopoly; Odling-Smee et al., *Q. Rev.
+Biol.* 88 (2013), wanted.
+
+**Not found:** a Sugarscape or other grid artificial society with decomposers or recycling. The
+nearest is Chapter II's pollution and a 2026 arXiv policy paper that extends it with mitigation.

@@ -183,6 +183,8 @@ archaeology, agriculture, migration and terrain); what it couldn't find free:
 - **Terrain:** Perlin (1985); O'Callaghan & Mark (1984); Horton (1945); Braun & Willett (2013),
   *Geomorphology* 180.
 
+- **Ecology and recirculation** (2026-10-11, for the [recirculation study stub](studies/2026-10-11-recirculation.md)): Holland, *Signals and Boundaries* (2012) and *Hidden Order* (1995); Holland, "Echoing emergence," SFI WP 93-04-023; Forrest & Jones, "Modeling complex adaptive systems with Echo," SFI WP 94-12-064; Lindgren & Nordahl, "Artificial food webs," *Artificial Life III* (1994); Loreau (1994), *Am. Nat.* 143:508 (JSTOR 2462743); Ulanowicz (1980), *J. Theor. Biol.* 85:223; Theis, Quévreux & Loreau (2022), *Funct. Ecol.*, doi:10.1111/1365-2435.13961; Odling-Smee et al. (2013), *Q. Rev. Biol.* 88:3; DeAngelis, *Dynamics of Nutrient Cycling and Food Webs* (1992).
+
 A second search (2026-09-30) added, still missing:
 
 - **Belief and social psychology:** Abbott & Sherratt (2011), *Animal Behaviour* 82:85,
