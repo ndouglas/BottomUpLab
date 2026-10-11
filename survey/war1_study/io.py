@@ -35,7 +35,7 @@ def strict_json(data: bytes, limit: int) -> Json:
         result = {}
         for key, value in items:
             if key in result:
-                raise ValueError(f"duplicate JSON field: {key[:128]}")
+                raise ValueError(f"duplicate JSON field: {key[:128]!a}")
             result[key] = value
         return result
 

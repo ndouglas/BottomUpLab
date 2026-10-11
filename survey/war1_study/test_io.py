@@ -42,6 +42,16 @@ class JsonTests(unittest.TestCase):
             io.strict_json(data, 20000)
         self.assertLessEqual(len(str(raised.exception).encode("utf-8")), 4096)
 
+    def test_duplicate_surrogate_key_error_detail_is_bounded_utf8(self):
+        for key in ("\ud800", "\ud800" * 4096):
+            escaped = key.encode("ascii", errors="backslashreplace")
+            data = b'{"' + escaped + b'":1,"' + escaped + b'":2}'
+            with self.subTest(key_length=len(key)):
+                with self.assertRaises(ValueError) as raised:
+                    io.strict_json(data, 50000)
+                detail = str(raised.exception).encode("utf-8")
+                self.assertLessEqual(len(detail), 4096)
+
     def test_extreme_decimal_exponent_is_refused_as_value_error(self):
         with self.assertRaises(ValueError):
             io.strict_json(b'{"n":1e9999999999999999999999999999999999}', 100)
