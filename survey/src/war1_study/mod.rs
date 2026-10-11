@@ -9,6 +9,8 @@ mod gate_tests;
 pub mod io;
 #[cfg(test)]
 mod io_tests;
+pub mod metadata;
+mod monitor;
 pub mod numerics;
 #[cfg(test)]
 mod numerics_tests;

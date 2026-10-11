@@ -18,6 +18,10 @@ pub const FILES: &[&str] = &[
     "survey/build.rs",
     "survey/src/bin/war1_study.rs",
     "survey/build_support/war1_study_source_identity.rs",
+    "survey/build_support/f5_source_identity.rs",
+    "survey/build_support/bt_source_identity.rs",
+    "survey/build_support/war1_source_identity.rs",
+    "survey/war1_study/fixtures/core-literal-inputs-v1.txt",
     "docs/superpowers/specs/2026-10-10-war-1-measurement-design.md",
     "docs/superpowers/specs/2026-10-10-war-1-measurement-proposal.json",
     "docs/superpowers/plans/2026-10-10-war-1-measurement.md",
@@ -44,10 +48,32 @@ pub fn validate_selection(path: &str) -> Result<(), String> {
     }
     Ok(())
 }
+const LITERAL_INPUTS: &str = include_str!("../war1_study/fixtures/core-literal-inputs-v1.txt");
+pub fn literal_paths() -> Result<Vec<&'static str>, String> {
+    let paths: Vec<_> = LITERAL_INPUTS.lines().collect();
+    if paths.is_empty()
+        || paths.len() > MAX_ENTRIES
+        || !LITERAL_INPUTS.ends_with('\n')
+        || paths.windows(2).any(|w| w[0] >= w[1])
+        || paths.iter().any(|p| {
+            !valid_relative(p)
+                || p.len() > 4096
+                || !(p.starts_with("sweeps/")
+                    || p.starts_with("data/anasazi/")
+                    || p.starts_with("data/bali/")
+                    || p.starts_with("docs/examples/burrow/")
+                    || *p == "crates/sugarscape-core/assets/sugar-map.txt")
+        })
+    {
+        return Err("invalid fixed core literal inventory".into());
+    }
+    Ok(paths)
+}
 fn selected(path: &str, manifest: &str) -> bool {
     valid_relative(path)
         && (path == manifest
             || FILES.contains(&path)
+            || LITERAL_INPUTS.lines().any(|p| p == path)
             || DIRECTORIES
                 .iter()
                 .any(|d| path.starts_with(&format!("{d}/")))
@@ -87,7 +113,7 @@ pub fn fingerprint(entries: &[(String, Vec<u8>)], manifest: &str) -> Result<Stri
         hash.update((bytes.len() as u64).to_be_bytes());
         hash.update(bytes);
     }
-    for path in FILES.iter().copied().chain([
+    for path in FILES.iter().copied().chain(literal_paths()?).chain([
         manifest,
         "crates/sugarscape-core/src/lib.rs",
         "survey/src/war1_study/mod.rs",
@@ -208,6 +234,11 @@ fn read_limits(
     };
     for path in DIRECTORIES.iter().chain(FILES).copied().chain([manifest]) {
         loader.visit(root, path)?;
+    }
+    for path in literal_paths()? {
+        if !FILES.contains(&path) {
+            loader.visit(root, path)?;
+        }
     }
     for item in fs::read_dir(root.join("survey/war1_study")).map_err(|e| e.to_string())? {
         let item = item.map_err(|e| e.to_string())?;

@@ -233,9 +233,6 @@ pub fn save_bytes(path: &Path, bytes: &[u8]) -> Result<(), String> {
     fault(path, "parent_sync")?;
     sync_directory(path.parent().ok_or("file parent")?)
 }
-pub fn save_json(path: &Path, value: &impl Serialize) -> Result<(), String> {
-    save_bytes(path, &encode(value, METADATA_LIMIT, true)?)
-}
 
 // The immutable path exists only in test builds, for injecting failures beneath
 // real filesystem writes without changing archive/observer behavior.

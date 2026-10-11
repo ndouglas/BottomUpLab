@@ -105,3 +105,64 @@ fn missing_execution_is_refused_before_output_creation() {
     assert!(String::from_utf8_lossy(&result.stderr).contains("execution receipt"));
     assert!(!output.exists());
 }
+
+#[test]
+fn metadata_reports_actual_binary_and_build_inputs_without_collection() {
+    let result = run(&["metadata"]);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(value["schema"], "war1-study-metadata-v1");
+    assert_eq!(value["selected_purpose"], "construction_fixture");
+    assert_eq!(value["registered_histories"], 0);
+    assert_eq!(
+        value["inventory"]["compiled_inputs_sha256"],
+        value["binding"]["compiled_inputs_sha256"]
+    );
+    assert_eq!(value["flags"].as_array().unwrap().len(), 7);
+}
+
+#[test]
+fn parent_wait4_peak_can_veto_a_complete_candidate() {
+    let code = r#"
+from pathlib import Path
+import tempfile
+import sys
+from types import SimpleNamespace
+from unittest.mock import patch
+from survey.war1_study import supervisor
+root=Path.cwd()
+with tempfile.TemporaryDirectory(prefix='construction_test_peak_',dir=Path('/tmp').resolve()) as temp:
+    out=Path(temp)/'archive'
+    command=(sys.argv[1],'fixture','--manifest',str(root/'survey/war1_study/fixtures/construction-manifest.json'),'--out',str(out))
+    original=supervisor.os.wait4
+    def unsampled_burst(pid, flags):
+        waited,status,usage=original(pid,flags)
+        if waited:
+            usage=SimpleNamespace(ru_maxrss=2147483649 if sys.platform=='darwin' else 2097153)
+        return waited,status,usage
+    with patch.object(supervisor.os,'wait4',side_effect=unsampled_burst):
+        result=supervisor.supervise(command,out,43200,2147483648)
+    assert result['schema']=='war1-study-supervisor-failure-v1',result
+    assert any('RSS' in e for e in result['errors']),result
+    assert out.joinpath('candidate-index.json').is_file()
+    assert not out.joinpath('success.json').exists()
+    assert result['semantic_steps'] is None
+    assert result['observed_steps'] is None
+    assert result['final_checkpoint'] is None
+    assert result['reason']=='unknown_after_termination'
+"#;
+    let result = Command::new("python3")
+        .current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+        .args(["-c", code, env!("CARGO_BIN_EXE_war1-study")])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}

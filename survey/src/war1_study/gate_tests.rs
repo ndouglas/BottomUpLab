@@ -158,13 +158,14 @@ fn complete_synthetic_receipt_set_still_cannot_activate_compiled_fixture() {
     assert!(!f.output.exists());
 }
 #[test]
-fn scientific_collection_is_unready_before_output_even_for_internal_authorization() {
+fn scientific_collection_requires_channel_before_output_even_for_internal_authorization() {
     let f = gate_fixture();
     let authorized =
         gate::fixture(&std::path::Path::new(source::ROOT).join(source::MANIFEST_PATH)).unwrap();
     let before = construction_count();
-    let error = super::archive::collect(authorized, &f.output).unwrap_err();
-    assert!(error.detail.contains("supervisor"));
+    let error = super::archive::collect(authorized, &f.output, &f.output.join("missing-socket"))
+        .unwrap_err();
+    assert!(error.detail.contains("monitor"));
     assert_eq!(construction_count(), before);
     assert!(!f.output.exists());
 }
@@ -262,12 +263,17 @@ impl FullEvidence {
             std::fs::remove_dir_all(&root).unwrap();
         }
         std::fs::create_dir_all(&root).unwrap();
-        for path in source::inputs::FILES.iter().copied().chain([
-            "crates/sugarscape-core/src/lib.rs",
-            "survey/src/war1_study/mod.rs",
-            "survey/war1_study/contracts.py",
-            source::MANIFEST_PATH,
-        ]) {
+        for path in source::inputs::FILES
+            .iter()
+            .copied()
+            .chain(source::inputs::literal_paths().unwrap())
+            .chain([
+                "crates/sugarscape-core/src/lib.rs",
+                "survey/src/war1_study/mod.rs",
+                "survey/war1_study/contracts.py",
+                source::MANIFEST_PATH,
+            ])
+        {
             let dest = root.join(path);
             std::fs::create_dir_all(dest.parent().unwrap()).unwrap();
             std::fs::write(

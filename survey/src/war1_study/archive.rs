@@ -209,25 +209,44 @@ fn empty_failure(detail: String, planned: u64) -> CampaignFailure {
 #[allow(clippy::result_large_err)] // Frozen receipt API owns census and actual checkpoint evidence.
 pub fn collect(
     authorized: AuthorizedCampaign,
-    _out: &Path,
+    out: &Path,
+    socket: &Path,
 ) -> Result<ArchiveReceipt, CampaignFailure> {
-    let (manifest, _) = authorized.parts();
-    Err(empty_failure("scientific collector unready: Task5 process supervisor handshake and actual resource validation are required before output or construction".into(),manifest.cases.len() as u64))
+    let mut monitor = super::monitor::Monitor::connect(socket, authorized.parts().1)
+        .map_err(|e| empty_failure(e, 0))?;
+    collect_construction(authorized, out, Some(&mut monitor))
 }
-#[allow(clippy::result_large_err)] // Frozen receipt API owns census and actual checkpoint evidence.
+#[allow(clippy::result_large_err)]
 pub fn collect_fixture(
     manifest_path: &Path,
     out: &Path,
 ) -> Result<ArchiveReceipt, CampaignFailure> {
     let authorized = gate::fixture(manifest_path).map_err(|e| empty_failure(e, 0))?;
-    collect_construction(authorized, out)
+    collect_construction(authorized, out, None)
 }
-#[allow(clippy::result_large_err)] // Frozen receipt API owns census and actual checkpoint evidence.
+#[allow(clippy::result_large_err)]
+pub fn collect_fixture_monitored(
+    manifest_path: &Path,
+    out: &Path,
+    socket: &Path,
+) -> Result<ArchiveReceipt, CampaignFailure> {
+    let authorized = gate::fixture(manifest_path).map_err(|e| empty_failure(e, 0))?;
+    let mut monitor = super::monitor::Monitor::connect(socket, authorized.parts().1)
+        .map_err(|e| empty_failure(e, 0))?;
+    collect_construction(authorized, out, Some(&mut monitor))
+}
+#[allow(clippy::result_large_err)]
 fn collect_construction(
     authorized: AuthorizedCampaign,
     out: &Path,
+    mut monitor: Option<&mut super::monitor::Monitor>,
 ) -> Result<ArchiveReceipt, CampaignFailure> {
     let (manifest, binding) = authorized.parts();
+    let mode = if manifest.purpose == "construction_fixture" {
+        "construction_fixture"
+    } else {
+        "prospective_seed_population"
+    };
     let planned = manifest.cases.len() as u64;
     let mut census = Census {
         planned,
@@ -243,26 +262,23 @@ fn collect_construction(
     let mut case_failure = None;
     let budget = Budget::new();
     let mut created = false;
+    let mut probe_metrics = Vec::new();
     let result = (|| -> Result<(), String> {
-        if manifest.purpose != "construction_fixture"
-            || binding.declaration_sha256.is_some()
-            || binding.acceptance_sha256.is_some()
-            || binding.execution_approval_sha256.is_some()
+        if mode == "prospective_seed_population"
+            && (monitor.is_none() || binding.execution_approval_sha256.is_none())
         {
-            return Err("construction-only archive authorization required".into());
+            return Err("authorized scientific monitor required".into());
+        }
+        if let Some(m) = monitor.as_deref_mut() {
+            m.check()?;
         }
         let entries = source::inputs::read(Path::new(source::ROOT), source::MANIFEST_PATH)?;
-        let source_bytes: u64 = entries.iter().map(|(_, bytes)| bytes.len() as u64).sum();
         let audit_bound: u64 = manifest
             .arms
             .iter()
             .map(|arm| (arm.config.max_steps + 3) * io::ROW_LIMIT as u64)
             .sum();
-        let reserved = source_bytes
-            + audit_bound
-            + planned * (io::ROW_LIMIT as u64 + 1024)
-            + 4 * io::METADATA_LIMIT as u64
-            + io::FAILURE_RESERVE;
+        let reserved = audit_bound + planned * (io::ROW_LIMIT as u64 + 1024) + 1024 * 1024 * 1024;
         if reserved > io::CAMPAIGN_LIMIT {
             return Err("fixture reservation exceeds campaign cap".into());
         }
@@ -276,7 +292,7 @@ fn collect_construction(
             "header.json",
             &Header {
                 schema: "war1-study-archive-v1".into(),
-                mode: "construction_fixture".into(),
+                mode: mode.into(),
                 binding: binding.clone(),
                 planned,
             },
@@ -286,6 +302,9 @@ fn collect_construction(
         io::save_bytes(&out.join("manifest.json"), wire::SELECTED)?;
         let mut inventory = vec![];
         for (i, (path, bytes)) in entries.iter().enumerate() {
+            if let Some(m) = monitor.as_deref_mut() {
+                m.check()?;
+            }
             budget.reserve(bytes.len() as u64)?;
             io::save_bytes(&out.join(format!("source/{i:06}.bin")), bytes)?;
             inventory.push(gate::Artifact {
@@ -304,11 +323,31 @@ fn collect_construction(
             },
             &budget,
         )?;
+        if !authorized.retained().is_empty() {
+            io::create_directory(&out.join("provenance"))?;
+            io::create_directory(&out.join("provenance/fixture-probes"))?;
+            for (name, descriptor) in authorized.retained() {
+                if let Some(m) = monitor.as_deref_mut() {
+                    m.check()?;
+                }
+                let bytes = io::read_input(Path::new(&descriptor.path))?;
+                if bytes.len() as u64 != descriptor.bytes
+                    || wire::sha256(&bytes) != descriptor.sha256
+                {
+                    return Err("preflight provenance changed before copy".into());
+                }
+                budget.reserve(bytes.len() as u64)?;
+                io::save_bytes(&out.join("provenance").join(name), &bytes)?;
+            }
+            io::sync_directory(&out.join("provenance/fixture-probes"))?;
+            io::sync_directory(&out.join("provenance"))?;
+        }
         let mut blocks = vec![];
         for (block_index, cases) in manifest.cases.chunks(128).enumerate() {
             let path = format!("blocks/block-{block_index:06}.jsonl");
             let mut journal = io::Journal::new(&out.join(&path), io::CAMPAIGN_LIMIT)?;
             for case in cases {
+                let case_clock = std::time::Instant::now();
                 let arm = manifest
                     .arms
                     .iter()
@@ -337,7 +376,9 @@ fn collect_construction(
                     final_checkpoint: None,
                     acknowledged_archive_prefix: Some(receipt.clone()),
                 });
+                let start_clock = std::time::Instant::now();
                 let bytes = append(&mut journal, &start, 1024, &budget)?;
+                let start_seconds = start_clock.elapsed().as_secs_f64();
                 prefix.update(&bytes);
                 receipt.bytes += bytes.len() as u64;
                 receipt.sha256 = format!("{:x}", prefix.clone().finalize());
@@ -365,11 +406,23 @@ fn collect_construction(
                 } else {
                     None
                 };
-                let result = observer::execute_case(
-                    case,
-                    arm,
-                    audit.as_mut().map(|a| a as &mut dyn FrameSink),
-                );
+                let mut measured = observer::ProbeMetrics::default();
+                let sink = audit.as_mut().map(|a| a as &mut dyn FrameSink);
+                let result = match monitor.as_deref_mut() {
+                    Some(m) if mode == "prospective_seed_population" => {
+                        observer::execute_authorized(case, arm, sink, &authorized, m)
+                    }
+                    Some(m) => observer::execute_measured(
+                        case,
+                        arm,
+                        sink,
+                        &mut || m.check(),
+                        &mut measured,
+                    ),
+                    None => {
+                        observer::execute_measured(case, arm, sink, &mut || Ok(()), &mut measured)
+                    }
+                };
                 let mut outcome = match result {
                     Ok(value) => value,
                     Err(mut e) => {
@@ -413,12 +466,33 @@ fn collect_construction(
                     final_checkpoint: Some(outcome.final_checkpoint.clone()),
                     acknowledged_archive_prefix: Some(receipt.clone()),
                 });
+                if let Some(m) = monitor.as_deref_mut() {
+                    m.progress(
+                        &case.key(),
+                        outcome.completed_steps,
+                        outcome.observed_steps,
+                        outcome
+                            .audit_descriptor
+                            .as_ref()
+                            .map_or(0, |d| d.acknowledged_steps),
+                    )?;
+                }
+                let outcome_clock = std::time::Instant::now();
                 let bytes = append(
                     &mut journal,
                     &Row::Outcome { outcome },
                     io::ROW_LIMIT,
                     &budget,
                 )?;
+                if mode == "construction_fixture" {
+                    measured.start_outcome_seconds =
+                        start_seconds + outcome_clock.elapsed().as_secs_f64();
+                    measured.case_overhead_seconds = (case_clock.elapsed().as_secs_f64()
+                        - measured.start_outcome_seconds
+                        - measured.measured_step_seconds)
+                        .max(0.0);
+                    probe_metrics.push(measured);
+                }
                 prefix.update(&bytes);
                 receipt.bytes += bytes.len() as u64;
                 receipt.acknowledged_cases += 1;
@@ -443,21 +517,56 @@ fn collect_construction(
             )?;
             blocks.push(descriptor);
         }
-        if source::verify()? != binding {
+        if mode == "construction_fixture" {
+            #[derive(Serialize)]
+            struct Probe<'a> {
+                schema: &'static str,
+                purpose: &'static str,
+                cases: &'a [observer::ProbeMetrics],
+            }
+            save(
+                out,
+                "fixture-probe.json",
+                &Probe {
+                    schema: "war1-study-fixture-probe-v1",
+                    purpose: "construction_fixture",
+                    cases: &probe_metrics,
+                },
+                &budget,
+            )?;
+        }
+        let current_binding = source::verify()?;
+        if current_binding.manifest_sha256 != binding.manifest_sha256
+            || current_binding.compiled_inputs_sha256 != binding.compiled_inputs_sha256
+            || current_binding.executable_sha256 != binding.executable_sha256
+        {
             return Err("source/binary changed before candidate publication".into());
         }
-        validate_saved(out, &manifest, &binding, &blocks, &receipt)?;
+        validate_saved(out, manifest, binding, &blocks, &receipt, &mut || {
+            if let Some(m) = monitor.as_deref_mut() {
+                m.check()?;
+            }
+            Ok(())
+        })?;
+        if let Some(m) = monitor.as_deref_mut() {
+            m.check()?;
+        }
         for dir in ["source", "audits", "blocks", ""] {
             io::sync_directory(&out.join(dir))?;
         }
         let candidate = Candidate {
             schema: "war1-study-candidate-index-v1".into(),
-            mode: "construction_fixture".into(),
-            binding,
+            mode: mode.into(),
+            binding: binding.clone(),
             census: census.clone(),
             receipt: receipt.clone(),
             blocks,
-            monitor: "construction_deterministic_no_scientific_resource_decision".into(),
+            monitor: if mode == "construction_fixture" {
+                "construction_deterministic_no_scientific_resource_decision"
+            } else {
+                "verified_control_channel_parent_final_peak_pending"
+            }
+            .into(),
         };
         if let Err(error) = save(out, "candidate-index.json", &candidate, &budget) {
             let path = out.join("candidate-index.json");
@@ -474,6 +583,7 @@ fn collect_construction(
     match result {
         Ok(()) => Ok(receipt),
         Err(mut detail) => {
+            detail = detail.chars().take(1024).collect();
             if census.pending > 0 {
                 census.pending = 0;
                 census.partial = 1
@@ -489,7 +599,9 @@ fn collect_construction(
                 case_failure,
             };
             if created {
-                if let Err(e) = io::save_json(&out.join("failure.json"), &failure) {
+                if let Err(e) = io::encode(&failure, 65536, true)
+                    .and_then(|bytes| io::save_bytes(&out.join("failure.json"), &bytes))
+                {
                     detail.push_str(&format!("; failure receipt also failed: {e}"));
                     failure.detail = detail;
                 }
@@ -532,11 +644,13 @@ fn validate_saved(
     binding: &CampaignBinding,
     blocks: &[BlockDescriptor],
     receipt: &ArchiveReceipt,
+    check: &mut dyn FnMut() -> Result<(), String>,
 ) -> Result<(), String> {
+    check()?;
     let header: Header = serde_json::from_slice(&io::read_input(&out.join("header.json"))?)
         .map_err(|e| e.to_string())?;
     if header.schema != "war1-study-archive-v1"
-        || header.mode != "construction_fixture"
+        || header.mode != manifest.purpose
         || header.binding != *binding
         || header.planned != manifest.cases.len() as u64
         || io::read_input(&out.join("manifest.json"))? != wire::SELECTED
@@ -553,6 +667,7 @@ fn validate_saved(
     }
     let mut entries = vec![];
     for (i, item) in inventory.iter().enumerate() {
+        check()?;
         let bytes = io::read_input(&out.join(format!("source/{i:06}.bin")))?;
         if item.path != source::INPUT_PATHS[i]
             || wire::sha256(&bytes) != item.sha256
@@ -572,6 +687,7 @@ fn validate_saved(
     let mut hash = Sha256::new();
     let mut total = 0;
     for (i, block) in blocks.iter().enumerate() {
+        check()?;
         let raw = io::read_bounded(&out.join(&block.path), 128 * (io::ROW_LIMIT + 1024))?;
         if wire::sha256(&raw) != block.sha256 || raw.len() as u64 != block.bytes {
             return Err("block descriptor mismatch".into());
@@ -591,6 +707,7 @@ fn validate_saved(
             return Err("saved block closure mismatch".into());
         }
         lines::<Row>(&out.join(&block.path), |row| {
+            check()?;
             let case = manifest.cases.get(ordinal).ok_or("extra archive key")?;
             let arm = manifest
                 .arms
@@ -627,7 +744,7 @@ fn validate_saved(
                     }
                     validate_outcome(&o, &arm.config)?;
                     if case.replicate_index == 0 {
-                        validate_audit(out, &o, &input)?
+                        validate_audit(out, &o, &input, check)?
                     } else if o.audit_descriptor.is_some() {
                         return Err("undeclared audit subset".into());
                     }
@@ -699,7 +816,12 @@ fn validate_outcome(
     }
     Ok(())
 }
-fn validate_audit(out: &Path, o: &Outcome, input: &[u8]) -> Result<(), String> {
+fn validate_audit(
+    out: &Path,
+    o: &Outcome,
+    input: &[u8],
+    check: &mut dyn FnMut() -> Result<(), String>,
+) -> Result<(), String> {
     let d = o
         .audit_descriptor
         .as_ref()
@@ -717,6 +839,7 @@ fn validate_audit(out: &Path, o: &Outcome, input: &[u8]) -> Result<(), String> {
     semantic.update(b"war1-study-transcript-v1\0");
     let mut state = observer::Accounting::new(&o.final_checkpoint.config);
     lines::<AuditRow>(&out.join(&d.path), |row| {
+        check()?;
         match row {
             AuditRow::Header {
                 schema,
@@ -812,5 +935,180 @@ pub(super) fn construction_test_validate_saved(out: &Path) -> Result<(), String>
         &candidate.binding,
         &candidate.blocks,
         &candidate.receipt,
+        &mut || Ok(()),
     )
+}
+
+#[cfg(test)]
+#[test]
+fn synthetic_full_escaped_frames_and_checkpoints_fit_algebraic_certificate() {
+    use sugarscape_core::war::{
+        config::{EngagementConfig, Geometry, Side, CHECKPOINT_SCHEMA},
+        math::Probability,
+        Casualty, EndReason, Ending, Exposure,
+    };
+    let ending = Ending {
+        reason: EndReason::OneSideExtinction,
+        winner: Some(Side::Blue),
+        censored: false,
+    };
+    let probability = Probability {
+        hazard: f64::MAX,
+        dose: f64::MAX,
+        ideal: f64::MAX,
+        realized: f64::MAX,
+        saturated: false,
+    };
+    // Deliberately maximum-sized schema payload, not a valid physical history.
+    let frame = Frame {
+        step: 512,
+        start: [768; 2],
+        survivors: [768; 2],
+        active_steps: 512,
+        calendar_time: f64::MAX,
+        active_time: f64::MAX,
+        exposure: Exposure {
+            contact_pairs: u64::MAX,
+            exposed: [768; 2],
+            contributed_rate: [f64::MAX; 2],
+            integrated: [f64::MAX; 2],
+            target_probability: [Some(probability.clone()), Some(probability)],
+        },
+        casualties: (0..768)
+            .map(|_| Casualty {
+                id: 767,
+                side: Side::Blue,
+            })
+            .collect(),
+        ending: Some(ending.clone()),
+    };
+    let row = AuditRow::Frame {
+        step: 512,
+        cause: "benchmark_exposure".into(),
+        frame_json: String::from_utf8(observer::semantic_bytes(&frame).unwrap()).unwrap(),
+    };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(encoded.len() <= 24832, "escaped frame {}", encoded.len());
+    let checkpoint = Checkpoint {
+        schema: CHECKPOINT_SCHEMA.into(),
+        config: EngagementConfig {
+            blue: 768,
+            red: 768,
+            blue_rate: f64::MAX,
+            red_rate: f64::MAX,
+            dt: f64::MAX,
+            max_steps: 512,
+            geometry: Geometry::DuelContact,
+        },
+        seed: u64::MAX,
+        step: 512,
+        active_steps: 512,
+        blue_alive: vec![767; 768],
+        red_alive: vec![],
+        contact_rng: "\u{0000}".repeat(128),
+        casualty_rng: "\u{0000}".repeat(128),
+        ending: Some(ending),
+    };
+    let row = AuditRow::Terminal {
+        checkpoint_json: String::from_utf8(observer::semantic_bytes(&checkpoint).unwrap()).unwrap(),
+        completed_steps: 512,
+        observed_steps: 512,
+        active_steps: 512,
+    };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(
+        encoded.len() <= 5706,
+        "escaped checkpoint {}",
+        encoded.len()
+    );
+    let proposal: serde_json::Value = serde_json::from_slice(wire::PROPOSAL).unwrap();
+    let fixture: serde_json::Value = serde_json::from_slice(wire::SELECTED).unwrap();
+    let arm_id = proposal["arms"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(fixture["arms"].as_array().unwrap())
+        .map(|arm| arm["arm_id"].as_str().unwrap())
+        .max_by_key(|id| id.len())
+        .unwrap();
+    let key = wire::Key {
+        ordinal: 52223,
+        arm_id: arm_id.into(),
+        replicate_index: 1023,
+    };
+    let start = Row::Start {
+        key: key.clone(),
+        seed: u64::MAX,
+        case_input_sha256: "f".repeat(64),
+    };
+    assert!(io::encode(&start, 1024, true).unwrap().len() <= 231);
+    let outcome = Outcome {
+        schema: "war1-study-outcome-v1".into(),
+        key,
+        seed: u64::MAX,
+        case_input_sha256: "f".repeat(64),
+        manifest_sha256: "f".repeat(64),
+        completed_steps: 512,
+        observed_steps: 512,
+        active_steps: 512,
+        calendar_time: f64::MAX,
+        active_time: f64::MAX,
+        initial_counts: [768; 2],
+        final_counts: [768; 2],
+        ending: checkpoint.ending.clone().unwrap(),
+        observations: (0..4)
+            .map(|_| observer::Observation {
+                step: 512,
+                counts: [768; 2],
+                origin: "derived_absorbing".into(),
+                reason: Some("\u{0000}".repeat(128)),
+                reference: Some(observer::ReferenceWire {
+                    requested_time: f64::MAX,
+                    evaluated_time: f64::MAX,
+                    forces: [f64::MAX; 2],
+                    regime: "initial_extinction".into(),
+                    extinction_time: Some(f64::MAX),
+                    at_boundary: false,
+                    survivor: Some(Side::Blue),
+                }),
+                reference_error: Some(observer::ReferenceErrorWire {
+                    field: "\"".repeat(512),
+                    detail: "\"".repeat(512),
+                }),
+            })
+            .collect(),
+        casualty_totals: [768; 2],
+        contributed_exposure_totals: [f64::MAX; 2],
+        final_checkpoint: checkpoint,
+        transcript_sha256: "f".repeat(64),
+        audit_descriptor: Some(observer::AuditDescriptor {
+            path: "audits/52223.jsonl".into(),
+            sha256: "f".repeat(64),
+            bytes: u64::MAX,
+            acknowledged_steps: 512,
+        }),
+    };
+    let row = Row::Outcome { outcome };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(encoded.len() <= 19084, "compact outcome {}", encoded.len());
+}
+
+#[test]
+fn saved_validation_honors_monitor_stop_before_io() {
+    let manifest = wire::decode_manifest(wire::SELECTED).unwrap();
+    let binding = source::verify().unwrap();
+    let receipt = ArchiveReceipt {
+        sha256: String::new(),
+        bytes: 0,
+        acknowledged_cases: 0,
+    };
+    let result = validate_saved(
+        Path::new("/construction-test-missing"),
+        &manifest,
+        &binding,
+        &[],
+        &receipt,
+        &mut || Err("construction_test monitor stop".into()),
+    );
+    assert_eq!(result.unwrap_err(), "construction_test monitor stop");
 }

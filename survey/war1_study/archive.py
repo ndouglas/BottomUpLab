@@ -1032,6 +1032,10 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
             reason=reason,
             registered=available,
             errors=errors,
+            partial_keys=[dict(ordinal=c.key.ordinal, arm_id=c.key.arm_id, replicate_index=c.key.replicate_index)
+                          for c, state in zip(manifest.cases, states) if state in ("partial", "pending")],
+            acknowledged_archive_prefix=dict(sha256=prefix.hexdigest(), bytes=prefix_bytes,
+                                             acknowledged_cases=census["complete_valid"]),
             non_audit_transcripts="replay_checkable_hash_only_full_frames_not_retained",
         ),
     }

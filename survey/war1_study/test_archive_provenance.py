@@ -6,10 +6,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from . import archive_provenance as provenance, test_fixtures as fixtures
-from .io import canonical_bytes, strict_json, METADATA_LIMIT
-from .oracle import prepare_oracles
-from . import test_oracle
+from survey.war1_study import archive_provenance as provenance, test_fixtures as fixtures
+from survey.war1_study.io import canonical_bytes, strict_json, METADATA_LIMIT
+from survey.war1_study.oracle import prepare_oracles
+from survey.war1_study import test_oracle
 
 
 def synthetic_packet(root, manifest):
@@ -286,7 +286,7 @@ class RetainedReceiptTests(unittest.TestCase):
     def test_full_synthetic_population_reports_tiny_rejections_and_all_ctmc_margins(
         self,
     ):
-        from . import analysis, archive
+        from survey.war1_study import analysis, archive
         from unittest.mock import patch
 
         arms = {a["arm_id"]: a for a in self.manifest.arms}

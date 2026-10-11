@@ -5,8 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from . import manifest
-from .io import canonical_bytes
+from survey.war1_study import manifest
+from survey.war1_study.io import canonical_bytes
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -248,10 +248,10 @@ def save_campaign(root, m, *, stop=None):
     def save(path, value):
         (root / path).write_bytes(canonical_bytes(value))
 
-    from .archive_provenance import SOURCE_REQUIRED
+    from survey.war1_study.archive_provenance import SOURCE_REQUIRED, LITERAL_INVENTORY, literal_paths
 
     sources = sorted(
-        [(path, (ROOT / path).read_bytes()) for path in SOURCE_REQUIRED]
+        [(path, (ROOT / path).read_bytes()) for path in set(SOURCE_REQUIRED) | set(literal_paths((ROOT / LITERAL_INVENTORY).read_bytes()))]
         + [
             (
                 (

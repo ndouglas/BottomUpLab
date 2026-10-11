@@ -1,4 +1,4 @@
-use super::{archive, gate, numerics, source, wire};
+use super::{archive, gate, metadata, numerics, source, wire};
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
@@ -84,16 +84,19 @@ pub fn main_args(args: &[String]) -> Result<(), CliFailure> {
     match args {
         [] => {
             println!(
-                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
+                "war1-study metadata | validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
             );
             Ok(())
         }
         [flag] if flag == "--help" || flag == "-h" => {
             println!(
-                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
+                "war1-study metadata | validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
             );
             Ok(())
         }
+        [cmd] if cmd == "metadata" => std::io::stdout()
+            .write_all(&metadata::bytes().map_err(input_failure)?)
+            .map_err(failure),
         [cmd, flag, path] if cmd == "validate" && flag == "--manifest" => validate_command(path),
         [cmd, flag, path, outflag, output]
             if cmd == "numerics" && flag == "--manifest" && outflag == "--out" =>
@@ -125,7 +128,52 @@ pub fn main_args(args: &[String]) -> Result<(), CliFailure> {
                 Path::new(execution),
             )
             .map_err(input_failure)?;
-            archive::collect(authorized, Path::new(output)).map_err(|e| failure(e.detail))?;
+            let _ = (authorized, output);
+            Err(input_failure(
+                "scientific collection requires the documented process supervisor control channel",
+            ))
+        }
+        [cmd, flag, path, outflag, output, socketflag, socket]
+            if cmd == "fixture"
+                && flag == "--manifest"
+                && outflag == "--out"
+                && socketflag == "--control-socket" =>
+        {
+            archive::collect_fixture_monitored(
+                Path::new(path),
+                Path::new(output),
+                Path::new(socket),
+            )
+            .map_err(|e| {
+                if e.census.planned == 0 {
+                    input_failure(e.detail)
+                } else {
+                    failure(e.detail)
+                }
+            })?;
+            Ok(())
+        }
+        [cmd, dflag, declaration, aflag, acceptance, eflag, execution, oflag, output, sflag, socket]
+            if cmd == "collect"
+                && dflag == "--declaration"
+                && aflag == "--acceptance"
+                && eflag == "--execution"
+                && oflag == "--out"
+                && sflag == "--control-socket" =>
+        {
+            let authorized = gate::preflight(
+                Path::new(declaration),
+                Path::new(acceptance),
+                Path::new(execution),
+            )
+            .map_err(input_failure)?;
+            archive::collect(authorized, Path::new(output), Path::new(socket)).map_err(|e| {
+                if e.census.planned == 0 {
+                    input_failure(e.detail)
+                } else {
+                    failure(e.detail)
+                }
+            })?;
             Ok(())
         }
         _ => Err(CliFailure {

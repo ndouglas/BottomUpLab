@@ -214,6 +214,12 @@ fn war1_study_stamp(root: &Path, out: &Path) {
         .to_str()
         .expect("UTF8 root")
         .to_owned();
+    let cargo_version = std::process::Command::new(std::env::var_os("CARGO").expect("CARGO"))
+        .arg("--version")
+        .output()
+        .expect("study cargo version");
+    assert!(cargo_version.status.success());
+    let cargo_version = String::from_utf8(cargo_version.stdout).expect("cargo UTF8");
     fs::write(out.join("war1_study_manifest.json"), bytes).expect("embed selected manifest");
-    fs::write(out.join("war1_study_stamp.rs"),format!("pub const ROOT:&str={root:?};\npub const MANIFEST_PATH:&str={selected:?};\npub const MANIFEST_SHA256:&str={manifest_hash:?};\npub const PURPOSE:&str={purpose:?};\npub const INPUTS_SHA256:&str={identity:?};\npub const INPUT_PATHS:&[&str]=&{paths:?};\npub const TOOLCHAIN:&str={compiler:?};\npub const FLAGS:&[(&str,&str)]=&{flags:?};\npub const FEATURES:&[&str]=&{features:?};\n")).expect("study stamp");
+    fs::write(out.join("war1_study_stamp.rs"),format!("pub const CARGO_VERSION:&str={cargo_version:?};\npub const ROOT:&str={root:?};\npub const MANIFEST_PATH:&str={selected:?};\npub const MANIFEST_SHA256:&str={manifest_hash:?};\npub const PURPOSE:&str={purpose:?};\npub const INPUTS_SHA256:&str={identity:?};\npub const INPUT_PATHS:&[&str]=&{paths:?};\npub const TOOLCHAIN:&str={compiler:?};\npub const FLAGS:&[(&str,&str)]=&{flags:?};\npub const FEATURES:&[&str]=&{features:?};\n")).expect("study stamp");
 }

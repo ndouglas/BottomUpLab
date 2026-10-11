@@ -95,6 +95,10 @@ SOURCE_REQUIRED = (
     "survey/build.rs",
     "survey/src/bin/war1_study.rs",
     "survey/build_support/war1_study_source_identity.rs",
+    "survey/build_support/f5_source_identity.rs",
+    "survey/build_support/bt_source_identity.rs",
+    "survey/build_support/war1_source_identity.rs",
+    "survey/war1_study/fixtures/core-literal-inputs-v1.txt",
     "docs/superpowers/specs/2026-10-10-war-1-measurement-design.md",
     "docs/superpowers/specs/2026-10-10-war-1-measurement-proposal.json",
     "docs/superpowers/plans/2026-10-10-war-1-measurement.md",
@@ -105,6 +109,23 @@ SOURCE_REQUIRED = (
     "survey/src/war1_study/mod.rs",
     "survey/war1_study/contracts.py",
 )
+
+
+LITERAL_INVENTORY = "survey/war1_study/fixtures/core-literal-inputs-v1.txt"
+
+
+def literal_paths(raw):
+    text = raw.decode("utf-8")
+    paths = text.splitlines()
+    _require(text.endswith("\n") and 1 <= len(paths) <= 4096 and paths == sorted(set(paths)), "literal inventory ordering/bounds")
+    for path in paths:
+        _text(path, "literal path", 4096)
+        p = PurePosixPath(path)
+        _require(str(p) == path and not p.is_absolute() and ".." not in p.parts and "\\" not in path,
+                 "literal canonical path")
+        _require(path.startswith(("sweeps/", "data/anasazi/", "data/bali/", "docs/examples/burrow/")) or path == "crates/sugarscape-core/assets/sugar-map.txt",
+                 "literal input outside approved roots")
+    return paths
 
 
 def validate_source(root, header, manifest):
@@ -122,8 +143,11 @@ def validate_source(root, header, manifest):
     _require(
         isinstance(entries, list) and 1 <= len(entries) <= 4096, "source entry bound"
     )
+    literal_index = next((i for i, entry in enumerate(entries) if entry["path"] == LITERAL_INVENTORY), None)
+    _require(literal_index is not None, "missing literal source inventory")
+    literals = literal_paths(read_regular(root / f"source/{literal_index:06}.bin", METADATA_LIMIT))
     paths = {i.get("path") for i in entries if isinstance(i, dict)}
-    _require(set(SOURCE_REQUIRED) <= paths, "missing required frozen source inputs")
+    _require(set(SOURCE_REQUIRED) | set(literals) <= paths, "missing required frozen source inputs")
     total = 0
     previous = ""
     digest = hashlib.sha256(b"war1-study-compiled-inputs-v1\0")
@@ -150,6 +174,7 @@ def validate_source(root, header, manifest):
         )
         _require(
             path in SOURCE_REQUIRED
+            or path in literals
             or selected_manifest
             or path.startswith(
                 ("crates/sugarscape-core/src/", "survey/src/war1_study/")
@@ -255,6 +280,26 @@ def _exact_integers(actual, expected, name):
         _uint(actual[k], name)
         _require(actual[k] == v, f"{name} mismatch")
 
+
+RESOURCE_FIELDS = {
+            "schema",
+            "manifest_sha256",
+            "compiled_inputs_sha256",
+            "binary_sha256",
+            "budgets",
+            "census",
+            "reserved_bytes",
+            "failure_reserve_bytes",
+            "schema_bounds_valid",
+            "aggregate_proof_valid",
+            "forecast_valid",
+            "forecast_method",
+            "forecast_inputs",
+            "forecast_wall_seconds",
+            "forecast_peak_rss_bytes",
+            "fixture_probes",
+            "unavailable",
+        }
 
 def validate_monitor(monitor, header):
     import math
@@ -533,6 +578,29 @@ def validate_retained_receipts(root, header, manifest):
             _require(receipt[key] == ids[key], "authorization identity")
     for key in ("compiled_inputs_sha256", "source_inventory_sha256"):
         _require(e[key] == ids[key], "execution source identity")
+    return validate_preparation(root, manifest, d)
+
+
+def validate_preparation(root, manifest, d):
+    """Shared strict frozen build/numeric/resource packet validation.
+
+    Deliberately independent of future reviewer/owner receipts, so preparation
+    never needs to invent an activation chain to validate its own evidence.
+    """
+    from pathlib import Path
+    import math
+    from .io import canonical_bytes
+    from .manifest import proposal
+    ids = d["identities"]
+    _fields(ids, IDENTITY_FIELDS, "identities")
+    for value in ids.values():
+        _hash(value)
+    _require(ids["manifest_sha256"] == manifest.sha256, "preparation manifest")
+    _require(ids["resolved_roster_sha256"] == manifest.raw["roster_sha256"], "preparation roster")
+    for key in ("protocol_sha256", "proposal_sha256"):
+        _require(ids[key] == manifest.raw[key], "preparation normative identity")
+    _exact_integers(d["budgets"], LIMITS, "budgets")
+    _exact_integers(d["census"], POPULATION, "population")
     _artifact(root, "manifest.json", d["manifest"])
     _require(d["manifest"]["sha256"] == manifest.sha256, "declared manifest hash")
     _fields(d["binary"], {"path", "sha256", "bytes"}, "binary descriptor")
@@ -672,29 +740,7 @@ def validate_retained_receipts(root, header, manifest):
         "numeric source digest",
     )
     r = _artifact(root, "provenance/resources.json", d["resources"])
-    _fields(
-        r,
-        {
-            "schema",
-            "manifest_sha256",
-            "compiled_inputs_sha256",
-            "binary_sha256",
-            "budgets",
-            "census",
-            "reserved_bytes",
-            "failure_reserve_bytes",
-            "schema_bounds_valid",
-            "aggregate_proof_valid",
-            "forecast_valid",
-            "forecast_method",
-            "forecast_inputs",
-            "forecast_wall_seconds",
-            "forecast_peak_rss_bytes",
-            "fixture_probes",
-            "unavailable",
-        },
-        "resources",
-    )
+    _fields(r, RESOURCE_FIELDS, "resources")
     _require(r["schema"] == "war1-study-resources-v1", "resource schema")
     for key in ("manifest_sha256", "compiled_inputs_sha256", "binary_sha256"):
         _require(r[key] == ids[key], "resource binding")

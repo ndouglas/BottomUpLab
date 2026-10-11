@@ -117,6 +117,7 @@ pub(super) fn construction_count() -> usize {
 
 /// Internal boundary: only the authorized archive path and fixed-fixture tests call this.
 #[allow(clippy::result_large_err)] // Frozen typed failure API retains the actual checkpoint.
+#[cfg(test)]
 pub(super) fn execute_case(
     case: &wire::Case,
     arm: &wire::Arm,
@@ -125,11 +126,61 @@ pub(super) fn execute_case(
     execute_monitored(case, arm, audit, &mut || Ok(()))
 }
 #[allow(clippy::result_large_err)] // Same typed failure contract as execute_case.
+#[cfg(test)]
 pub(super) fn execute_monitored(
+    case: &wire::Case,
+    arm: &wire::Arm,
+    audit: Option<&mut dyn FrameSink>,
+    stop: &mut dyn FnMut() -> Result<(), String>,
+) -> Result<Outcome, CaseFailure> {
+    execute_inner(case, arm, audit, stop, None, None)
+}
+#[derive(Default, Serialize)]
+pub(super) struct ProbeMetrics {
+    pub actor_steps: u64,
+    pub kernel_seconds_per_actor_step: f64,
+    pub projection_seconds_per_step: f64,
+    pub start_outcome_seconds: f64,
+    pub case_overhead_seconds: f64,
+    #[serde(skip)]
+    pub measured_step_seconds: f64,
+    pub audit_seconds_per_frame: f64,
+}
+#[allow(clippy::result_large_err)]
+pub(super) fn execute_measured(
+    case: &wire::Case,
+    arm: &wire::Arm,
+    audit: Option<&mut dyn FrameSink>,
+    stop: &mut dyn FnMut() -> Result<(), String>,
+    metrics: &mut ProbeMetrics,
+) -> Result<Outcome, CaseFailure> {
+    execute_inner(case, arm, audit, stop, None, Some(metrics))
+}
+#[allow(clippy::result_large_err)]
+pub(super) fn execute_authorized(
+    case: &wire::Case,
+    arm: &wire::Arm,
+    audit: Option<&mut dyn FrameSink>,
+    authorized: &super::gate::AuthorizedCampaign,
+    monitor: &mut super::monitor::Monitor,
+) -> Result<Outcome, CaseFailure> {
+    execute_inner(
+        case,
+        arm,
+        audit,
+        &mut || monitor.check(),
+        Some(authorized),
+        None,
+    )
+}
+#[allow(clippy::result_large_err)]
+fn execute_inner(
     case: &wire::Case,
     arm: &wire::Arm,
     mut audit: Option<&mut dyn FrameSink>,
     stop: &mut dyn FnMut() -> Result<(), String>,
+    authorization: Option<&super::gate::AuthorizedCampaign>,
+    mut metrics: Option<&mut ProbeMetrics>,
 ) -> Result<Outcome, CaseFailure> {
     let c = &arm.config;
     let mut observed = 0;
@@ -158,8 +209,10 @@ pub(super) fn execute_monitored(
     };
     if c.blue as u64 + c.red as u64 > 768
         || c.max_steps > 512
-        || ![7, 8].contains(&case.seed)
-        || !arm.arm_id.starts_with("fixture.")
+        || match authorization {
+            Some(permit) => !permit.permits(case, arm),
+            None => ![7, 8].contains(&case.seed) || !arm.arm_id.starts_with("fixture."),
+        }
     {
         return Err(failure(
             "bounds",
@@ -205,6 +258,7 @@ pub(super) fn execute_monitored(
                 durable,
             )
         })?;
+        let kernel_start = std::time::Instant::now();
         let frame = engine
             .step()
             .map_err(|e| {
@@ -225,6 +279,16 @@ pub(super) fn execute_monitored(
                     durable,
                 )
             })?;
+        let kernel_seconds = kernel_start.elapsed().as_secs_f64();
+        let projection_start = std::time::Instant::now();
+        if let Some(m) = metrics.as_deref_mut() {
+            let actors = frame.start.iter().map(|n| *n as u64).sum::<u64>();
+            m.actor_steps += actors;
+            m.measured_step_seconds += kernel_seconds;
+            m.kernel_seconds_per_actor_step = m
+                .kernel_seconds_per_actor_step
+                .max(kernel_seconds / actors as f64);
+        }
         checkpoint = engine.checkpoint();
         state.accept(c, &frame).map_err(|e| {
             failure(
@@ -251,6 +315,12 @@ pub(super) fn execute_monitored(
         if requested.contains(&frame.step) {
             observations.push(observation(c, frame.step, frame.survivors, None));
         }
+        if let Some(m) = metrics.as_deref_mut() {
+            let seconds = projection_start.elapsed().as_secs_f64();
+            m.projection_seconds_per_step = m.projection_seconds_per_step.max(seconds);
+            m.measured_step_seconds += seconds;
+        }
+        let audit_start = std::time::Instant::now();
         if let Some(sink) = audit.as_deref_mut() {
             sink.frame(&frame).map_err(|e| {
                 let mut f = failure(
@@ -264,6 +334,11 @@ pub(super) fn execute_monitored(
                 f
             })?;
             durable += 1;
+        }
+        if let Some(m) = metrics.as_deref_mut() {
+            let seconds = audit_start.elapsed().as_secs_f64();
+            m.audit_seconds_per_frame = m.audit_seconds_per_frame.max(seconds);
+            m.measured_step_seconds += seconds;
         }
     }
     stop().map_err(|e| {
@@ -374,7 +449,7 @@ fn observation(
             None,
             Some(ReferenceErrorWire {
                 field: e.field,
-                detail: bounded_detail(e.detail),
+                detail: e.detail,
             }),
         ),
     };

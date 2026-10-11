@@ -18,10 +18,32 @@ pub struct CampaignBinding {
 pub struct AuthorizedCampaign {
     manifest: wire::Manifest,
     binding: CampaignBinding,
+    retained: Vec<(String, Artifact)>,
 }
 impl AuthorizedCampaign {
-    pub(super) fn parts(self) -> (wire::Manifest, CampaignBinding) {
-        (self.manifest, self.binding)
+    pub(super) fn parts(&self) -> (&wire::Manifest, &CampaignBinding) {
+        (&self.manifest, &self.binding)
+    }
+    pub(super) fn retained(&self) -> &[(String, Artifact)] {
+        &self.retained
+    }
+    pub(super) fn permits(&self, case: &wire::Case, arm: &wire::Arm) -> bool {
+        self.binding.execution_approval_sha256.is_some()
+            && self.manifest.purpose == "prospective_seed_population"
+            && self
+                .manifest
+                .cases
+                .get(case.ordinal as usize)
+                .is_some_and(|c| {
+                    c.arm_id == case.arm_id
+                        && c.seed == case.seed
+                        && c.replicate_index == case.replicate_index
+                })
+            && self
+                .manifest
+                .arms
+                .iter()
+                .any(|a| a == arm && arm.arm_id == case.arm_id)
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -434,7 +456,7 @@ fn preflight_with_context(
         return Err("resource readiness failed".into());
     }
     artifact(&r.forecast_inputs)?;
-    for p in r.fixture_probes {
+    for p in &r.fixture_probes {
         if p.fixture_purpose != "construction_fixture"
             || !hash(&p.compiled_inputs_sha256)
             || !hash(&p.binary_sha256)
@@ -451,9 +473,36 @@ fn preflight_with_context(
     binding.declaration_sha256 = Some(wire::sha256(&db));
     binding.acceptance_sha256 = Some(wire::sha256(&ab));
     binding.execution_approval_sha256 = Some(wire::sha256(&eb));
+    let descriptor = |path: &Path, bytes: &[u8]| Artifact {
+        path: path.to_string_lossy().into_owned(),
+        sha256: wire::sha256(bytes),
+        bytes: bytes.len() as u64,
+    };
+    let mut retained = vec![
+        ("declaration.json".into(), descriptor(declaration, &db)),
+        ("acceptance.json".into(), descriptor(acceptance, &ab)),
+        ("execution.json".into(), descriptor(execution, &eb)),
+        ("build.json".into(), d.build.clone()),
+        ("numeric.json".into(), d.numeric.clone()),
+        ("resources.json".into(), d.resources.clone()),
+        ("source-inventory.json".into(), d.source_inventory.clone()),
+        ("numeric-export.json".into(), n.numeric_export.clone()),
+        ("oracle-packet.json".into(), n.oracle_packet.clone()),
+        (
+            "resource-forecast-inputs.json".into(),
+            r.forecast_inputs.clone(),
+        ),
+    ];
+    for (i, probe) in r.fixture_probes.iter().enumerate() {
+        retained.push((
+            format!("fixture-probes/{i:06}.json"),
+            probe.artifact.clone(),
+        ));
+    }
     Ok(AuthorizedCampaign {
         manifest: m,
         binding,
+        retained,
     })
 }
 pub(super) fn fixture(path: &Path) -> Result<AuthorizedCampaign, String> {
@@ -469,7 +518,11 @@ pub(super) fn fixture(path: &Path) -> Result<AuthorizedCampaign, String> {
         return Err("fixed construction fixture authorization required".into());
     }
     let binding = source::verify()?;
-    Ok(AuthorizedCampaign { manifest, binding })
+    Ok(AuthorizedCampaign {
+        manifest,
+        binding,
+        retained: vec![],
+    })
 }
 
 pub(super) fn validate_receipt_links(
