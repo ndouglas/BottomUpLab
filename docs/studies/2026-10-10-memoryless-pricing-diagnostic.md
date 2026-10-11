@@ -93,3 +93,5 @@ Primary evidence is preserved locally at `survey/out/collusion-memoryless-202610
 This is eight seeds, one market/grid/learning-rate/exploration setup and a finite observed horizon. Censoring and different tail endpoints remain explicit. The updater changes feedback, frequency and trajectories jointly; true equilibrium, asymptotic convergence, biological applicability and real-market generalization are unestablished. Historical thousand-session results are context rather than acceptance targets.
 
 A future experiment could separate refreshing immediate rewards from refreshing historical continuation estimates or changing update frequency. That would require a new fixed design and execution decision. The current spike is complete; it does not authorize extra arms or tuning.
+
+The separately approved [cloned-state component follow-up](2026-10-10-memoryless-component-refresh.md) completed later on 2026-10-10, testing the proposed distinction with preserved trained states. Its results supplement this record without changing its raw data or original conclusions.

@@ -47,3 +47,6 @@ survey/out/democratic-peace-*
 
 # Local memoryless-pricing exploratory traces and verification evidence
 survey/out/collusion-memoryless-20261010/
+
+# Local cloned-state memoryless component-refresh evidence
+survey/out/collusion-memoryless-components-20261010/
