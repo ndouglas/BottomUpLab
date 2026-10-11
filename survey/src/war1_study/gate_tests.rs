@@ -340,6 +340,9 @@ impl FullEvidence {
         f.exported["compiled_inputs_sha256"] = f.frozen_hash.clone().into();
         let packet = f.save_bytes("oracle.json", b"construction_test synthetic oracle packet");
         f.numeric = serde_json::json!({"schema":"war1-study-numeric-v1","manifest_sha256":f.d.identities.manifest_sha256,"compiled_inputs_sha256":f.frozen_hash,"binary_sha256":f.d.binary.sha256,"numeric_export":packet,"oracle_packet":packet,"certificate_valid":true,"mass_valid":true,"width_valid":true,"ulp_valid":true,"ctmc_valid":true,"unresolved_findings":[],"oracle_ids":wire::approved_oracle_ids().unwrap()});
+        let proof =
+            super::dose_proof::proof(&f.d.identities.manifest_sha256, &f.frozen_hash).unwrap();
+        f.numeric["dose_proof"] = serde_json::to_value(f.save("dose-proof.json", &proof)).unwrap();
         let forecast = f.save_bytes("forecast.json", b"construction_test synthetic forecast");
         let probe = f.save_bytes("probe.json", b"construction_test synthetic probe");
         f.resources = serde_json::json!({"schema":"war1-study-resources-v1","manifest_sha256":f.d.identities.manifest_sha256,"compiled_inputs_sha256":f.frozen_hash,"binary_sha256":f.d.binary.sha256,"budgets":f.d.budgets,"census":f.d.census,"reserved_bytes":super::io::FAILURE_RESERVE+1,"failure_reserve_bytes":super::io::FAILURE_RESERVE,"schema_bounds_valid":true,"aggregate_proof_valid":true,"forecast_valid":true,"forecast_method":"construction_test synthetic method","forecast_inputs":forecast,"forecast_wall_seconds":1.0,"forecast_peak_rss_bytes":1,"fixture_probes":[{"artifact":probe,"command":["construction_test synthetic probe"],"compiled_inputs_sha256":f.frozen_hash,"binary_sha256":f.d.binary.sha256,"wall_seconds":1.0,"peak_rss_bytes":1,"fixture_purpose":"construction_fixture"}],"unavailable":[]});
@@ -410,6 +413,10 @@ fn construction_test_full_evidence_mutations() {
         ("inventory", "frozen source inventory/path"),
         ("build", "invalid build evidence"),
         ("numeric", "numeric readiness"),
+        ("dose_missing", "dose_proof"),
+        ("dose_changed", "dose proof differs"),
+        ("dose_extra", "unknown field"),
+        ("dose_omitted_arm", "dose proof differs"),
         ("export", "numeric export differs"),
         ("resources", "resource readiness"),
         ("probe", "invalid fixture resource probe"),
@@ -439,7 +446,26 @@ fn construction_test_full_evidence_mutations() {
             "inventory" => f.inventory["entries"][0]["sha256"] = "0".repeat(64).into(),
             "build" => f.build["rustc"] = "construction_test wrong compiler".into(),
             "numeric" => f.numeric["ulp_valid"] = false.into(),
+            "dose_missing" => {
+                f.numeric.as_object_mut().unwrap().remove("dose_proof");
+            }
             "export" => f.exported["states"][0]["targets"][0]["q_numerator"] = 0.into(),
+            "dose_changed" | "dose_extra" | "dose_omitted_arm" => {
+                let mut proof = serde_json::to_value(
+                    super::dose_proof::proof(&f.d.identities.manifest_sha256, &f.frozen_hash)
+                        .unwrap(),
+                )
+                .unwrap();
+                match kind {
+                    "dose_changed" => proof["positive_dose_extrema"][0] = "0/1".into(),
+                    "dose_extra" => proof["valid"] = true.into(),
+                    _ => {
+                        proof["arms"].as_array_mut().unwrap().pop();
+                    }
+                }
+                f.numeric["dose_proof"] =
+                    serde_json::to_value(f.save("wrong-dose.json", &proof)).unwrap();
+            }
             "resources" => f.resources["forecast_valid"] = false.into(),
             "probe" => f.resources["fixture_probes"][0]["fixture_purpose"] = "science".into(),
             _ => unreachable!(),

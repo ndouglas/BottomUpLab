@@ -76,6 +76,57 @@ class SavedArchiveTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             list(saved.outcomes())
 
+    def test_added_failure_before_or_during_iteration_suppresses_all_estimates(self):
+        from dataclasses import replace
+        from survey.war1_study.analysis import analyze
+        from survey.war1_study.io import canonical_bytes, strict_json, METADATA_LIMIT
+
+        for during in (False, True):
+            with self.subTest(during=during):
+                marker = self.root / "failure.json"
+                marker.unlink(missing_ok=True)
+                saved = archive.read_campaign(self.root, self.manifest)
+                candidate = strict_json(
+                    (self.root / "candidate-index.json").read_bytes(), METADATA_LIMIT
+                )
+                failure = dict(
+                    census=candidate["census"],
+                    receipt=candidate["receipt"],
+                    detail="construction_test late failure",
+                    case_failure=None,
+                )
+
+                def add_failure():
+                    marker.write_bytes(canonical_bytes(failure))
+
+                if during:
+                    original = saved.outcomes
+
+                    def changed():
+                        for index, row in enumerate(original()):
+                            if index == 0:
+                                add_failure()
+                            yield row
+
+                    saved = replace(saved, outcomes=changed)
+                else:
+                    add_failure()
+                result = analyze(self.manifest, saved, ())
+                self.assertFalse(result.primary_available)
+                self.assertIsNotNone(result.census["analysis_stream_error"])
+                self.assertTrue(
+                    all(
+                        row["mean"] is None and row["planned_n"] == 2
+                        for row in result.scalars
+                    )
+                )
+                self.assertEqual(saved.census["planned"], 16)
+                fresh = archive.read_campaign(self.root, self.manifest)
+                self.assertFalse(fresh.complete)
+                self.assertEqual(
+                    fresh.header["validation"]["errors"], ["failure_receipt_present"]
+                )
+
     def test_forged_audit_bytes_never_count_as_complete(self):
         path = self.root / "audits/0.jsonl"
         path.write_bytes(path.read_bytes() + b"{}\n")

@@ -768,6 +768,7 @@ def _failure(root, manifest, census, receipt, states, attempted):
 def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
     from .archive_provenance import (
         validate_source,
+        archive_metadata_namespace,
         inference_provenance,
         validate_receipt,
         validate_census,
@@ -1032,23 +1033,35 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
             reason=reason,
             registered=available,
             errors=errors,
-            partial_keys=[dict(ordinal=c.key.ordinal, arm_id=c.key.arm_id, replicate_index=c.key.replicate_index)
-                          for c, state in zip(manifest.cases, states) if state in ("partial", "pending")],
-            acknowledged_archive_prefix=dict(sha256=prefix.hexdigest(), bytes=prefix_bytes,
-                                             acknowledged_cases=census["complete_valid"]),
+            partial_keys=[
+                dict(
+                    ordinal=c.key.ordinal,
+                    arm_id=c.key.arm_id,
+                    replicate_index=c.key.replicate_index,
+                )
+                for c, state in zip(manifest.cases, states)
+                if state in ("partial", "pending")
+            ],
+            acknowledged_archive_prefix=dict(
+                sha256=prefix.hexdigest(),
+                bytes=prefix_bytes,
+                acknowledged_cases=census["complete_valid"],
+            ),
             non_audit_transcripts="replay_checkable_hash_only_full_frames_not_retained",
         ),
     }
     valid = frozenset(i for i, s in enumerate(states) if s == "complete_valid")
-    metadata_paths = [
-        p for p in root.rglob("*.json") if "audits" not in p.relative_to(root).parts
-    ]
+    metadata_paths = archive_metadata_namespace(root)
     metadata_hashes = {
         p: hashlib.sha256(read_regular(p, METADATA_LIMIT)).hexdigest()
         for p in metadata_paths
     }
 
     def recheck_metadata():
+        _require(
+            archive_metadata_namespace(root) == metadata_paths,
+            "archive metadata namespace changed after validation",
+        )
         _require(
             _block_namespace(root, planned) == namespace,
             "block namespace changed after validation",

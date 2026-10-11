@@ -187,9 +187,12 @@ class SyntheticPacketWorkflowTests(unittest.TestCase):
                 export.update(purpose=m.purpose, manifest_sha256=m.sha256, binding_state="source_bound", compiled_inputs_sha256=inventory["compiled_inputs_sha256"])
                 registration.save(packet/"numeric-export.json", export)
                 oracles = prepare_oracles(m, export)
+                from survey.war1_study.dose_proof import dose_proof
+                registration.save(packet/"dose-proof.json", dose_proof(root, m.sha256, inventory["compiled_inputs_sha256"]))
                 registration.save(packet/"oracle-packet.json", provenance.oracle_packet(m, inventory["compiled_inputs_sha256"], oracles))
                 numeric = dict(schema="war1-study-numeric-v1", manifest_sha256=m.sha256,
                     compiled_inputs_sha256=inventory["compiled_inputs_sha256"], binary_sha256=build["binary"]["sha256"],
+                    dose_proof=registration.artifact(packet/"dose-proof.json"),
                     numeric_export=registration.artifact(packet/"numeric-export.json"), oracle_packet=registration.artifact(packet/"oracle-packet.json"),
                     certificate_valid=True, mass_valid=True, width_valid=True, ulp_valid=True, ctmc_valid=True,
                     unresolved_findings=[], oracle_ids=[o.arm_id for o in oracles])
@@ -221,7 +224,7 @@ class SyntheticPacketWorkflowTests(unittest.TestCase):
                             self.assertFalse((packet/(name+"-build.json")).exists())
                         finally:
                             path.write_bytes(original)
-                for name in ("missing_certificate", "missing_forecast", "wrong_numeric_envelope"):
+                for name in ("missing_certificate", "missing_forecast", "wrong_numeric_envelope", "missing_dose", "changed_dose"):
                     with self.subTest(mutation=name):
                         bad_numeric, bad_resources = deepcopy(numeric), deepcopy(resources)
                         changed = {}
@@ -229,6 +232,16 @@ class SyntheticPacketWorkflowTests(unittest.TestCase):
                             bad_numeric.pop("certificate_valid")
                         elif name == "missing_forecast":
                             bad_resources.pop("forecast_inputs")
+                        elif name == "missing_dose":
+                            bad_numeric.pop("dose_proof")
+                        elif name == "changed_dose":
+                            target = packet/"dose-proof.json"
+                            changed[target] = target.read_bytes()
+                            bad = registration.load(target)
+                            bad["arms"].pop()
+                            target.unlink()
+                            registration.save(target, bad)
+                            bad_numeric["dose_proof"] = registration.artifact(target)
                         else:
                             target = packet/"numeric-export.json"
                             changed[target] = target.read_bytes()

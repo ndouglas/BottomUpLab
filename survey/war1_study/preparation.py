@@ -10,6 +10,7 @@ import time
 
 from .archive_provenance import LIMITS, POPULATION, oracle_packet, validate_oracle_packet
 from .contracts import Json, Manifest
+from .dose_proof import dose_proof, validate_dose_proof
 from .io import METADATA_LIMIT, _checked_path, canonical_bytes, create_bytes, read_regular
 from .manifest import sample_manifest, validate_manifest
 from .oracle import prepare_oracles
@@ -130,6 +131,7 @@ def prepare_evidence(root: Path, fixture_binary: Path, scientific_binary: Path,
     export = load(out / "numeric-export.json")
     if export["compiled_inputs_sha256"] != scientific["binding"]["compiled_inputs_sha256"]:
         raise ValueError("numeric export source binding")
+    save(out / "dose-proof.json", dose_proof(root, manifest.sha256, export["compiled_inputs_sha256"]))
     oracles = prepare_oracles(manifest, export)
     if any(o.ctmc_one_vs_one and o.ctmc_one_vs_one["required_at_this_dt"] and not all(v["passes"] is True for v in o.ctmc_one_vs_one["criteria"].values()) for o in oracles):
         raise ValueError("required CTMC criterion failed")
@@ -137,6 +139,7 @@ def prepare_evidence(root: Path, fixture_binary: Path, scientific_binary: Path,
     binary = artifact(scientific_binary, 1024**3)
     numeric = dict(schema="war1-study-numeric-v1", manifest_sha256=manifest.sha256,
         compiled_inputs_sha256=export["compiled_inputs_sha256"], binary_sha256=binary["sha256"],
+        dose_proof=artifact(out / "dose-proof.json"),
         numeric_export=artifact(out / "numeric-export.json"), oracle_packet=artifact(out / "oracle-packet.json"),
         certificate_valid=True, mass_valid=True, width_valid=True, ulp_valid=True, ctmc_valid=True,
         unresolved_findings=[], oracle_ids=[o.arm_id for o in oracles])
@@ -171,7 +174,7 @@ def prepare_evidence(root: Path, fixture_binary: Path, scientific_binary: Path,
     save(out / "resources.json", resources)
     if manifest.purpose == "construction_fixture":
         save(out / "preseed-resource-readiness.json", dict(schema="war1-study-preseed-resources-v1", purpose="construction_fixture",
-            registered_histories=0, resources=artifact(out / "resources.json"), forecast_inputs=artifact(out / "resource-forecast-inputs.json")))
+            registered_histories=0, dose_proof=artifact(out / "dose-proof.json"), resources=artifact(out / "resources.json"), forecast_inputs=artifact(out / "resource-forecast-inputs.json")))
     return numeric, resources
 
 
@@ -179,7 +182,7 @@ def validate_preseed(root: Path):
     from .manifest import _fields
     from .archive_provenance import validate_artifact_descriptor, validate_resource_receipt
     gate = load(root / PRESEED)
-    _fields(gate, {"schema", "purpose", "registered_histories", "resources", "forecast_inputs"}, "preseed gate")
+    _fields(gate, {"schema", "purpose", "registered_histories", "resources", "forecast_inputs", "dose_proof"}, "preseed gate")
     if gate["schema"] != "war1-study-preseed-resources-v1" or gate["purpose"] != "construction_fixture" or type(gate["registered_histories"]) is not int or gate["registered_histories"] != 0:
         raise ValueError("construction preseed resource gate required")
     def linked(descriptor):
@@ -195,6 +198,8 @@ def validate_preseed(root: Path):
     metadata = native_metadata(Path(inputs["fixture_binary"]["path"]))
     if Path(metadata["root"]) != root.absolute():
         raise ValueError("preseed gate belongs to a different source root")
+    validate_dose_proof(linked(gate["dose_proof"]), root, metadata["binding"]["manifest_sha256"],
+                        metadata["binding"]["compiled_inputs_sha256"])
     probe = linked(inputs["fixture_probe"])
     validate_resource_evidence(resource, inputs, probe, metadata)
     return resource

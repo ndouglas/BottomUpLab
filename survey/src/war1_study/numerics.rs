@@ -35,7 +35,9 @@ pub struct NumericExport {
     pub states: Vec<NumericState>,
 }
 pub fn export_numeric_inputs(manifest: &wire::Manifest) -> Result<NumericExport, String> {
-    export_verified_numeric_inputs(manifest, &super::source::verify()?)
+    let binding = super::source::verify()?;
+    super::dose_proof::validate_native_domain()?;
+    export_verified_numeric_inputs(manifest, &binding)
 }
 // The caller has just verified source and executable through the fixed gate context.
 pub(super) fn export_verified_numeric_inputs(

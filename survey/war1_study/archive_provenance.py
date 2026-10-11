@@ -121,14 +121,27 @@ LITERAL_INVENTORY = "survey/war1_study/fixtures/core-literal-inputs-v1.txt"
 def literal_paths(raw):
     text = raw.decode("utf-8")
     paths = text.splitlines()
-    _require(text.endswith("\n") and 1 <= len(paths) <= 4096 and paths == sorted(set(paths)), "literal inventory ordering/bounds")
+    _require(
+        text.endswith("\n") and 1 <= len(paths) <= 4096 and paths == sorted(set(paths)),
+        "literal inventory ordering/bounds",
+    )
     for path in paths:
         _text(path, "literal path", 4096)
         p = PurePosixPath(path)
-        _require(str(p) == path and not p.is_absolute() and ".." not in p.parts and "\\" not in path,
-                 "literal canonical path")
-        _require(path.startswith(("sweeps/", "data/anasazi/", "data/bali/", "docs/examples/burrow/")) or path == "crates/sugarscape-core/assets/sugar-map.txt",
-                 "literal input outside approved roots")
+        _require(
+            str(p) == path
+            and not p.is_absolute()
+            and ".." not in p.parts
+            and "\\" not in path,
+            "literal canonical path",
+        )
+        _require(
+            path.startswith(
+                ("sweeps/", "data/anasazi/", "data/bali/", "docs/examples/burrow/")
+            )
+            or path == "crates/sugarscape-core/assets/sugar-map.txt",
+            "literal input outside approved roots",
+        )
     return paths
 
 
@@ -147,11 +160,19 @@ def validate_source(root, header, manifest):
     _require(
         isinstance(entries, list) and 1 <= len(entries) <= 4096, "source entry bound"
     )
-    literal_index = next((i for i, entry in enumerate(entries) if entry["path"] == LITERAL_INVENTORY), None)
+    literal_index = next(
+        (i for i, entry in enumerate(entries) if entry["path"] == LITERAL_INVENTORY),
+        None,
+    )
     _require(literal_index is not None, "missing literal source inventory")
-    literals = literal_paths(read_regular(root / f"source/{literal_index:06}.bin", METADATA_LIMIT))
+    literals = literal_paths(
+        read_regular(root / f"source/{literal_index:06}.bin", METADATA_LIMIT)
+    )
     paths = {i.get("path") for i in entries if isinstance(i, dict)}
-    _require(set(SOURCE_REQUIRED) | set(literals) <= paths, "missing required frozen source inputs")
+    _require(
+        set(SOURCE_REQUIRED) | set(literals) <= paths,
+        "missing required frozen source inputs",
+    )
     total = 0
     previous = ""
     digest = hashlib.sha256(b"war1-study-compiled-inputs-v1\0")
@@ -225,7 +246,13 @@ def validate_source(root, header, manifest):
         manifest_seen and digest.hexdigest() == packet["compiled_inputs_sha256"],
         "saved closure/manifest mismatch",
     )
+    archive_metadata_namespace(root)
+    return packet
+
+
+def archive_metadata_namespace(root):
     # Count actual uncompressed bytes, including unknown leftovers, before use.
+    metadata = []
     budget = 0
     files = 0
     directories = 0
@@ -238,15 +265,21 @@ def validate_source(root, header, manifest):
             mode = child.lstat().st_mode
             _require(not stat.S_ISLNK(mode), "archive symlink forbidden")
             if stat.S_ISDIR(mode):
+                _require(directories + len(pending) < 4096, "archive directory bound")
                 pending.append(child)
             else:
                 _require(stat.S_ISREG(mode), "archive nonregular file forbidden")
+                if (
+                    child.suffix == ".json"
+                    and "audits" not in child.relative_to(root).parts
+                ):
+                    metadata.append(child)
                 files += 1
                 budget += child.stat().st_size
                 _require(
                     files <= 10000 and budget <= 4 * 1024**3, "archive file/byte budget"
                 )
-    return packet
+    return frozenset(metadata)
 
 
 LIMITS = dict(
@@ -286,24 +319,25 @@ def _exact_integers(actual, expected, name):
 
 
 RESOURCE_FIELDS = {
-            "schema",
-            "manifest_sha256",
-            "compiled_inputs_sha256",
-            "binary_sha256",
-            "budgets",
-            "census",
-            "reserved_bytes",
-            "failure_reserve_bytes",
-            "schema_bounds_valid",
-            "aggregate_proof_valid",
-            "forecast_valid",
-            "forecast_method",
-            "forecast_inputs",
-            "forecast_wall_seconds",
-            "forecast_peak_rss_bytes",
-            "fixture_probes",
-            "unavailable",
-        }
+    "schema",
+    "manifest_sha256",
+    "compiled_inputs_sha256",
+    "binary_sha256",
+    "budgets",
+    "census",
+    "reserved_bytes",
+    "failure_reserve_bytes",
+    "schema_bounds_valid",
+    "aggregate_proof_valid",
+    "forecast_valid",
+    "forecast_method",
+    "forecast_inputs",
+    "forecast_wall_seconds",
+    "forecast_peak_rss_bytes",
+    "fixture_probes",
+    "unavailable",
+}
+
 
 def validate_monitor(monitor, header):
     import math
@@ -588,6 +622,7 @@ def validate_retained_receipts(root, header, manifest):
 def validate_resource_receipt(r, ids):
     """Complete strict resource schema shared by preseed and saved packets."""
     import math
+
     _fields(r, RESOURCE_FIELDS, "resources")
     _require(r["schema"] == "war1-study-resources-v1", "resource schema")
     for key in ("manifest_sha256", "compiled_inputs_sha256", "binary_sha256"):
@@ -658,12 +693,16 @@ def validate_preparation(root, manifest, d):
     import math
     from .io import canonical_bytes
     from .manifest import proposal
+
     ids = d["identities"]
     _fields(ids, IDENTITY_FIELDS, "identities")
     for value in ids.values():
         _hash(value)
     _require(ids["manifest_sha256"] == manifest.sha256, "preparation manifest")
-    _require(ids["resolved_roster_sha256"] == manifest.raw["roster_sha256"], "preparation roster")
+    _require(
+        ids["resolved_roster_sha256"] == manifest.raw["roster_sha256"],
+        "preparation roster",
+    )
     for key in ("protocol_sha256", "proposal_sha256"):
         _require(ids[key] == manifest.raw[key], "preparation normative identity")
     _exact_integers(d["budgets"], LIMITS, "budgets")
@@ -771,6 +810,7 @@ def validate_preparation(root, manifest, d):
             "compiled_inputs_sha256",
             "binary_sha256",
             "numeric_export",
+            "dose_proof",
             "oracle_packet",
             "certificate_valid",
             "mass_valid",
@@ -799,6 +839,15 @@ def validate_preparation(root, manifest, d):
         and n["oracle_ids"]
         == [a["arm_id"] for a in approved["arms"] if a["group"] == "oracle"],
         "numeric oracle census",
+    )
+    from .dose_proof import validate_dose_proof
+
+    proof = _artifact(root, "provenance/dose-proof.json", n["dose_proof"])
+    validate_dose_proof(
+        proof,
+        Path(__file__).resolve().parents[2],
+        manifest.sha256,
+        ids["compiled_inputs_sha256"],
     )
     export = _artifact(root, "provenance/numeric-export.json", n["numeric_export"])
     packet = _artifact(root, "provenance/oracle-packet.json", n["oracle_packet"])

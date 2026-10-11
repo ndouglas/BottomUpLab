@@ -90,17 +90,17 @@ def schema_proof():
         obj(kind=literal("terminal"), checkpoint_json=string(checkpoint), completed_steps=integer, observed_steps=integer, active_steps=integer)]
     audit_bytes = sum((a["config"]["max_steps"] + 3) * 32768 for a in roster["arms"])
     starts_outcomes = 52224 * (1024 + 32768)
-    # All retained receipt files: d/a/e,b/n/r,inventory,numericexport,oracle,forecast,
+    # All retained receipt files: d/a/e,b/n/r,inventory,numericexport,oracle,forecast,doseproof,
     # <=32probes. Also manifest, nativeinventory, header,index,probe metrics, outer
     # failure/monitor/success, bounded logs, block descriptors, and64MiB rawsource.
     # Nine root metadata files each receive the full16MiB cap, including the
     # candidate index with408 block descriptors; logs/failure reserve are extra.
-    metadata = 42 * 16777216 + 9 * 16777216 + 64*1024**2 + 408 * 1024 + 2*65536 + 1048576
+    metadata = 43 * 16777216 + 9 * 16777216 + 64*1024**2 + 408 * 1024 + 2*65536 + 1048576
     result = dict(schema="war1-study-schema-proof-v1", start_bytes=start_bytes, outcome_bytes=outcome_bytes,
         audit_frame_bytes=frame_bytes, audit_fixed_bytes=empty_frame_row.size+1, escaped_casualty_increment=casualty_escaped_with_comma,
         audit_envelope_bytes=max(e.size+1 for e in envelopes), starts_outcomes_bytes=starts_outcomes,
         audit_bytes=audit_bytes, metadata_reserved_bytes=metadata, failure_reserve_bytes=1048576,
-        reserved_bytes=starts_outcomes+audit_bytes+1073741824, metadata_files_maximum=42+9+816+66+4096+2,
+        reserved_bytes=starts_outcomes+audit_bytes+1073741824, metadata_files_maximum=43+9+816+66+4096+2,
         source_file_count_maximum=4096, source_bytes_maximum=67108864, metadata_file_bytes_maximum=16777216,
         bound_method="complete schema algebra including nested JSON escaping; fixed roster and pure reference vocabulary")
     if start_bytes > 1024 or outcome_bytes > 32768 or frame_bytes > 28672 or result["audit_fixed_bytes"] > 4096 or casualty_escaped_with_comma > 32 or result["audit_envelope_bytes"] > 32768 or metadata > 1073741824 or result["reserved_bytes"] >= 4294967296:

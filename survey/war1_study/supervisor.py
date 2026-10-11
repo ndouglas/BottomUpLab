@@ -191,6 +191,7 @@ def _inputs(command, out, staging):
             value = _copy_descriptor(declaration[name], provenance / (name.replace("_", "-") + ".json"))
             receipts[name] = value
         n, r = receipts["numeric"], receipts["resources"]
+        _copy_descriptor(n["dose_proof"], provenance / "dose-proof.json")
         _copy_descriptor(n["numeric_export"], provenance / "numeric-export.json")
         _copy_descriptor(n["oracle_packet"], provenance / "oracle-packet.json")
         _copy_descriptor(r["forecast_inputs"], provenance / "resource-forecast-inputs.json")

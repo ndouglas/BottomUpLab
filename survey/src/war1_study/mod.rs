@@ -3,6 +3,7 @@ pub mod archive;
 #[cfg(test)]
 mod archive_tests;
 pub mod cli;
+pub mod dose_proof;
 pub mod gate;
 #[cfg(test)]
 mod gate_tests;

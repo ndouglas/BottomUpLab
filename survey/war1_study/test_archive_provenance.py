@@ -6,10 +6,14 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from survey.war1_study import archive_provenance as provenance, test_fixtures as fixtures
+from survey.war1_study import (
+    archive_provenance as provenance,
+    test_fixtures as fixtures,
+)
 from survey.war1_study.io import canonical_bytes, strict_json, METADATA_LIMIT
 from survey.war1_study.oracle import prepare_oracles
 from survey.war1_study import test_oracle
+from survey.war1_study.dose_proof import dose_proof
 
 
 def synthetic_packet(root, manifest):
@@ -97,6 +101,12 @@ def synthetic_packet(root, manifest):
         dict(
             schema="war1-study-numeric-v1",
             **common,
+            dose_proof=artifact(
+                "provenance/dose-proof.json",
+                dose_proof(
+                    fixtures.ROOT, manifest.sha256, ids["compiled_inputs_sha256"]
+                ),
+            ),
             numeric_export=numeric_export,
             oracle_packet=packet,
             certificate_valid=True,
@@ -230,6 +240,50 @@ class RetainedReceiptTests(unittest.TestCase):
         self.assertEqual(
             provenance.oracle_rows(result), provenance.oracle_rows(self.oracles)
         )
+
+    def test_retained_dose_proof_is_recomputed_after_descriptor_rebinding(self):
+        from survey.war1_study.registration import load
+
+        numeric_path = self.root / "provenance/numeric.json"
+        proof_path = self.root / "provenance/dose-proof.json"
+        original_numeric, original_proof = (
+            numeric_path.read_bytes(),
+            proof_path.read_bytes(),
+        )
+        for change in ("missing", "coverage", "source", "extra"):
+            with self.subTest(change=change):
+                declaration = load(self.root / "provenance/declaration.json")
+                numeric = strict_json(original_numeric, METADATA_LIMIT)
+                bad = strict_json(original_proof, METADATA_LIMIT)
+                if change == "missing":
+                    numeric.pop("dose_proof")
+                else:
+                    if change == "coverage":
+                        bad["arms"].pop()
+                    elif change == "source":
+                        bad["compiled_inputs_sha256"] = "0" * 64
+                    else:
+                        bad["valid"] = True
+                    raw = canonical_bytes(bad)
+                    proof_path.write_bytes(raw)
+                    numeric["dose_proof"].update(
+                        sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)
+                    )
+                raw = canonical_bytes(numeric)
+                numeric_path.write_bytes(raw)
+                declaration["numeric"].update(
+                    sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)
+                )
+                try:
+                    with self.assertRaisesRegex(
+                        ValueError, "dose proof|numeric receipt"
+                    ):
+                        provenance.validate_preparation(
+                            self.root, self.manifest, declaration
+                        )
+                finally:
+                    numeric_path.write_bytes(original_numeric)
+                    proof_path.write_bytes(original_proof)
 
     def test_native_inventory_integer_tokens_are_checked_before_semantic_equality(self):
         path = self.root / "source-inventory.json"

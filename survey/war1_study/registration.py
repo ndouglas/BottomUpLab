@@ -334,6 +334,7 @@ def _validated_declaration(build: Json, numeric: Json, resources: Json, out: Pat
             _copy_descriptor(declaration[name], provenance / (name.replace("_", "-") + ".json"))
         _copy_descriptor(declaration["manifest"], stage / "manifest.json")
         save(stage / "source-inventory.json", inventory)
+        _copy_descriptor(numeric["dose_proof"], provenance / "dose-proof.json")
         _copy_descriptor(numeric["numeric_export"], provenance / "numeric-export.json")
         _copy_descriptor(numeric["oracle_packet"], provenance / "oracle-packet.json")
         _copy_descriptor(resources["forecast_inputs"], provenance / "resource-forecast-inputs.json")

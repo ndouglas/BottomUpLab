@@ -24,6 +24,13 @@ def synthetic_resources(root, metadata=None, fixture=None):
             inventory=dict(entries=[]), binding=dict(manifest_sha256="b"*64, compiled_inputs_sha256="c"*64,
                 executable_sha256=bound["sha256"], declaration_sha256=None, acceptance_sha256=None, execution_approval_sha256=None))
     metadata = metadata or fixture
+    from survey.war1_study import manifest
+    project = Path(__file__).resolve().parents[2]
+    for relative in (manifest.PROTOCOL, manifest.PROPOSAL):
+        target = Path(metadata["root"])/relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((project/relative).read_bytes())
+    registration.save(root/"dose-proof.json", preparation.dose_proof(project, metadata["binding"]["manifest_sha256"], metadata["binding"]["compiled_inputs_sha256"]))
     proof = resource_proof.schema_proof()
     rows = [dict(actor_steps=1, kernel_seconds_per_actor_step=1e-8, projection_seconds_per_step=1e-8,
         start_outcome_seconds=1e-8, case_overhead_seconds=1e-8, audit_seconds_per_frame=1e-8) for _ in range(16)]
@@ -69,9 +76,60 @@ class PreseedTests(unittest.TestCase):
             gate = root/preparation.PRESEED
             gate.parent.mkdir(parents=True)
             registration.save(gate, dict(schema="war1-study-preseed-resources-v1", purpose="construction_fixture", registered_histories=0,
-                resources=registration.artifact(root/"resources.json"), forecast_inputs=resources["forecast_inputs"]))
+                resources=registration.artifact(root/"resources.json"), dose_proof=registration.artifact(root/"dose-proof.json"), forecast_inputs=resources["forecast_inputs"]))
             with patch.object(preparation, "native_metadata", return_value=metadata), patch.object(preparation, "source_inventory", return_value=metadata["inventory"]):
                 self.assertEqual(supervisor.canonical_bytes(preparation.validate_preseed(root)), supervisor.canonical_bytes(resources))
+
+    def test_missing_dose_proof_refuses_before_entropy(self):
+        from survey.war1_study import preparation, registration, manifest
+        with tempfile.TemporaryDirectory(prefix="construction_test_") as temp:
+            root = Path(temp).resolve()
+            project = Path(__file__).resolve().parents[2]
+            for relative in (manifest.PROTOCOL, manifest.PROPOSAL):
+                (root/relative).parent.mkdir(parents=True, exist_ok=True)
+                (root/relative).write_bytes((project/relative).read_bytes())
+            metadata, resources, _, _ = synthetic_resources(root)
+            registration.save(root/"resources.json", resources)
+            gate = root/preparation.PRESEED
+            gate.parent.mkdir(parents=True)
+            registration.save(gate, dict(schema="war1-study-preseed-resources-v1", purpose="construction_fixture", registered_histories=0,
+                resources=registration.artifact(root/"resources.json"), forecast_inputs=resources["forecast_inputs"]))
+            with patch.object(preparation, "native_metadata", return_value=metadata), patch.object(preparation, "source_inventory", return_value=metadata["inventory"]), patch.object(registration.os, "urandom", side_effect=AssertionError("entropy forbidden")) as entropy:
+                with self.assertRaisesRegex(ValueError, "dose|missing fields"):
+                    registration.prepare(root, root/"must-not-exist")
+                entropy.assert_not_called()
+                self.assertFalse((root/"must-not-exist").exists())
+
+    def test_changed_dose_proof_refuses_before_entropy_even_when_descriptor_rebound(self):
+        from survey.war1_study import preparation, registration
+        for change in ("omitted_arm", "extrema", "source", "typed_coverage", "missing_artifact", "stale_descriptor"):
+            with self.subTest(change=change), tempfile.TemporaryDirectory(prefix="construction_test_") as temp:
+                root = Path(temp).resolve()
+                metadata, resources, _, _ = synthetic_resources(root)
+                registration.save(root/"resources.json", resources)
+                proof_path = root/"dose-proof.json"
+                descriptor = registration.artifact(proof_path)
+                bad = registration.load(proof_path)
+                if change == "omitted_arm": bad["arms"].pop()
+                elif change == "extrema": bad["positive_dose_extrema"][0] = "0/1"
+                elif change == "source": bad["compiled_inputs_sha256"] = "0"*64
+                elif change == "typed_coverage": bad["interior_target_states"] = float(bad["interior_target_states"])
+                proof_path.unlink()
+                if change != "missing_artifact":
+                    registration.save(proof_path, bad)
+                    if change == "stale_descriptor":
+                        proof_path.write_bytes(proof_path.read_bytes()+b" ")
+                    else:
+                        descriptor = registration.artifact(proof_path)
+                gate = root/preparation.PRESEED
+                gate.parent.mkdir(parents=True)
+                registration.save(gate, dict(schema="war1-study-preseed-resources-v1", purpose="construction_fixture", registered_histories=0,
+                    resources=registration.artifact(root/"resources.json"), dose_proof=descriptor, forecast_inputs=resources["forecast_inputs"]))
+                with patch.object(preparation, "native_metadata", return_value=metadata), patch.object(preparation, "source_inventory", return_value=metadata["inventory"]), patch.object(registration.os, "urandom", side_effect=AssertionError("entropy forbidden")) as entropy:
+                    with self.assertRaises((ValueError, OSError)):
+                        registration.prepare(root, root/"must-not-exist")
+                    entropy.assert_not_called()
+                    self.assertFalse((root/"must-not-exist").exists())
 
     def test_relative_producer_paths_round_trip_through_resource_validation(self):
         """Synthetic measured costs; real producer serialization and link checks."""
@@ -152,7 +210,7 @@ class PreseedTests(unittest.TestCase):
                 gate_path = root/preparation.PRESEED
                 gate_path.parent.mkdir(parents=True)
                 registration.save(gate_path, dict(schema="war1-study-preseed-resources-v1", purpose="construction_fixture", registered_histories=0,
-                    resources=registration.artifact(resource_path), forecast_inputs=good_input_ref))
+                    resources=registration.artifact(resource_path), dose_proof=registration.artifact(root/"evidence/dose-proof.json"), forecast_inputs=good_input_ref))
                 with patch.object(preparation, "native_metadata", return_value=metadata), patch.object(preparation, "source_inventory", return_value=metadata["inventory"]), patch.object(registration.os, "urandom", side_effect=AssertionError("scientific entropy forbidden")) as entropy:
                     with self.assertRaises(ValueError):
                         registration.prepare(root, root/"must-not-exist")
@@ -333,6 +391,7 @@ class MonitorTests(unittest.TestCase):
         self.assertLessEqual(proof["outcome_bytes"], 32768)
         self.assertLessEqual(proof["start_bytes"], 1024)
         self.assertLessEqual(proof["metadata_reserved_bytes"], 1073741824)
+        self.assertEqual(proof["metadata_files_maximum"], 43 + 9 + 816 + 66 + 4096 + 2)
 
     def test_forecast_requires_measured_per_case_constructor_and_terminal_cost(self):
         rows = [dict(actor_steps=1, kernel_seconds_per_actor_step=1e-8,

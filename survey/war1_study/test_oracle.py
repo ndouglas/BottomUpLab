@@ -132,7 +132,9 @@ class PreparedOracleTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(ValueError):
                 oracle.prepare_oracles(self.manifest, data)
 
-    def test_source_bound_export_accepts_well_formed_stamp_and_refuses_invalid_binding(self):
+    def test_source_bound_export_accepts_well_formed_stamp_and_refuses_invalid_binding(
+        self,
+    ):
         from copy import deepcopy
 
         data = deepcopy(self.export)
@@ -208,3 +210,10 @@ class FiniteHorizonTests(unittest.TestCase):
             ),
         )
         self.assertEqual(ref["means"][1], (F(3, 4), F(1, 2)))
+        self.assertEqual(
+            ref["survivor_cdfs"],
+            (
+                ((F(0), F(0)), (F(1, 2), F(1, 2)), (F(1), F(1))),
+                ((F(0), F(1, 2)), (F(1), F(1))),
+            ),
+        )

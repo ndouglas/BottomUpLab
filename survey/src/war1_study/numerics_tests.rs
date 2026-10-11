@@ -36,3 +36,22 @@ fn fabricated_manifest_cannot_claim_fixture_identity() {
     manifest.purpose = "prospective_seed_population".into();
     assert!(numerics::export_numeric_inputs(&manifest).is_err());
 }
+
+#[test]
+fn complete_roster_domain_proof_matches_independent_python_without_engine() {
+    let before = super::observer::construction_count();
+    let proof = super::dose_proof::proof(&"a".repeat(64), &"b".repeat(64)).unwrap();
+    let output = std::process::Command::new("python3")
+        .current_dir(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+        .args(["-c", "from pathlib import Path; from survey.war1_study.dose_proof import dose_proof; from survey.war1_study.io import canonical_bytes; import sys; sys.stdout.buffer.write(canonical_bytes(dose_proof(Path('.'), 'a'*64, 'b'*64)))"])
+        .output().unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let independent: super::dose_proof::DoseProof = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(proof, independent);
+    super::dose_proof::validate_native_domain().unwrap();
+    assert_eq!(super::observer::construction_count(), before);
+}

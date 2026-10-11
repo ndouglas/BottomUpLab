@@ -225,6 +225,7 @@ pub struct NumericReceipt {
     pub compiled_inputs_sha256: String,
     pub binary_sha256: String,
     pub numeric_export: Artifact,
+    pub dose_proof: Artifact,
     pub oracle_packet: Artifact,
     pub certificate_valid: bool,
     pub mass_valid: bool,
@@ -431,6 +432,11 @@ fn preflight_with_context(
     if exported != super::numerics::export_verified_numeric_inputs(&m, &binding)? {
         return Err("numeric export differs from source-bound native certificate inputs".into());
     }
+    let proof: super::dose_proof::DoseProof = decode(&n.dose_proof)?;
+    if proof != super::dose_proof::proof(&ids.manifest_sha256, &ids.compiled_inputs_sha256)? {
+        return Err("dose proof differs from complete-roster recomputation".into());
+    }
+    super::dose_proof::validate_native_domain()?;
     artifact(&n.oracle_packet)?;
     let r: ResourceReceipt = decode(&d.resources)?;
     if r.schema != "war1-study-resources-v1"
@@ -488,6 +494,7 @@ fn preflight_with_context(
         ("source-inventory.json".into(), d.source_inventory.clone()),
         ("numeric-export.json".into(), n.numeric_export.clone()),
         ("oracle-packet.json".into(), n.oracle_packet.clone()),
+        ("dose-proof.json".into(), n.dose_proof.clone()),
         (
             "resource-forecast-inputs.json".into(),
             r.forecast_inputs.clone(),
