@@ -231,6 +231,23 @@ class RetainedReceiptTests(unittest.TestCase):
             provenance.oracle_rows(result), provenance.oracle_rows(self.oracles)
         )
 
+    def test_native_inventory_integer_tokens_are_checked_before_semantic_equality(self):
+        path = self.root / "source-inventory.json"
+        raw = path.read_bytes()
+        original = strict_json(raw, METADATA_LIMIT)
+        try:
+            for value in (float(original["entries"][0]["bytes"]), True):
+                with self.subTest(value=value):
+                    bad = deepcopy(original)
+                    bad["entries"][0]["bytes"] = value
+                    path.write_bytes(canonical_bytes(bad))
+                    with self.assertRaisesRegex(ValueError, "integer"):
+                        provenance.validate_retained_receipts(
+                            self.root, self.header, self.manifest
+                        )
+        finally:
+            path.write_bytes(raw)
+
     def test_missing_monitor_cannot_turn_synthetic_receipts_into_primary_inference(
         self,
     ):
@@ -316,3 +333,98 @@ class RetainedReceiptTests(unittest.TestCase):
             all(r["criterion"]["passes"] for r in margins if r["required_at_this_dt"])
         )
         self.assertTrue(all(not r["registered"] for r in result.scalars))
+
+
+class SuccessIntegerTests(unittest.TestCase):
+    def test_success_nested_integer_tokens_are_strict_before_preparation(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            header = dict(mode="prospective_seed_population", binding={})
+            census = dict(
+                planned=16,
+                attempted=16,
+                complete_valid=16,
+                failed=0,
+                invalid=0,
+                partial=0,
+                pending=0,
+                unstarted=0,
+            )
+            receipt = dict(sha256="a" * 64, bytes=123, acknowledged_cases=16)
+            candidate = dict(census=census, receipt=receipt)
+            monitor = dict(
+                schema="war1-study-monitor-result-v1",
+                **header,
+                child_pid=123,
+                exit_code=0,
+                platform="linux",
+                peak_method="os.wait4.ru_maxrss",
+                wall_seconds=1.25,
+                peak_rss_bytes=1024,
+                wall_limit_seconds=43200,
+                rss_limit_bytes=2147483648,
+                campaign_limit_bytes=4294967296,
+                source_valid=True,
+                archive_valid=True
+            )
+
+            def artifact(path, value):
+                data = canonical_bytes(value)
+                (root / path).write_bytes(data)
+                return dict(
+                    path=path, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()
+                )
+
+            success = dict(
+                schema="war1-study-success-v1",
+                **header,
+                candidate=artifact("candidate-index.json", candidate),
+                receipt=receipt,
+                census=census,
+                monitor=artifact("monitor.json", monitor)
+            )
+            m = SimpleNamespace(purpose=header["mode"], cases=tuple(range(16)))
+            # Real success, artifact and monitor validation; expensive independent
+            # numerical receipt recomputation is outside this schema regression.
+            with patch.object(
+                provenance, "validate_retained_receipts", return_value=()
+            ):
+                (root / "success.json").write_bytes(canonical_bytes(success))
+                self.assertEqual(
+                    provenance.inference_provenance(root, dict(header), m, candidate),
+                    (True, None),
+                )
+                for location, key, value in [
+                    ("receipt", "acknowledged_cases", 16.0),
+                    ("census", "failed", 0.0),
+                    ("census", "failed", False),
+                ]:
+                    with self.subTest(location=location, value=value):
+                        bad = deepcopy(success)
+                        bad[location][key] = value
+                        (root / "success.json").write_bytes(canonical_bytes(bad))
+                        available, reason = provenance.inference_provenance(
+                            root, dict(header), m, candidate
+                        )
+                        self.assertFalse(available)
+                        self.assertIn("integer", reason)
+
+
+class InventoryIntegerTests(unittest.TestCase):
+    def test_inventory_bytes_bool_and_integral_float_never_equal_integer(self):
+        packet = dict(
+            schema="war1-study-source-inventory-v1",
+            compiled_inputs_sha256="a" * 64,
+            entries=[dict(path="survey/war1_study/probe.py", sha256="b" * 64, bytes=1)],
+        )
+        provenance.validate_inventory(packet)
+        for value in (1.0, True):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                ValueError, "integer"
+            ):
+                bad = deepcopy(packet)
+                bad["entries"][0]["bytes"] = value
+                provenance.validate_inventory(bad)

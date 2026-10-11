@@ -593,10 +593,20 @@ def _descriptor(root, index, planned):
 
 def _block(root, d):
     raw = read_regular(root / d["path"], BLOCK_LIMIT)
+    if "file_sha256" in d:
+        _require(
+            hashlib.sha256(raw).hexdigest() == d["file_sha256"],
+            "open block bytes changed",
+        )
+        raw = raw[: d["bytes"]]
     _require(
         len(raw) == d["bytes"] and hashlib.sha256(raw).hexdigest() == d["sha256"],
         "block digest/length changed",
     )
+    yield from _block_rows(raw)
+
+
+def _block_rows(raw):
     # One bounded block, at most 256 bounded lines; never an archive object graph.
     offset = 0
     for index in range(257):
@@ -615,21 +625,79 @@ def _block(root, d):
         yield row
 
 
+def _block_namespace(root, planned):
+    directory = root / "blocks"
+    actual = (
+        frozenset(p.name for p in directory.iterdir())
+        if directory.exists()
+        else frozenset()
+    )
+    allowed = {
+        f"block-{i:06}.{suffix}"
+        for i in range((planned + 127) // 128)
+        for suffix in ("jsonl", "descriptor.json")
+    }
+    _require(actual <= allowed, "unexpected block namespace paths")
+    return actual
+
+
+def _failure_prefixes(root, planned):
+    """Validate the acknowledged byte boundary before interpreting open rows."""
+    from .archive_provenance import validate_receipt, validate_census
+
+    failure = strict_json(
+        read_regular(root / "failure.json", METADATA_LIMIT), METADATA_LIMIT
+    )
+    _fields(failure, {"detail", "census", "receipt", "case_failure"}, "failure receipt")
+    validate_census(failure["census"], planned)
+    receipt = failure["receipt"]
+    validate_receipt(receipt, planned)
+    if failure["case_failure"] is not None:
+        validate_receipt(
+            failure["case_failure"]["acknowledged_archive_prefix"], planned
+        )
+    remaining = receipt["bytes"]
+    digest = hashlib.sha256()
+    acknowledged = 0
+    prefixes = {}
+    for index in range((planned + 127) // 128):
+        path = f"blocks/block-{index:06}.jsonl"
+        if not (root / path).exists():
+            continue
+        raw = read_regular(root / path, BLOCK_LIMIT)
+        size = min(remaining, len(raw))
+        part = raw[:size]
+        if (root / f"blocks/block-{index:06}.descriptor.json").exists():
+            _require(size == len(raw), "closed block exceeds acknowledged prefix")
+        # Parsing enforces the exact complete-record boundary and row/count caps.
+        acknowledged += sum(row.get("kind") == "outcome" for row in _block_rows(part))
+        digest.update(part)
+        remaining -= size
+        prefixes[index] = dict(
+            path=path,
+            bytes=size,
+            sha256=hashlib.sha256(part).hexdigest(),
+            file_sha256=hashlib.sha256(raw).hexdigest(),
+        )
+    _require(
+        remaining == 0
+        and digest.hexdigest() == receipt["sha256"]
+        and acknowledged == receipt["acknowledged_cases"],
+        "failure acknowledged prefix mismatch",
+    )
+    return prefixes
+
+
 def _failure(root, manifest, census, receipt, states, attempted):
+    from .archive_provenance import validate_receipt, validate_census
+
     failure = strict_json(
         read_regular(root / "failure.json", METADATA_LIMIT), METADATA_LIMIT
     )
     _fields(failure, {"detail", "census", "receipt", "case_failure"}, "failure receipt")
     _text(failure["detail"], "failure detail", 4096)
-    for value in (failure["census"],):
-        _fields(value, set(census), "failure census")
-        for k, n in value.items():
-            _uint(n, k, len(manifest.cases))
-    _fields(
-        failure["receipt"],
-        {"sha256", "bytes", "acknowledged_cases"},
-        "failure archive prefix",
-    )
+    validate_census(failure["census"], len(manifest.cases))
+    validate_receipt(failure["receipt"], len(manifest.cases))
     _require(failure["receipt"] == receipt, "failure acknowledged prefix mismatch")
     f = failure["case_failure"]
     if f is not None:
@@ -674,6 +742,7 @@ def _failure(root, manifest, census, receipt, states, attempted):
             )
         else:
             _require(f["semantic_steps"] == 0, "missing actual failure checkpoint")
+        validate_receipt(f["acknowledged_archive_prefix"], len(manifest.cases))
         _require(
             f["acknowledged_archive_prefix"] == receipt, "failure case prefix mismatch"
         )
@@ -697,7 +766,12 @@ def _failure(root, manifest, census, receipt, states, attempted):
 
 
 def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
-    from .archive_provenance import validate_source, inference_provenance
+    from .archive_provenance import (
+        validate_source,
+        inference_provenance,
+        validate_receipt,
+        validate_census,
+    )
 
     root = Path(root)
     header = strict_json(
@@ -754,8 +828,20 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
     states = ["unstarted"] * planned
     attempted = set()
     descriptors = []
+    outcome_descriptors = []
     audits = []
     errors = []
+    namespace = None
+    try:
+        namespace = _block_namespace(root, planned)
+    except ValueError as error:
+        errors.append(str(error))
+    failure_prefixes = None
+    if (root / "failure.json").exists():
+        try:
+            failure_prefixes = _failure_prefixes(root, planned)
+        except (ValueError, OSError, KeyError, TypeError) as error:
+            errors.append(f"failure: {error}")
     prefix = hashlib.sha256()
     prefix_bytes = 0
     for index in range((planned + 127) // 128):
@@ -766,6 +852,7 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
         first = index * 128
         last = min(first + 128, planned)
         closed = descriptorpath.exists()
+        ordinal = first
         try:
             if closed:
                 d = _descriptor(root, index, planned)
@@ -779,15 +866,20 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
                 prefix_bytes += len(raw)
                 del raw
                 rows = _block(root, d)
+            elif failure_prefixes is not None:
+                d = failure_prefixes[index]
+                raw = read_regular(blockpath, BLOCK_LIMIT)[: d["bytes"]]
+                prefix.update(raw)
+                prefix_bytes += len(raw)
+                rows = _block(root, d)
+                errors.append(f"block {index}: unclosed_block")
             else:
-
+                # Without a closed descriptor or verified failure receipt no
+                # open outcome has evidence of a successful synchronization.
                 def open_rows():
-                    nonlocal prefix_bytes
                     for raw, tagged in _lines(blockpath, ROW_LIMIT, 256):
                         if tagged.get("kind") == "start":
                             _require(len(raw) <= 1024, "start byte quota")
-                        prefix.update(raw)
-                        prefix_bytes += len(raw)
                         yield tagged
 
                 rows = open_rows()
@@ -836,7 +928,11 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
                         if row["audit_descriptor"] is not None:
                             _audit(root, row)
                             audits.append(row["audit_descriptor"])
-                        states[ordinal] = "complete_valid"
+                        states[ordinal] = (
+                            "complete_valid"
+                            if closed or failure_prefixes is not None
+                            else "partial"
+                        )
                     except (ValueError, OSError) as error:
                         states[ordinal] = "invalid"
                         errors.append(f"key {ordinal}: {error}")
@@ -847,6 +943,8 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
             if closed:
                 _require(ordinal == last and not started, "incomplete closed block")
                 descriptors.append(d)
+            if closed or failure_prefixes is not None:
+                outcome_descriptors.append(d)
         except (ValueError, OSError) as error:
             errors.append(f"block {index}: {error}")
             if not closed and ordinal < last and states[ordinal] == "unstarted":
@@ -901,6 +999,8 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
                 and candidate["binding"] == binding,
                 "candidate binding/schema",
             )
+            validate_census(candidate["census"], planned)
+            validate_receipt(candidate["receipt"], planned)
             _require(
                 canonical_bytes(candidate["census"]) == canonical_bytes(census)
                 and canonical_bytes(candidate["receipt"]) == canonical_bytes(receipt)
@@ -945,6 +1045,10 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
     }
 
     def recheck_metadata():
+        _require(
+            _block_namespace(root, planned) == namespace,
+            "block namespace changed after validation",
+        )
         for path, expected in metadata_hashes.items():
             _require(
                 hashlib.sha256(read_regular(path, METADATA_LIMIT)).hexdigest()
@@ -954,10 +1058,10 @@ def read_campaign(root: Path, manifest: Manifest) -> ArchiveRead:
         validate_source(root, header, manifest)
 
     def outcomes():
-        # Recheck every closed block and all audit bytes. Any change aborts the
-        # consumer's aggregate, including if a late file changed after early rows.
+        # Recheck each durable block/prefix and all audit bytes. Any change aborts
+        # the consumer's aggregate, even if a late file changed after early rows.
         recheck_metadata()
-        for d in descriptors:
+        for d in outcome_descriptors:
             for tagged in _block(root, d):
                 if (
                     tagged["kind"] == "outcome"

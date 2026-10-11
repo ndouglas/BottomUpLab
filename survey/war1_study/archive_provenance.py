@@ -41,6 +41,50 @@ def _artifact(root, path, descriptor):
     return strict_json(raw, METADATA_LIMIT)
 
 
+def validate_receipt(receipt, planned):
+    """Validate the exact native archive-prefix schema before value comparison."""
+    _fields(receipt, {"sha256", "bytes", "acknowledged_cases"}, "archive prefix")
+    _hash(receipt["sha256"])
+    _uint(receipt["bytes"], "archive prefix bytes", 4 * 1024**3)
+    _uint(receipt["acknowledged_cases"], "acknowledged cases", planned)
+
+
+def validate_census(census, planned):
+    """Require integer census tokens and the fixed planned partition."""
+    states = {"complete_valid", "failed", "invalid", "partial", "pending", "unstarted"}
+    _fields(census, states | {"planned", "attempted"}, "archive census")
+    for key, value in census.items():
+        _uint(value, f"census {key}", planned)
+    _require(
+        census["planned"] == planned and sum(census[k] for k in states) == planned,
+        "archive census partition",
+    )
+
+
+def validate_inventory(packet):
+    """Validate both inventory serializations before strict semantic matching."""
+    _fields(packet, {"schema", "compiled_inputs_sha256", "entries"}, "source inventory")
+    _require(
+        packet["schema"] == "war1-study-source-inventory-v1", "source inventory schema"
+    )
+    _hash(packet["compiled_inputs_sha256"])
+    entries = packet["entries"]
+    _require(
+        isinstance(entries, list) and 1 <= len(entries) <= 4096, "source entry bound"
+    )
+    total = 0
+    previous = ""
+    for item in entries:
+        _fields(item, {"path", "sha256", "bytes"}, "source entry")
+        _text(item["path"], "source path", 4096)
+        _require(item["path"] > previous, "source path/order")
+        previous = item["path"]
+        _hash(item["sha256"])
+        _uint(item["bytes"], "source file bytes", METADATA_LIMIT)
+        total += item["bytes"]
+    _require(total <= 64 * 1024**2, "source aggregate bound")
+
+
 SOURCE_REQUIRED = (
     "Cargo.toml",
     "Cargo.lock",
@@ -66,6 +110,7 @@ SOURCE_REQUIRED = (
 def validate_source(root, header, manifest):
     """Rehash saved closure in bounded file increments and enforce total budget."""
     packet, _ = _json(root, "source-inventory.json")
+    validate_inventory(packet)
     _fields(packet, {"schema", "compiled_inputs_sha256", "entries"}, "source inventory")
     _require(
         packet["schema"] == "war1-study-source-inventory-v1"
@@ -506,6 +551,8 @@ def validate_retained_receipts(root, header, manifest):
         "frozen source inventory hash",
     )
     native_inventory, _ = _json(root, "source-inventory.json")
+    validate_inventory(inventory)
+    validate_inventory(native_inventory)
     _require(inventory == native_inventory, "frozen/native source inventory semantics")
     b = _artifact(root, "provenance/build.json", d["build"])
     _fields(
@@ -749,6 +796,9 @@ def inference_provenance(root, header, manifest, candidate):
             "success retained paths",
         )
         saved = _artifact(root, "candidate-index.json", success["candidate"])
+        for value in (success, saved, candidate):
+            validate_receipt(value["receipt"], len(manifest.cases))
+            validate_census(value["census"], len(manifest.cases))
         _require(saved == candidate, "success candidate binding")
         _require(
             success["receipt"] == candidate["receipt"]

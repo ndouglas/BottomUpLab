@@ -221,6 +221,81 @@ class FailureReceiptTests(unittest.TestCase):
             any("failure clocks" in e for e in saved.header["validation"]["errors"])
         )
 
+    def test_full_unacknowledged_outcome_after_sync_failure_stays_partial(self):
+        from survey.war1_study.io import canonical_bytes, strict_json
+
+        path = self.root / "blocks/block-000000.jsonl"
+        start, outcome = path.read_bytes().splitlines(keepends=True)[:2]
+        failure, census = self.prepare_failure()
+        row = strict_json(outcome, archive.ROW_LIMIT)["outcome"]
+        failure["case_failure"].update(
+            kind="archive_outcome",
+            semantic_steps=row["completed_steps"],
+            observed_steps=row["observed_steps"],
+            durable_audit_steps=row["audit_descriptor"]["acknowledged_steps"],
+            final_checkpoint=row["final_checkpoint"],
+        )
+        path.write_bytes(start + outcome)
+        (self.root / "failure.json").write_bytes(canonical_bytes(failure))
+        saved = archive.read_campaign(self.root, self.manifest)
+        self.assertEqual(saved.census, census)
+        self.assertEqual(list(saved.outcomes()), [])
+        self.assertFalse(
+            any("prefix mismatch" in e for e in saved.header["validation"]["errors"])
+        )
+
+    def test_failure_prefix_integer_tokens_reject_float_and_bool(self):
+        from copy import deepcopy
+        from survey.war1_study.io import canonical_bytes
+
+        failure, _ = self.prepare_failure()
+        for location in ("receipt", "acknowledged_archive_prefix"):
+            for value in (0.0, False):
+                with self.subTest(location=location, value=value):
+                    bad = deepcopy(failure)
+                    target = bad if location == "receipt" else bad["case_failure"]
+                    # Detach the two fixture references so each boundary is
+                    # independently malformed, just as in parsed saved JSON.
+                    target[location] = dict(target[location], acknowledged_cases=value)
+                    (self.root / "failure.json").write_bytes(canonical_bytes(bad))
+                    saved = archive.read_campaign(self.root, self.manifest)
+                    self.assertTrue(
+                        any(
+                            "integer" in e for e in saved.header["validation"]["errors"]
+                        )
+                    )
+
+
+class BlockNamespaceTests(unittest.TestCase):
+    setUp = SavedArchiveTests.setUp
+
+    def test_extra_open_or_closed_block_prevents_complete_candidate(self):
+        from survey.war1_study.io import canonical_bytes
+
+        raw = (self.root / "blocks/block-000000.jsonl").read_bytes()
+        extra = self.root / "blocks/block-000001.jsonl"
+        extra.write_bytes(raw)
+        for closed in (False, True):
+            with self.subTest(closed=closed):
+                if closed:
+                    (self.root / "blocks/block-000001.descriptor.json").write_bytes(
+                        canonical_bytes({})
+                    )
+                saved = archive.read_campaign(self.root, self.manifest)
+                self.assertFalse(saved.complete)
+                self.assertTrue(
+                    any(
+                        "block namespace" in e
+                        for e in saved.header["validation"]["errors"]
+                    )
+                )
+
+    def test_new_unindexed_block_after_validation_aborts_iteration(self):
+        saved = archive.read_campaign(self.root, self.manifest)
+        (self.root / "blocks/block-000001.jsonl").write_bytes(b"{}\n")
+        with self.assertRaisesRegex(ValueError, "block namespace"):
+            list(saved.outcomes())
+
 
 class TornStartTests(unittest.TestCase):
     setUp = SavedArchiveTests.setUp
@@ -350,3 +425,78 @@ class FailedStartReceiptTests(unittest.TestCase):
             ),
             (1, 1, 15),
         )
+
+
+class AcknowledgedOpenPrefixTests(unittest.TestCase):
+    setUp = SavedArchiveTests.setUp
+    prepare_failure = FailureReceiptTests.prepare_failure
+
+    def test_only_acknowledged_rows_are_reiterated_and_all_block_bytes_rechecked(self):
+        import hashlib
+        from survey.war1_study.io import canonical_bytes
+
+        path = self.root / "blocks/block-000000.jsonl"
+        lines = path.read_bytes().splitlines(keepends=True)
+        failure, _ = self.prepare_failure()
+        prefix = b"".join(lines[:3])  # Completed key 0 and durable start of key 1.
+        path.write_bytes(prefix + lines[3])  # Key 1 outcome sync never acknowledged.
+        receipt = dict(
+            sha256=hashlib.sha256(prefix).hexdigest(),
+            bytes=len(prefix),
+            acknowledged_cases=1,
+        )
+        census = dict(
+            planned=16,
+            attempted=2,
+            complete_valid=1,
+            failed=0,
+            invalid=0,
+            partial=1,
+            pending=0,
+            unstarted=14,
+        )
+        failure.update(receipt=receipt, census=census)
+        case = self.manifest.cases[1]
+        failure["case_failure"].update(
+            key=dict(ordinal=1, arm_id=case.key.arm_id, replicate_index=1),
+            final_checkpoint=fixtures.checkpoint(
+                self.manifest.arms[0]["config"], 8, 0, [1, 1], None
+            ),
+            acknowledged_archive_prefix=receipt,
+        )
+        (self.root / "failure.json").write_bytes(canonical_bytes(failure))
+        saved = archive.read_campaign(self.root, self.manifest)
+        self.assertEqual(saved.census, census)
+        for _ in range(2):
+            self.assertEqual([r["key"]["ordinal"] for r in saved.outcomes()], [0])
+        path.write_bytes(prefix + lines[3] + b" ")
+        with self.assertRaisesRegex(ValueError, "block bytes changed"):
+            list(saved.outcomes())
+
+    def test_prefix_requires_exact_hash_and_record_boundary(self):
+        import hashlib
+        from survey.war1_study.io import canonical_bytes
+
+        failure, _ = self.prepare_failure()
+        path = self.root / "blocks/block-000000.jsonl"
+        for receipt in [
+            dict(failure["receipt"], sha256="f" * 64),
+            dict(
+                failure["receipt"],
+                bytes=1,
+                sha256=hashlib.sha256(path.read_bytes()[:1]).hexdigest(),
+            ),
+        ]:
+            with self.subTest(receipt=receipt):
+                failure["receipt"] = receipt
+                failure["case_failure"]["acknowledged_archive_prefix"] = receipt
+                (self.root / "failure.json").write_bytes(canonical_bytes(failure))
+                saved = archive.read_campaign(self.root, self.manifest)
+                self.assertEqual(saved.census["complete_valid"], 0)
+                self.assertTrue(
+                    any(
+                        e.startswith("failure:")
+                        for e in saved.header["validation"]["errors"]
+                    )
+                )
+                self.assertEqual(list(saved.outcomes()), [])

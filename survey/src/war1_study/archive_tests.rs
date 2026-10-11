@@ -85,6 +85,36 @@ fn injected_durable_start_and_outcome_failures_preserve_prefix_and_clocks() {
         }
         assert!(!out.join("candidate-index.json").exists());
         assert!(!out.join("success.json").exists());
+        // The construction producer invokes the saved-only reader, never the
+        // reverse. Exercise bytes left by actual native write/flush/sync faults.
+        let checked = std::process::Command::new("python3")
+            .current_dir(source::ROOT)
+            .arg("-c")
+            .arg(
+                r#"
+from pathlib import Path
+import sys
+from survey.war1_study import archive, manifest
+out = Path(sys.argv[1])
+m = manifest.validate_manifest((out / 'manifest.json').read_bytes(), Path.cwd())
+saved = archive.read_campaign(out, m)
+assert saved.census['complete_valid'] == 0, saved.census
+assert saved.census['partial'] == 1, saved.census
+assert saved.census['unstarted'] == 15, saved.census
+assert list(saved.outcomes()) == [], saved.census
+errors = saved.header['validation']['errors']
+assert not any(e.startswith('failure:') for e in errors), errors
+"#,
+            )
+            .arg(&out)
+            .output()
+            .expect("python3 must be available for saved-reader integration");
+        assert!(
+            checked.status.success(),
+            "saved reader failed for {event}/{nth}: stdout={} stderr={}",
+            String::from_utf8_lossy(&checked.stdout),
+            String::from_utf8_lossy(&checked.stderr)
+        );
         std::fs::remove_dir_all(out).unwrap();
     }
 }
