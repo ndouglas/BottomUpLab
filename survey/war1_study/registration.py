@@ -67,19 +67,74 @@ def _source_files(root: Path, relative: str):
                     raise ValueError("nonregular source")
 
 
+# Concrete closed literal macros used by core's source identity receipts. Match
+# the complete bodies (with flexible whitespace), never arbitrary macro Rust.
+_SOURCE_MACRO_BODIES = (
+    r'''macro_rules! source {
+        ($path:literal) => {
+            (concat!("crates/sugarscape-core/src/", $path),
+             include_bytes!(concat!("../../", $path)).as_slice(),)
+        };
+    }''',
+    r'''macro_rules! source {
+        ($path:literal) => {
+            ArtifactReceipt {
+                path: concat!("crates/sugarscape-core/src/", $path).into(),
+                bytes: include_bytes!(concat!("../../", $path)).len() as u64,
+                sha256: hash::sha256(include_bytes!(concat!("../../", $path))),
+            }
+        };
+    }''',
+)
+_SOURCE_MACROS = tuple(re.compile(r"\s*".join(re.escape(token) for token in
+    re.findall(r'"[^"\n]*"|[A-Za-z_][A-Za-z_0-9]*|=>|::|[^\s]', body)))
+    for body in _SOURCE_MACRO_BODIES)
+
+
+def _audit_source_macro(text, path, root):
+    if re.search(r"\b(?:source|include(?:_str|_bytes)?)\s*/[/*]", text):
+        raise ValueError("comment-interposed include/macro syntax is unsupported")
+    definitions = list(re.finditer(r"\bmacro_rules\s*!\s*source\b", text))
+    calls = list(re.finditer(r"\bsource\s*!(?!=)", text))
+    if not definitions and not calls:
+        return text
+    matches = [m for pattern in _SOURCE_MACROS for m in pattern.finditer(text)]
+    if len(definitions) != 1 or len(matches) != 1 or definitions[0].start() != matches[0].start():
+        raise ValueError("unsupported source literal macro definition")
+    match = matches[0]
+    text = text[:match.start()] + text[match.end():]
+    literals = list(re.finditer(r'(?<![A-Za-z_0-9:])source\s*!\s*\(\s*"([^"\\\n]+)"\s*\)', text))
+    if not calls or len(calls) > 4096 or len(literals) != len(calls):
+        raise ValueError("unsupported or unresolved source literal macro call")
+    core = root / "crates/sugarscape-core/src"
+    for literal in literals:
+        value = literal.group(1)
+        relative = Path(value)
+        if (len(value.encode()) > 4096 or not re.fullmatch(r"[A-Za-z_0-9./-]+", value)
+            or relative.is_absolute() or any(part in ("", ".", "..") for part in value.split("/"))):
+            raise ValueError("noncanonical source literal macro path")
+        # Validate the expansion relative to the actual including file, then
+        # require the path label and expanded target to agree in the bound tree.
+        target = _checked_path(path.parent / "../../" / relative).resolve()
+        if target != core / relative:
+            raise ValueError("source literal macro outside bound core tree")
+        read_regular(target, METADATA_LIMIT)
+    return text
+
+
 def audit_literal_inputs(root: Path):
     expected = set(literal_paths(read_regular(root / LITERAL_INVENTORY, METADATA_LIMIT)))
     found = set()
-    pattern = re.compile(r'include_(?:str|bytes)!\s*\(\s*"([^"\\\n]+)"\s*,?\s*\)')
+    pattern = re.compile(r'include_(?:str|bytes)\s*!\s*\(\s*"([^"\\\n]+)"\s*,?\s*\)')
     retained = 0
     for index, path in enumerate(p for p in _source_files(root, "crates/sugarscape-core/src") if p.suffix == ".rs"):
         if index >= 4096:
             raise ValueError("literal include audit source entry bound")
         raw = read_regular(path, min(METADATA_LIMIT, 64*1024**2 - retained))
         retained += len(raw)
-        text = raw.decode("utf-8")
+        text = _audit_source_macro(raw.decode("utf-8"), path, root)
         matches = list(pattern.finditer(text))
-        if len(matches) != len(re.findall(r"include_(?:str|bytes)!", text)) or "include!(" in text:
+        if len(matches) != len(re.findall(r"include_(?:str|bytes)\s*!", text)) or re.search(r"\binclude\s*!", text):
             raise ValueError("unsupported or unresolved core include syntax")
         for match in matches:
             target = (path.parent / match.group(1)).resolve()

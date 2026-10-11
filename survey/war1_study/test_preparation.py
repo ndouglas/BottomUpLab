@@ -73,6 +73,46 @@ class PreseedTests(unittest.TestCase):
             with patch.object(preparation, "native_metadata", return_value=metadata), patch.object(preparation, "source_inventory", return_value=metadata["inventory"]):
                 self.assertEqual(supervisor.canonical_bytes(preparation.validate_preseed(root)), supervisor.canonical_bytes(resources))
 
+    def test_relative_producer_paths_round_trip_through_resource_validation(self):
+        """Synthetic measured costs; real producer serialization and link checks."""
+        import os
+        from survey.war1_study import preparation, registration
+        with tempfile.TemporaryDirectory(prefix="construction_test_relative_") as temp:
+            root = Path(temp).resolve()
+            fixture, _, inputs, probe = synthetic_resources(root)
+            binary = root/"construction_test_binary"
+            manifest_path = root/fixture["selected_path"]
+            manifest_path.write_bytes(b"{}\n")
+            manifest = SimpleNamespace(raw_bytes=b"{}\n", sha256=fixture["binding"]["manifest_sha256"], purpose="construction_fixture")
+            monitor = registration.load(root/"fixture-archive/monitor.json")
+            synthetic = registration.load(root/"synthetic-monitored.json")
+            def native(path):
+                self.assertEqual(path, binary)
+                return fixture
+            def pure(path, command, selected, output=None):
+                self.assertEqual((path, selected), (binary, manifest_path))
+                if output is not None:
+                    registration.save(output, dict(compiled_inputs_sha256=fixture["binding"]["compiled_inputs_sha256"]))
+            def monitored(command, destination, wall, rss):
+                self.assertEqual(command, (str(binary), "fixture", "--manifest", str(manifest_path), "--out", str(destination)))
+                self.assertTrue(destination.is_absolute())
+                destination.mkdir()
+                registration.save(destination/"fixture-probe.json", probe)
+                registration.save(destination/"monitor.json", monitor)
+                return monitor
+            def measured(selected_root, destination):
+                self.assertEqual(selected_root, root)
+                destination.mkdir()
+                registration.save(destination/"synthetic-monitored.json", synthetic)
+                return dict(synthetic)
+            relative = lambda path: Path(os.path.relpath(path, Path.cwd()))
+            with patch.object(preparation, "native_metadata", side_effect=native), patch.object(preparation, "_native_pure", side_effect=pure), patch.object(preparation, "prepare_oracles", return_value=[]), patch.object(preparation, "oracle_packet", return_value={}), patch.object(preparation, "supervise", side_effect=monitored), patch.object(preparation, "_run_synthetic", side_effect=measured), patch.object(preparation, "source_inventory", return_value=fixture["inventory"]):
+                _, resource = preparation.prepare_evidence(relative(root), relative(binary), relative(binary), manifest, relative(root/"produced"))
+                inputs = registration.load(root/"produced/resource-forecast-inputs.json")
+                validated = preparation.validate_resource_evidence(resource, inputs, registration.load(root/"produced/fixture-archive/fixture-probe.json"), fixture)
+            self.assertEqual(validated["wall_seconds"], resource["forecast_wall_seconds"])
+            self.assertTrue(Path(resource["fixture_probes"][0]["command"][0]).is_absolute())
+
     def test_every_invalid_resource_link_is_rejected_before_entropy(self):
         from copy import deepcopy
         from survey.war1_study import preparation, registration

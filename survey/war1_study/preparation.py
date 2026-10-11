@@ -10,7 +10,7 @@ import time
 
 from .archive_provenance import LIMITS, POPULATION, oracle_packet, validate_oracle_packet
 from .contracts import Json, Manifest
-from .io import METADATA_LIMIT, canonical_bytes, create_bytes, read_regular
+from .io import METADATA_LIMIT, _checked_path, canonical_bytes, create_bytes, read_regular
 from .manifest import sample_manifest, validate_manifest
 from .oracle import prepare_oracles
 from .registration import artifact, load, native_metadata, save, source_inventory
@@ -111,6 +111,10 @@ def _native_pure(binary, command, manifest_path, output=None):
 
 def prepare_evidence(root: Path, fixture_binary: Path, scientific_binary: Path,
                      manifest: Manifest, out: Path) -> tuple[Json, Json]:
+    # Reject symlinks before normalizing relative/dot path spelling. The same
+    # canonical arguments are launched, recorded, and bound by descriptors.
+    root, fixture_binary, scientific_binary, out = (
+        _checked_path(path).resolve() for path in (root, fixture_binary, scientific_binary, out))
     fixture = native_metadata(fixture_binary)
     scientific = native_metadata(scientific_binary)
     _same_sources(fixture, scientific)

@@ -1,5 +1,6 @@
 """Construction-only preparation boundaries; entropy is always injected."""
 import hashlib
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -64,6 +65,52 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(len(paths), 229)
         self.assertIn("data/anasazi/Map.txt", paths)
         self.assertIn("docs/examples/burrow/access-explore.json", paths)
+
+    def test_literal_source_macros_resolve_closed_paths_and_reject_forgery(self):
+        """Only the two checked concrete macro bodies and literal calls resolve."""
+        import shutil
+        definitions = (
+            "crates/sugarscape-core/src/browser_experiments/discovery/mod.rs",
+            "crates/sugarscape-core/src/surface_discovery/diagnostics/protocol.rs",
+        )
+        for original in definitions:
+            with self.subTest(definition=original), tempfile.TemporaryDirectory(prefix="construction_test_include_") as temp:
+                root = Path(temp).resolve()
+                # Use actual source bytes; mutation is confined to this temp tree.
+                shutil.copytree(ROOT/"crates/sugarscape-core/src", root/"crates/sugarscape-core/src")
+                (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
+                (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
+                self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
+                path = root/original
+                text = path.read_text()
+                call = next(re.finditer(r'source!\("([^"\n]+)"\)', text)).group(1)
+                replacements = (
+                    text.replace('$path:literal', '$path:expr'),
+                    text.replace('"../../", $path', '"../../../", $path'),
+                    text.replace('$path)).', '$other)).'),
+                    text.replace('source!("'+call+'")', 'source!(concat!("'+call+'"))'),
+                    text.replace('source!("'+call+'")', 'source!("../Cargo.toml")'),
+                    text.replace('source!("'+call+'")', 'source!("/tmp/forged")'),
+                    text.replace('source!("'+call+'")', 'source!("missing.rs")'),
+                    text.replace('source!("'+call+'")', 'source!("shared_surface//mod.rs")'),
+                    text.replace('source!("'+call+'")', 'source!("shared_surface/./mod.rs")'),
+                    text.replace('source!("'+call+'")', 'source!("'+'x'*4097+'")'),
+                    text + '\ninclude_bytes!(env!("FORGED"));\n',
+                    text.replace('source!("'+call+'")', 'source/**/!("../forged")'),
+                    text + '\ninclude_bytes/**/!("../forged");\n',
+                )
+                for index, forged in enumerate(replacements):
+                    with self.subTest(forgery=index):
+                        self.assertNotEqual(forged, text)
+                        path.write_text(forged)
+                        with self.assertRaises((ValueError, OSError)):
+                            registration.audit_literal_inputs(root)
+                path.write_text(text)
+                link = root/"crates/sugarscape-core/src"/call
+                link.unlink()
+                link.symlink_to(ROOT/"crates/sugarscape-core/src"/call)
+                with self.assertRaises(ValueError):
+                    registration.audit_literal_inputs(root)
 
     def test_inventory_matches_native_domain_and_excludes_receipts(self):
         selected = "survey/war1_study/fixtures/construction-manifest.json"

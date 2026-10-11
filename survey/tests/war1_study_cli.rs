@@ -195,3 +195,26 @@ with tempfile.TemporaryDirectory(prefix='construction_test_science_refusal_') as
         String::from_utf8_lossy(&result.stderr)
     );
 }
+
+#[test]
+fn merged_core_literal_audit_matches_native_inventory() {
+    let code = r#"
+from pathlib import Path
+import json,subprocess,sys
+from survey.war1_study.registration import audit_literal_inputs,source_inventory
+root=Path.cwd()
+metadata=json.loads(subprocess.run((sys.argv[1],'metadata'),check=True,capture_output=True).stdout)
+assert len(audit_literal_inputs(root))==229
+assert source_inventory(root,metadata['selected_path'])==metadata['inventory']
+"#;
+    let result = Command::new("python3")
+        .current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+        .args(["-c", code, env!("CARGO_BIN_EXE_war1-study")])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}
