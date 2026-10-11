@@ -398,3 +398,5 @@ dialog.keep .row { display: flex; gap: 8px; justify-content: flex-end; }
 
 .spatial-cell { font-size: var(--glyph-size, clamp(.6rem, 1.8vw, 1.1rem)); }
 @media (max-width: 700px) { .spatial-cell { font-size: var(--glyph-size, .9rem); } }
+/* Matched policy labels must shrink with their containing row on narrow screens. */
+.episode-comparison .row > label { min-width: 0; max-width: 100%; }

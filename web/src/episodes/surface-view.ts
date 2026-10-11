@@ -2,7 +2,7 @@ import { h } from '../ui/dom';
 import type { Checkpoint, Json } from './types';
 import type { RenderDescriptor } from './catalog';
 import { obj, list, valueText, fact, details } from './presentation';
-import { surfaceDisplay, surfaceSummary, surfaceBelief } from './surface-projection';
+import { surfaceDisplay, surfaceSummary, surfaceBelief, surfaceChoiceLabel } from './surface-projection';
 
 function field(symbol: Json, lineage: Json, title: string): HTMLElement {
   return h('section', { class: 'surface-field' }, h('h4', {}, title), h('strong', { class: 'surface-symbol' }, valueText(symbol)), fact('Original write symbol', obj(lineage).symbol), details('Write origin', lineage));
@@ -38,7 +38,8 @@ export function renderSurface(at: Checkpoint, descriptor: RenderDescriptor): HTM
       if (a.lastSupportedBelief) pane.append(details('Last supported belief · historical only', surfaceBelief(a.lastSupportedBelief)));
       if (a.decision) {
         const decision = obj(a.decision);
-        pane.append(fact('Own choice', decision.choice ?? a.decision));
+        pane.append(fact(descriptor.id === 'surface_discovery' ? surfaceChoiceLabel(decision.choice) : 'Own choice', decision.choice ?? a.decision));
+        if (descriptor.id === 'surface_discovery' && 'Calibration' in obj(decision.choice)) pane.append(h('p', { class: 'hint' }, 'Selection queues one owned slot. The following paid event charges one credit; no mid-round stop is available.'));
         if (decision.alternatives) {
           pane.append(h('p', {}, valueText(a.decisionLabel)), fact('Continuation policy', decision.continuation_policy));
           const alternatives = h('ul', { class: 'surface-alternatives' });
@@ -56,7 +57,7 @@ export function renderSurface(at: Checkpoint, descriptor: RenderDescriptor): HTM
     events.append(h('h4', {}, `Agent ${valueText(a.id)} · own history`), strip.childNodes.length ? strip : h('p', {}, 'No delivered events yet.'));
   }
   if (display.researcher !== null) events.append(details('Researcher · current paid event', researcher.event));
-  return h('div', { class: 'surface-view' }, h('div', { class: 'surface-clock' }, fact('Public clock', display.clock), fact('Status', display.status), fact('Latest public phase reset', display.reset), descriptor.id === 'active_surface' ? fact('Public probe stop · completed probes', display.probeStop) : null), h('div', { class: 'episode-stage' }, diagram, inspector), events);
+  return h('div', { class: 'surface-view' }, h('div', { class: 'surface-clock' }, fact('Public clock', display.clock), fact('Status', display.status), fact('Latest public phase reset', display.reset), ['active_surface', 'surface_discovery'].includes(descriptor.id) ? fact('Public probe stop · completed probes', display.probeStop) : null), h('div', { class: 'episode-stage' }, diagram, inspector), events);
 }
 export function renderSurfaceResult(payload: Json): HTMLElement {
   const summary = surfaceSummary(payload);

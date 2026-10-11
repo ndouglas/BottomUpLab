@@ -106,7 +106,7 @@ export class EpisodeView {
   private pick(): void { const d = this.catalog.find(d => d.id === this.picker.value); if (d) this.setEditor(d, d.default_input); }
   private setEditor(descriptor: StudyDescriptor, input: Json): void {
     this.editor = new EpisodeControls(descriptor, input, edited => this.session.edit(edited));
-    this.session.edit(this.editor.input());
+    this.session.edit(input);
     this.editorSlot.replaceChildren(h('p', {}, descriptor.question), h('p', { class: 'hint' }, descriptor.supplied), this.editor.el);
     this.runButton.disabled = !rendererAvailable(descriptor);
   }
@@ -115,7 +115,7 @@ export class EpisodeView {
   private async run(): Promise<void> {
     if (this.busy || !this.editor) return;
     this.setBusy(true); this.status.textContent = 'Running episode…';
-    try { const record = await this.session.run(this.editor.input()); if (!this.disposed) { this.showRecord(record); this.status.textContent = 'Episode complete. Playback uses its recorded checkpoints.'; } }
+    try { const input = this.editor.input(); this.session.edit(input); const record = await this.session.run(input); if (!this.disposed) { this.showRecord(record); this.status.textContent = 'Episode complete. Playback uses its recorded checkpoints.'; } }
     catch (error) { this.error(error); } finally { this.setBusy(false); }
   }
   private async openFile(): Promise<void> {
@@ -127,7 +127,7 @@ export class EpisodeView {
   }
   private async share(): Promise<void> {
     if (!this.editor) return;
-    try { const token = await encodeEpisode(this.editor.input()); await navigator.clipboard.writeText(`${location.origin}${location.pathname}${location.search}#e=${token}`); this.status.textContent = 'Input link copied.'; } catch (error) { this.error(error); }
+    try { const input = this.editor.input(); this.session.edit(input); const token = await encodeEpisode(input); await navigator.clipboard.writeText(`${location.origin}${location.pathname}${location.search}#e=${token}`); this.status.textContent = 'Input link copied.'; } catch (error) { this.error(error); }
   }
   private async export(): Promise<void> {
     if (this.busy || !this.session.shown) return;
@@ -185,7 +185,7 @@ export class EpisodeView {
       if (descriptor.family === 'surface') result.append(renderSurfaceResult(payload));
       if (descriptor.family === 'spatial') result.append(renderSpatialResult(payload));
       if (record.semantics === 'conditional_case') result.append(h('p', { class: 'hint' }, 'Conditional expectations are not a realized reward. Private truth and signals are unavailable.'));
-    } else result.append(h('p', { class: 'hint' }, 'Complete results become available at the final checkpoint or in Researcher perspective.'));
+    } else result.append(h('p', { class: 'hint' }, record.study === 'surface_discovery' ? 'Episode results are available only in Researcher perspective.' : 'Complete results become available at the final checkpoint or in Researcher perspective.'));
     this.stage.replaceChildren(rendered, result);
     this.drawComparison(record, descriptor);
   }
@@ -208,6 +208,8 @@ export class EpisodeView {
     this.comparisonSlot.hidden = descriptor.family !== 'surface' && !spatial;
     if (this.comparisonSlot.hidden) return;
     this.axisPicker.parentElement!.hidden = !spatial;
+    this.comparisonSlot.querySelector('h3')!.textContent = spatial ? 'Matched original control comparison' : descriptor.id === 'surface_discovery' ? 'Matched primary policy comparison' : 'Matched original policy comparison';
+    this.comparisonSlot.querySelector('.hint')!.textContent = spatial ? 'Changes one declared original control. Retains geometry, resources, spawn order, goals, seed, horizon and sampling. Same seed does not promise paired random draws. Only compatible choices are listed.' : descriptor.id === 'surface_discovery' ? 'Changes only the primary policy. Retains mechanism, investigator role, identifiers and complete sequence. Compare the three primary policies as sequential pairs; at most two episodes are retained. KnownRaw and InspectOnly remain labeled controls in the setting selector.' : 'Changes only the declared policy or Agent pair. Retains the mechanism, role, identifiers, priors and complete sequence.';
     if (spatial) {
       const axes = obj(descriptor.controls).comparisons;
       const rows = Array.isArray(axes) ? axes.map(obj) : [];
@@ -245,6 +247,7 @@ export class EpisodeView {
     this.comparisonBody.append(h('p', {}, `${index + 1} / ${other.checkpoints.length} · ${this.comparisonIndex === null ? 'Matched public clock and stage' : 'Independent checkpoint'}`), spatial ? (['protection_recaching','deception_gestures'].includes(descriptor.id)?renderCaching:renderSpatial)(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : renderSurface(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)));
     const payload = resultPayload(other, index, this.perspective);
     if (payload !== null) this.comparisonBody.append(h('h3', {}, this.perspective.kind === 'researcher' ? 'Researcher · comparison complete result' : 'Comparison final result'), spatial ? renderSpatialResult(payload) : renderSurfaceResult(payload));
+    else if (record.study === 'surface_discovery') this.comparisonBody.append(h('p', { class: 'hint' }, 'Comparison episode results are available only in Researcher perspective.'));
   }
   pause(): void { this.replay.pause(); this.draw(); }
   dispose(): void {

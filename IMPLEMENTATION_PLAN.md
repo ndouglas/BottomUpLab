@@ -24,10 +24,10 @@ Owned by docs/superpowers/plans/2026-10-10-surface-experiment-discovery.md.
 **Goal**: Tasks 6–7: bounded Rust adapter and existing episode viewer.
 **Success Criteria**: Actual WASM fits limits; full native/export/rendered equality and worker/privacy acceptance.
 **Tests**: Actual Node WASM, web and real browser tests.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 5: Frozen collection and delivery
 **Goal**: Task 8: precollection freeze, first/repeat, findings and exact remote verification.
 **Success Criteria**: Retained reports/reference checks, independent final review, merged/pushed exact commit CI/Pages.
 **Tests**: Project gates, complete census validation, byte repeat and final source hashes.
-**Status**: Not Started
+**Status**: In Progress
