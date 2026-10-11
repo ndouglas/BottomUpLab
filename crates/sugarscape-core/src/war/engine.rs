@@ -121,11 +121,16 @@ impl Engagement {
         let start = self.counts();
         let duel = self.config.geometry == Geometry::DuelContact;
         // Initial IDs are bounded by validated config, even after sparse restores.
-        // Reuse one per-attempt allocation for living, matched and dead membership.
+        // Duel reuses one allocation for living, matched and dead membership.
+        // Aimed fire needs markers only when casualties must be removed.
         const LIVING: u8 = 1;
         const MATCHED: u8 = 2;
         const DEAD: u8 = 4;
-        let mut membership = vec![0_u8; (self.config.blue + self.config.red) as usize];
+        let mut membership = if duel {
+            vec![0_u8; (self.config.blue + self.config.red) as usize]
+        } else {
+            Vec::new()
+        };
         if duel {
             let pairs = if let Some(pairs) = supplied_matching {
                 pairs.to_vec()
@@ -280,6 +285,9 @@ impl Engagement {
             }
         }
         let mut unique_deaths = 0;
+        if !duel && !casualties.is_empty() {
+            membership.resize((self.config.blue + self.config.red) as usize, 0);
+        }
         for casualty in &casualties {
             let marker = &mut membership[casualty.id as usize];
             unique_deaths += usize::from(*marker & DEAD == 0);
@@ -291,10 +299,12 @@ impl Engagement {
                 "casualty uniqueness or exposure reconciliation failed",
             ));
         }
-        self.blue_alive
-            .retain(|id| membership[*id as usize] & DEAD == 0);
-        self.red_alive
-            .retain(|id| membership[*id as usize] & DEAD == 0);
+        if !casualties.is_empty() {
+            self.blue_alive
+                .retain(|id| membership[*id as usize] & DEAD == 0);
+            self.red_alive
+                .retain(|id| membership[*id as usize] & DEAD == 0);
+        }
         let survivors = self.counts();
         for (side, identity) in [(0, Side::Blue), (1, Side::Red)] {
             let deaths = casualties.iter().filter(|c| c.side == identity).count() as u32;

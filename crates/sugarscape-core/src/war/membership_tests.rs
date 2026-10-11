@@ -1,6 +1,76 @@
 //! Behavioral comparison against the frozen pre-optimization HashSet engine.
 use super::{config::Geometry, engine::Engagement, engine_tests::config, frozen_engine};
 
+// Catches empty-casualty shortcuts changing clocks/RNG and deferred markers losing boundary IDs.
+#[test]
+fn supplied_empty_and_nonempty_casualties_match_frozen_engine_after_sparse_restore() {
+    for geometry in [Geometry::AimedFire, Geometry::DuelContact] {
+        let mut c = config(geometry);
+        c.blue = 4096;
+        c.red = 4096;
+        c.max_steps = 5;
+        let mut actual = Engagement::new(c.clone(), 7).unwrap();
+        let mut expected = frozen_engine::Engagement::new(c.clone(), 7).unwrap();
+        let mut saved = actual.checkpoint();
+        saved.step = 1;
+        saved.active_steps = 1;
+        saved.blue_alive = vec![0, 4095];
+        saved.red_alive = vec![4096, 8191];
+        actual.restore(&saved).unwrap();
+        expected.restore(&saved).unwrap();
+
+        let pairs = [(4095, 4096), (0, 8191)];
+        let empty = actual
+            .step_supplied(&pairs, &[u64::MAX; 4])
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            Some(empty.clone()),
+            expected.step_supplied(&pairs, &[u64::MAX; 4]).unwrap()
+        );
+        assert!(empty.casualties.is_empty());
+        assert_eq!(empty.survivors, [2, 2]);
+        assert_eq!(actual.checkpoint(), expected.checkpoint());
+
+        let deaths = actual
+            .step_supplied(&pairs, &[u64::MAX, 0, 0, u64::MAX])
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            Some(deaths.clone()),
+            expected
+                .step_supplied(&pairs, &[u64::MAX, 0, 0, u64::MAX])
+                .unwrap()
+        );
+        assert_eq!(
+            deaths.casualties.iter().map(|c| c.id).collect::<Vec<_>>(),
+            [4095, 4096]
+        );
+        let saved = actual.checkpoint();
+        assert_eq!(saved, expected.checkpoint());
+        assert_eq!(saved.blue_alive, [0]);
+        assert_eq!(saved.red_alive, [8191]);
+        actual = Engagement::new(c.clone(), 7).unwrap();
+        expected = frozen_engine::Engagement::new(c, 7).unwrap();
+        actual.restore(&saved).unwrap();
+        expected.restore(&saved).unwrap();
+        let continued = actual
+            .step_supplied(&[(0, 8191)], &[u64::MAX; 2])
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            Some(continued.clone()),
+            expected
+                .step_supplied(&[(0, 8191)], &[u64::MAX; 2])
+                .unwrap()
+        );
+        assert!(continued.casualties.is_empty());
+        assert_eq!(actual.checkpoint(), expected.checkpoint());
+        assert_eq!(actual.step(), expected.step());
+        assert_eq!(actual.checkpoint(), expected.checkpoint());
+    }
+}
+
 // Catches changed draw order, side offsets, retention, and scratch leaking across steps/restores.
 #[test]
 fn seeded_steps_and_restores_match_frozen_hash_engine() {
