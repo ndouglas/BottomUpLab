@@ -16,11 +16,18 @@ question. Like those, these are our own experiments, built on models we have rep
 
 Stuart Russell's *Human Compatible* (2019) argues for machines whose objective is the satisfaction
 of human preferences under uncertainty about what those preferences are. Several of its arguments
-are thought experiments. The one that prompted this program: Alice and Bob each want to be happy;
-Robbie, the machine, wants both happy; Alice cares about Bob less than Bob cares about Alice; a
-Robbie that counts the caring ends up favoring Alice and neglecting Bob. (The user's paraphrase
-from the book; check the chapter's exact statement before anything is built. The user owns the
-book.) The question was whether such things are only thought experiments.
+are thought experiments. The one that prompted this program, from the book's discussion of
+altruism (checked against the text on 2026-10-11): preferences split into *intrinsic well-being*
+(shelter, warmth, sustenance, safety) and preferences about others' well-being. With two people,
+Alice's overall utility is her intrinsic well-being plus a caring factor C_AB times *Bob's intrinsic
+well-being*, and Bob's is his intrinsic well-being plus C_BA times Alice's. Robbie helps both by
+maximizing the sum of the two utilities, so Robbie weights Alice's intrinsic well-being by
+1 + C_BA and Bob's by 1 + C_AB. Russell's worked case is selfish Alice (C_AB = 0, who "will divert
+any amount of resources away from Bob and toward herself") and nice Bob (C_BA > 0): Robbie
+protects Bob from Alice's depredations, yet "the final equilibrium will typically leave Bob with
+less intrinsic well-being than Alice, but he may have greater overall happiness because he cares
+about her well-being." Being nice costs Bob resources under a utilitarian Robbie. The question was
+whether such things are only thought experiments.
 
 They are not, and the literature falls into four strands:
 
@@ -41,9 +48,12 @@ They are not, and the literature falls into four strands:
    and bots help in Stag Hunt but barely in the Prisoner's Dilemma.
 4. **A machine planner over an artificial economy.** The AI Economist (Zheng et al. 2022).
 
-The caring example's formal root is older: Bergstrom (1999) on systems of benevolent utility
-functions, and Harsanyi (1955) on which utilities an aggregator may count. No agent-based model
-puts the caring version in a world with resources, lifetimes and populations. That is the gap.
+The caring example's formal roots are older. Russell's caring is over the other's *intrinsic*
+well-being, so the utilities are linear in two primitives and there is no fixed point to solve;
+Bergstrom (1999) treats the harder case where caring is over the other's *overall* utility, which
+recurses, and that becomes a named variant below. Harsanyi (1955) is the source for which utilities
+an aggregator may count. No agent-based model puts the caring version in a world with resources,
+lifetimes and populations. That is the gap.
 
 ## Principle
 
@@ -78,15 +88,28 @@ Queue items 2 (inspection games) and 26 (sequential social dilemmas) join this p
 ## Our experiments
 
 **A1. Caring, aggregation and survival.** Two humans (Minds foragers or Chapter II agents) and one
-assistant that can move sugar between them. Caring coefficients C_AB and C_BA enter the humans'
-utilities as in Bergstrom. Two aggregation rules as a switch: *experienced* (Harsanyi's: the
-assistant sums the humans' own-consumption utilities) and *inclusive* (it sums their full utilities,
-caring included). Pre-set decision rules: under experienced aggregation the allocation is
-independent of C_BA (a check, not a finding); under inclusive aggregation Bob's experienced welfare
-falls as C_BA rises, on at least 18 of 20 seeds, which is Russell's claim; and the new part, with
-lifetimes and death, the population the assistant serves becomes an outcome of its policy, measured
-as the difference between the assistant's welfare total over the living and over the initial
-population. If the selection effect is absent, say so.
+assistant that can move sugar between them. Intrinsic well-being W is the agent's own welfare
+function of its holdings (Cobb-Douglas in the goods, concave, so interior optima exist); overall
+utility is U_A = W_A + C_AB·W_B and U_B = W_B + C_BA·W_A, Russell's form. Alice can also take from
+Bob (Minds 6's theft gives the action), which is what the assistant protects against. Switches:
+
+- *Aggregation:* `inclusive` (Russell's: maximize U_A + U_B, weights 1 + C_BA and 1 + C_AB on the
+  intrinsic well-beings) against `experienced` (Harsanyi's: maximize W_A + W_B, caring ignored).
+- *Caring target:* `intrinsic` (Russell's) against `overall` (Bergstrom's recursion, solved as a
+  fixed point when it exists).
+- *Negative caring:* whether the assistant counts C < 0 (envy, sadism) or clips it at zero, the
+  question Russell takes up next in the chapter.
+
+Pre-set decision rules. (i) Under `experienced` the allocation is independent of both caring
+factors: a check, not a finding. (ii) Under `inclusive` with C_AB = 0 and C_BA > 0, Bob ends with
+less intrinsic well-being than Alice on at least 18 of 20 seeds, and W_B falls as C_BA rises: this
+is Russell's "typically." (iii) Bob's overall utility exceeds Alice's only when C_BA·W_A > W_A − W_B,
+which the runs report as a region of (C_BA, resource level), not a yes or no. (iv) The new part:
+with lifetimes, metabolism and death, the population the assistant serves is an outcome of its
+policy. Report the assistant's welfare total over the living against the initial pair, and whether
+the nice agent dies first more often than the selfish one under `inclusive`. If the selection
+effect is absent, say so. Then scale from a pair to a population with a distribution of caring
+factors, where "the nice are poorer" becomes a measurable correlation.
 
 **A2. The off-switch in a foraging world.** The assistant acts for a human whose preferences it
 holds a belief over; the human can switch it off. Reproduce the off-switch game's incentive result
@@ -127,8 +150,8 @@ Domingos et al. 2022, Booker et al. 2023, Guo et al. 2023, the 2024 cross-game b
 1999 and Harsanyi 1955. Leibo et al. 2017 and Hughes et al. 2018 are in
 `papers/multi-agent-coordination/`.
 
-Wanted: *Human Compatible* itself (the user has it; the chapter with the caring example, to quote
-exactly); Harsanyi 1977, "Morality and the theory of rational behavior," *Social Research* 44; Critch
+Wanted: *Human Compatible* in paper only (the user has it; the altruism passage has been checked
+against the text); Harsanyi 1977, "Morality and the theory of rational behavior," *Social Research* 44; Critch
 2017, "Toward negotiable reinforcement learning" (arXiv); Shirado and Christakis 2020, *iScience*;
 Terrucha et al. 2024, *PLoS Comput. Biol.*, "The art of compensation" (not on the mirrors);
 Shah et al. 2020, "Benefits of assistance over reward learning."
