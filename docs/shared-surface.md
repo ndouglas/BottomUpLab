@@ -96,3 +96,6 @@ All seven previous CLI outputs reproduce their retained bytes with the new froze
 For paid probe selection and task-directed stopping, see the [active-surface study](active-surface.md).
 
 See the [experiment viewer guide](experiment-viewer.md) for browser episodes, checkpoint perspectives, and recorded results.
+
+
+See [Surface experiment discovery](surface-discovery.md) for the measured comparison of owned raw calibration actions with the supplied recipe, both investigator roles, and out-of-catalog transfer failures.

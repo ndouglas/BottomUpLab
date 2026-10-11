@@ -21,6 +21,7 @@ pub const FILES: &[&str] = &[
     "crates/sugarscape-core/src/browser_experiments/fixtures/audit-recorded.json",
     "crates/sugarscape-core/src/browser_experiments/fixtures/caching-identities.json",
     "crates/sugarscape-core/src/browser_experiments/fixtures/caching-scenes.json",
+    "crates/sugarscape-core/src/browser_experiments/fixtures/discovery-recorded.json",
     "crates/sugarscape-core/src/browser_experiments/fixtures/engine-identities.json",
     "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-identities.json",
     "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-scenes.json",

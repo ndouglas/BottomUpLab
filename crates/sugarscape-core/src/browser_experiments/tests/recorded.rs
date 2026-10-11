@@ -149,3 +149,62 @@ fn original_environment_catalog_and_audit_evaluation_dtos_parse() {
         }
     }
 }
+
+#[test]
+fn discovery_recorded_summary_preserves_complete_measured_census_and_transfer_nulls() {
+    let value: Value = serde_json::from_str(&recorded_results_json().unwrap()).unwrap();
+    let summary = &value["studies"]["surface_discovery"];
+    assert_eq!(summary["version"], "surface-discovery-summary-v1");
+    assert_eq!(
+        summary["report_hash"],
+        "a4377fcebbbb92c5d389c319a8098303ed4db812dfb528eff36e5d35e4a23606"
+    );
+    assert_eq!(
+        summary["source_hash"],
+        "bea9272bcd6e9aab412d1aafd36dc9facd0ffffd8b10ccfd7e5bb2aaac9fa055"
+    );
+    for (field, count) in [
+        ("settings", 48),
+        ("comparisons", 24),
+        ("role_expectations", 10),
+        ("role_projections", 10),
+        ("role_contrasts", 6),
+        ("compilations", 16),
+    ] {
+        assert_eq!(summary[field].as_array().unwrap().len(), count, "{field}");
+    }
+    let transfer = summary["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| {
+            row["protocol"]["investigator"] == "B"
+                && row["protocol"]["policy"] == "InspectOnly"
+                && row["environment"] == "DataFlip"
+        })
+        .unwrap();
+    assert_eq!(
+        transfer["aggregate"]["spent"][0],
+        serde_json::json!({"numerator":"5","denominator":"1"})
+    );
+    assert_eq!(
+        transfer["aggregate"]["spent"][1],
+        serde_json::json!({"numerator":"7","denominator":"1"})
+    );
+    assert!(transfer["aggregate"]["group_net"].is_null());
+    assert_eq!(
+        transfer["aggregate"]["net"],
+        serde_json::json!([null, null])
+    );
+    assert_eq!(
+        transfer["projection"]["unavailable_mass"],
+        serde_json::json!({"numerator":"1","denominator":"1"})
+    );
+    assert!(summary.get("histories").is_none());
+    assert!(summary.get("runs").is_none());
+    assert!(summary["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|row| row.get("episodes").is_none()));
+}

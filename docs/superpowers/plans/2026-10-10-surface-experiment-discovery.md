@@ -10,7 +10,7 @@
 
 **Spec:** [Approved written design](../specs/2026-10-08-surface-experiment-discovery-design.md), committed as 108b4aa and approved by the user “LGTM!” on October 10, 2026.
 
-**Status:** Written plan approved by the user “LGTM!” on October 10, 2026; subagent-driven execution authorized. Task status and immutable approval digest are recorded in the owned evidence ledger. Scientific collection still requires the independent precollection gate.
+**Status:** Written plan approved by the user “LGTM!” on October 10, 2026; subagent-driven execution authorized. Task status and immutable approval digest are recorded in the owned evidence ledger. Tasks 1–8 implementation and independent whole-increment review are complete. Frozen first/repeat and full-census validation passed. Normal main integration, exact CI/Pages and owned tracker closure remain pending.
 
 ## Global Constraints
 
@@ -393,8 +393,8 @@ Sentinel-check selected own checkpoint through existing perspective projection/s
 **Files:** Protocol source binding, product guide/compact summary/recorded registration, appended guide links and owned tracker closure. Large evidence remains ignored.
 **Consumes:** Reviewed Tasks 1–7. **Produces:** Preserved scientific first/repeat, corrected findings and verified delivered increment.
 
-- [ ] **Step 1: Fresh precollection review and source freeze.** Verify spec/plan coverage, numerical independence/references, equal helper embedding, both-role values, identifiability, transfer nulls, census/caps, native/WASM/browser feasibility and old source/export/guide preservation. Protocol registers census/priors/ties/metrics/caps/pre-mortem/full source inventory/toolchain/binary/WASM hashes before judged invocation. Resolve findings and refresh dependent evidence before passing gate. Commit frozen source/protocol binding before collection.
-- [ ] **Step 2: Run project gates on recorded source.** One build owner; retain counts/exits/ignored/skipped/logs. Scoped formatting repairs, workspace fmt check-only:
+- [x] **Step 1: Fresh precollection review and source freeze.** Verify spec/plan coverage, numerical independence/references, equal helper embedding, both-role values, identifiability, transfer nulls, census/caps, native/WASM/browser feasibility and old source/export/guide preservation. Protocol registers census/priors/ties/metrics/caps/pre-mortem/full source inventory/toolchain/binary/WASM hashes before judged invocation. Resolve findings and refresh dependent evidence before passing gate. Commit frozen source/protocol binding before collection.
+- [x] **Step 2: Run project gates on recorded source.** One build owner; retain counts/exits/ignored/skipped/logs. Scoped formatting repairs, workspace fmt check-only:
 
 ~~~sh
 cargo fmt --all --check
@@ -405,7 +405,7 @@ cargo build --release -p sugarscape-cli
 ~~~
 
 In web: npm run build, npm run typecheck, npm test. Root: python3 -m unittest discover -s studio/tests -t studio -v. Browser receipts must bind current served source/actual WASM. Repeat gates only for dependent changes/failure/unresolved concern; disclose browser-only skips and packaging notices accurately.
-- [ ] **Step 3: Exclusive first/repeat and independent validation.** Recheck frozen hashes immediately before invocation. Define evidence as owned evidence Path and binary as frozen absolute release CLI Path, with retained hashes; use pathlib/subprocess:
+- [x] **Step 3: Exclusive first/repeat and independent validation.** Recheck frozen hashes immediately before invocation. Define evidence as owned evidence Path and binary as frozen absolute release CLI Path, with retained hashes; use pathlib/subprocess:
 
 ~~~python
 with (evidence / 'first-surface-discovery.json').open('xb') as out:
@@ -416,7 +416,7 @@ assert result.returncode == 0
 ~~~
 
 Record invocation status exclusively even on failure. Repeat once into exclusive repeat files with identical settings/source/binary; compare bytes and independently validate all 48 settings/12,288 episodes with streaming readers. Retain failed output; engineering invalidity needs separately named revised series, not overwritten first. Supported wrong/unsupported findings do not justify reruns. The CLI success validation harness consumes the retained first report and invocation status.
-- [ ] **Step 4: Publish corrected findings and compact summary.** Report all 24 primary stratum contrasts, both-role expectations, controls, chosen action sequences/equivalence classes, exact costs/accuracy/net/helper/group outcomes, failures/unavailable mass and computation. Separate changed trace/confidence from benefit; state zero/adverse results. No learned language/unrestricted discovery/incident fidelity claim. Generate source/report-bound summary_json and verify against full report; browser summary separate from selected episode. Append guide links preserving old prefixes. No scientific engine/settings change after results; retain/disclose revisions and a new series if scientific source changes. Summary registration and product documentation are delivery changes: retain separate first-measurement and final-delivery source manifests, disclose the delta, and refresh affected browser/identity checks without relabeling the measurement source.
+- [x] **Step 4: Publish corrected findings and compact summary.** Report all 24 primary stratum contrasts, both-role expectations, controls, chosen action sequences/equivalence classes, exact costs/accuracy/net/helper/group outcomes, failures/unavailable mass and computation. Separate changed trace/confidence from benefit; state zero/adverse results. No learned language/unrestricted discovery/incident fidelity claim. Generate source/report-bound summary_json and verify against full report; browser summary separate from selected episode. Append guide links preserving old prefixes. No scientific engine/settings change after results; retain/disclose revisions and a new series if scientific source changes. Summary registration and product documentation are delivery changes: retain separate first-measurement and final-delivery source manifests, disclose the delta, and refresh affected browser/identity checks without relabeling the measurement source.
 - [ ] **Step 5: Whole-increment review, commit and integration.** Fresh reviewer checks final diff/findings/report/summary/hash matches/limits; producer resolves findings with affected gates refreshed. Snapshot/remove only owned tracker, preserve evidence. Commit docs(surface): publish exact discovery and transfer findings. Inspect main/status/worktrees/remotes for concurrent work; normal merge incoming main into crowd if needed, resolve only owned conflicts, preserve foreign/untracked files. Safely merge finished crowd into main, push without force, check exact merged commit CI/Pages. Source-bearing incoming changes require dependent parity/source/browser refresh; documentation-only changes still require inventory/diff checks. Report actual final commit/results/limitations; queued CI is not completion.
 
 ## Self-review and Handoff
