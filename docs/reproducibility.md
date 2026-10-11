@@ -8,6 +8,10 @@ Minds and foraging/construction coverage below. It is an inventory of existing d
 not a new execution, publication audit or claim that a paper is false or irreproducible.
 The original findings, figures, source trees, binaries and archives remain authoritative.
 
+## Research purpose
+
+The [research method](research-method.md) records the standing sequence: faithful reproduction, transparent charitable reconstruction where needed, and scientific evaluation through authors’ responses, follow-ups, critiques and counterfactuals. Scientific evaluation is the highest purpose. Code identity, reproducible outcomes, supported mechanisms and broader scientific value are assessed separately; variants and uncertainty remain explicit.
+
 ## How to read an entry
 
 IDs are permanent. The subsection names the paper, model and milestone for every row beneath it.
@@ -380,6 +384,8 @@ visible here so the denominator is not only failed claims. IDs below index the d
 An [exploratory memoryless follow-up](studies/2026-10-10-memoryless-pricing-diagnostic.md) completed on 2026-10-10: 32 fixed runs, eight seeds per memory/update configuration, two-million-period limit. Full feedback lowered observed memoryless prices/gains in all eight pairs; recorded scores support stale/selective tracking, including historical bootstrap drift and incomplete adjustment. All memoryless full-feedback sessions are censored. This is additional diagnostic evidence for RR-COL-04/05, not closure of source equivalence, equilibrium or unique causal-mechanism questions.
 
 The subsequent [cloned component-refresh diagnostic](studies/2026-10-10-memoryless-component-refresh.md) used eight common trained checkpoints and four branches each. Under the stated reward-EMA/residual-future split, future-credit refresh reduced prices more than profit refresh in all eight seeds. This narrows the explanation to differently updated future-credit history while retaining immediate-history contributions, censoring and decomposition/trajectory limits. Original source-equivalence and equilibrium classifications remain open.
+
+A subsequent [scientific claim audit and working write-up](studies/2026-10-10-algorithmic-pricing-scientific-assessment.md) separates the original history-dependent claims from our stateless counterfactuals. The 2023 accepted response manuscript was inspected, including its different market/rate scope and its defense of upward punishments. Continuation-credit mechanisms have substantial prior literature. Saved memory1 policies and native payoff inputs are recoverable for a proposed independent value audit; that probe has not run and the original equilibrium/mechanism questions remain open.
 
 ### Milestone 35 — Banchio–Skrzypacz 2022, `auctions`
 

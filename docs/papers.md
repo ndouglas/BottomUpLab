@@ -5,6 +5,8 @@ ambiguity or departure as a named switch, and reports where a paper's claims do 
 (see the survey, `docs/superpowers/specs/2026-09-24-model-survey-design.md`). This file tracks the
 source papers: which milestone used each, which critiques we have, and the queue.
 
+The [research method](research-method.md) defines the faithful, charitable and scientific-evaluation sequence, with scientific value as the ultimate objective. Source versions, interpretations and counterfactuals remain distinct throughout.
+
 The [reproducibility register](reproducibility.md) maintains claim-level discrepancies, source
 identity and measurement gaps, corrected issues and concrete next actions across the completed
 catalog and Minds programme. It keeps conditional mismatches separate from unmeasured leads.
