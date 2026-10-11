@@ -1,0 +1,101 @@
+use super::{numerics, wire};
+use std::{
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
+    path::Path,
+};
+pub struct CliFailure {
+    pub exit_code: i32,
+    pub message: String,
+}
+fn failure(message: impl ToString) -> CliFailure {
+    CliFailure {
+        exit_code: 1,
+        message: message.to_string(),
+    }
+}
+fn check_path(path: &Path) -> Result<(), CliFailure> {
+    for part in path.ancestors() {
+        match fs::symlink_metadata(part) {
+            Ok(meta) if meta.file_type().is_symlink() => {
+                return Err(failure("symlink path forbidden"))
+            }
+            Ok(_) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(failure(e)),
+        }
+    }
+    Ok(())
+}
+fn load(path: &str) -> Result<wire::Manifest, CliFailure> {
+    let path = Path::new(path);
+    check_path(path)?;
+    let meta = fs::symlink_metadata(path).map_err(failure)?;
+    if !meta.is_file() || meta.len() > wire::LIMIT as u64 {
+        return Err(failure("manifest must be a bounded regular file"));
+    }
+    let mut bytes = Vec::new();
+    File::open(path)
+        .map_err(failure)?
+        .take(wire::LIMIT as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(failure)?;
+    wire::decode_manifest(&bytes).map_err(failure)
+}
+pub fn validate_command(path: &str) -> Result<(), CliFailure> {
+    load(path)?;
+    Ok(())
+}
+pub fn numerics_command(path: &str, output: &str) -> Result<(), CliFailure> {
+    let manifest = load(path)?;
+    let export = numerics::export_numeric_inputs(&manifest).map_err(failure)?;
+    let mut bytes = serde_json::to_vec(&export).map_err(failure)?;
+    bytes.push(b'\n');
+    if bytes.len() > wire::LIMIT {
+        return Err(failure("numeric export exceeds 16 MiB"));
+    }
+    let path = Path::new(output);
+    check_path(path)?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(failure)?;
+    file.write_all(&bytes).map_err(failure)?;
+    file.sync_all().map_err(failure)?;
+    File::open(
+        path.parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new(".")),
+    )
+    .map_err(failure)?
+    .sync_all()
+    .map_err(failure)?;
+    Ok(())
+}
+pub fn main_args(args: &[String]) -> Result<(), CliFailure> {
+    match args {
+        [] => {
+            println!(
+                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE"
+            );
+            Ok(())
+        }
+        [flag] if flag == "--help" || flag == "-h" => {
+            println!(
+                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE"
+            );
+            Ok(())
+        }
+        [cmd, flag, path] if cmd == "validate" && flag == "--manifest" => validate_command(path),
+        [cmd, flag, path, outflag, output]
+            if cmd == "numerics" && flag == "--manifest" && outflag == "--out" =>
+        {
+            numerics_command(path, output)
+        }
+        _ => Err(CliFailure {
+            exit_code: 2,
+            message: "unsupported war1-study command or argument order".into(),
+        }),
+    }
+}

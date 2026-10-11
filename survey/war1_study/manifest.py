@@ -42,7 +42,9 @@ def _fields(value, expected, context):
 
 def _text(value, context, maximum=192):
     if not isinstance(value, str) or not value or len(value.encode("utf-8")) > maximum:
-        raise ValueError(f"{context}: expected nonempty text within {maximum} UTF-8 bytes")
+        raise ValueError(
+            f"{context}: expected nonempty text within {maximum} UTF-8 bytes"
+        )
 
 
 def _uint(value, context, maximum=2**64 - 1):
@@ -105,9 +107,13 @@ def _validate_arms(value, expected):
                     actual = arm["config"][name]
                     if name in ("blue_rate", "red_rate", "dt"):
                         try:
-                            matches = type(actual) in (int, float, Decimal) and struct.pack(
-                                ">d", actual
-                            ) == struct.pack(">d", config_value)
+                            matches = type(actual) in (
+                                int,
+                                float,
+                                Decimal,
+                            ) and struct.pack(">d", actual) == struct.pack(
+                                ">d", config_value
+                            )
                         except (OverflowError, struct.error):
                             matches = False
                         if not matches:

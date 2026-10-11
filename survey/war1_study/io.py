@@ -29,6 +29,7 @@ def _bounded(data: bytes, limit: int) -> None:
 
 
 def strict_json(data: bytes, limit: int) -> Json:
+    """Retain Decimal tokens so schema validation precedes binary64 conversion."""
     _bounded(data, limit)
 
     def pairs(items):
@@ -81,6 +82,8 @@ def strict_json(data: bytes, limit: int) -> Json:
 
 
 def canonical_bytes(value: object) -> bytes:
+    """Encode validated values, normalizing Decimal display/config numbers only."""
+
     def decimal_number(number):
         if not isinstance(number, Decimal):
             raise TypeError("unsupported JSON value")

@@ -74,11 +74,13 @@ class JsonTests(unittest.TestCase):
 
 class DecimalWireTests(unittest.TestCase):
     def test_canonical_decimal_conversion_preserves_integer_seeds(self):
-        self.assertEqual(io.canonical_bytes({"x":Decimal("0.1"),"seed":2**64-1}),
-                         b'{"seed":18446744073709551615,"x":0.1}\n')
-        for value in (Decimal("1e-999"),Decimal("1e999"),Decimal("NaN")):
+        self.assertEqual(
+            io.canonical_bytes({"x": Decimal("0.1"), "seed": 2**64 - 1}),
+            b'{"seed":18446744073709551615,"x":0.1}\n',
+        )
+        for value in (Decimal("1e-999"), Decimal("1e999"), Decimal("NaN")):
             with self.subTest(value=value), self.assertRaises(ValueError):
-                io.canonical_bytes({"x":value})
+                io.canonical_bytes({"x": value})
 
 
 class FileTests(unittest.TestCase):
