@@ -379,6 +379,8 @@ visible here so the denominator is not only failed claims. IDs below index the d
 
 An [exploratory memoryless follow-up](studies/2026-10-10-memoryless-pricing-diagnostic.md) completed on 2026-10-10: 32 fixed runs, eight seeds per memory/update configuration, two-million-period limit. Full feedback lowered observed memoryless prices/gains in all eight pairs; recorded scores support stale/selective tracking, including historical bootstrap drift and incomplete adjustment. All memoryless full-feedback sessions are censored. This is additional diagnostic evidence for RR-COL-04/05, not closure of source equivalence, equilibrium or unique causal-mechanism questions.
 
+The subsequent [cloned component-refresh diagnostic](studies/2026-10-10-memoryless-component-refresh.md) used eight common trained checkpoints and four branches each. Under the stated reward-EMA/residual-future split, future-credit refresh reduced prices more than profit refresh in all eight seeds. This narrows the explanation to differently updated future-credit history while retaining immediate-history contributions, censoring and decomposition/trajectory limits. Original source-equivalence and equilibrium classifications remain open.
+
 ### Milestone 35 — Banchio–Skrzypacz 2022, `auctions`
 
 | ID | Category / status / evidence | Target and documented outcome | Next action |

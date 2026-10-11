@@ -3597,6 +3597,8 @@ See `docs/superpowers/specs/2026-10-01-algorithmic-collusion-design.md`.
 
 A [memoryless diagnostic follow-up](docs/studies/2026-10-10-memoryless-pricing-diagnostic.md) on 2026-10-10 tested eight fixed seeds across memory and feedback settings. In observed last 100,000-period windows, full counterfactual feedback reduced memoryless mean prices from 1.830 to 1.467 and removed almost all currently profitable undercut opportunities. Score histories show stale/incompletely adjusted scores, including historical reward and future-value estimates. All eight full-feedback memoryless sessions remain horizon-censored; this exploratory result supports selective-feedback explanations without uniquely isolating a mechanism or altering the original reproduction record.
 
+A [cloned-state component experiment](docs/studies/2026-10-10-memoryless-component-refresh.md) then split each of eight partially trained memoryless pairs into profit-only, future-credit-only, full-feedback and control continuations. Refreshing future credit lowered prices more than refreshing profit estimates in all eight seeds; profit-only scores could favor a cheaper price in their profit component while stored future credit still outweighed it. Both feedbacks produced the lowest observed prices, with all eight joint branches horizon-censored. The accounting convention and finite, coupled trajectories limit the mechanism claim.
+
 ## Experiments
 
 The header's **Experiments** switch replaces the grid with a sweep runner (the playground's
