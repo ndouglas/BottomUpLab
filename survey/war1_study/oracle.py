@@ -204,11 +204,25 @@ def prepare_oracles(manifest: Manifest, numeric_export: Json) -> tuple[Oracle, .
         ("purpose", manifest.purpose),
         ("manifest_sha256", manifest.sha256),
         ("rules_id", "war1-engagement-v1"),
-        ("binding_state", "engineering_unbound"),
-        ("compiled_inputs_sha256", None),
     ]:
         if numeric_export[field] != value:
             raise ValueError(f"numeric export {field} binding mismatch")
+    # Arithmetic validates the binding shape. Preparation must compare the
+    # source-bound digest with its independently verified build/inventory.
+    state = numeric_export["binding_state"]
+    stamp = numeric_export["compiled_inputs_sha256"]
+    if state == "engineering_unbound":
+        if manifest.purpose != "construction_fixture" or stamp is not None:
+            raise ValueError("unbound numeric exports are construction-only")
+    elif state == "source_bound":
+        if (
+            not isinstance(stamp, str)
+            or len(stamp) != 64
+            or any(char not in "0123456789abcdef" for char in stamp)
+        ):
+            raise ValueError("source-bound numeric export requires a SHA256 stamp")
+    else:
+        raise ValueError("unsupported numeric export binding state")
     approved = proposal(Path(__file__).resolve().parents[2])
     arms = [a for a in approved["arms"] if a["group"] == "oracle"]
     expected_states = [

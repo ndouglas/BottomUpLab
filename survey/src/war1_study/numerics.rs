@@ -1,25 +1,28 @@
 //! Pure arithmetic exports: no simulation or random stream is constructed.
 use super::wire;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sugarscape_core::war::{
     config::{Geometry, RULES_ID},
     math,
 };
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NumericTarget {
     pub hazard_bits: String,
     pub dose_bits: String,
     pub p_bits: String,
     pub q_numerator: u64,
 }
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NumericState {
     pub arm_id: String,
     pub blue: u32,
     pub red: u32,
     pub targets: [NumericTarget; 2],
 }
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NumericExport {
     pub schema: String,
     pub purpose: String,
@@ -27,11 +30,12 @@ pub struct NumericExport {
     pub rules_id: String,
     pub binding_state: String,
     pub compiled_inputs_sha256: Option<String>,
+    #[serde(deserialize_with = "wire::bounded_vec::<_,_,18>")]
     pub states: Vec<NumericState>,
 }
 pub fn export_numeric_inputs(manifest: &wire::Manifest) -> Result<NumericExport, String> {
-    if manifest != &wire::decode_manifest(wire::FIXTURE)? {
-        return Err("numeric export requires the exact engineering fixture".into());
+    if manifest != &wire::decode_manifest(wire::SELECTED)? {
+        return Err("numeric export requires the exact compiled selected manifest".into());
     }
     let proposal: serde_json::Value =
         serde_json::from_slice(wire::PROPOSAL).map_err(|e| e.to_string())?;
@@ -72,10 +76,10 @@ pub fn export_numeric_inputs(manifest: &wire::Manifest) -> Result<NumericExport,
     Ok(NumericExport {
         schema: "war1-study-numerics-v1".into(),
         purpose: manifest.purpose.clone(),
-        manifest_sha256: wire::sha256(wire::FIXTURE),
+        manifest_sha256: wire::sha256(wire::SELECTED),
         rules_id: RULES_ID.into(),
-        binding_state: "engineering_unbound".into(),
-        compiled_inputs_sha256: None,
+        binding_state: "source_bound".into(),
+        compiled_inputs_sha256: Some(super::source::verify()?.compiled_inputs_sha256),
         states,
     })
 }

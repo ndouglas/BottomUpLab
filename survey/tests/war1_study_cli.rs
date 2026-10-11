@@ -19,7 +19,7 @@ fn fixture_validation_is_engine_free_and_collect_is_unavailable() {
     assert_eq!(run(&["collect"]).status.code(), Some(2));
 }
 #[test]
-fn numerical_export_is_unbound_and_create_only() {
+fn numerical_export_is_source_bound_and_create_only() {
     let dir = std::env::temp_dir().join(format!("war1-numerics-{}", std::process::id()));
     std::fs::create_dir(&dir).unwrap();
     let dir = dir.canonicalize().unwrap();
@@ -35,10 +35,10 @@ fn numerical_export_is_unbound_and_create_only() {
     assert!(run(&args).status.success());
     let data = std::fs::read(&output).unwrap();
     let value: serde_json::Value = serde_json::from_slice(&data).unwrap();
-    assert_eq!(value["binding_state"], "engineering_unbound");
-    assert!(value["compiled_inputs_sha256"].is_null());
+    assert_eq!(value["binding_state"], "source_bound");
+    assert_eq!(value["compiled_inputs_sha256"].as_str().unwrap().len(), 64);
     assert_eq!(value["states"].as_array().unwrap().len(), 18);
-    assert!(!run(&args).status.success());
+    assert_eq!(run(&args).status.code(), Some(1));
     assert_eq!(std::fs::read(&output).unwrap(), data);
     std::fs::remove_dir_all(dir).unwrap();
 }
@@ -82,4 +82,26 @@ fn validation_refuses_mutations_nonregular_inputs_and_symlinks() {
     );
     assert!(run(&["--help"]).status.success());
     std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn missing_execution_is_refused_before_output_creation() {
+    let output = std::env::temp_dir()
+        .canonicalize()
+        .unwrap()
+        .join(format!("war1-no-execution-{}", std::process::id()));
+    let result = run(&[
+        "collect",
+        "--declaration",
+        "missing-declaration",
+        "--acceptance",
+        "missing-acceptance",
+        "--execution",
+        "missing-execution",
+        "--out",
+        output.to_str().unwrap(),
+    ]);
+    assert_eq!(result.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("execution receipt"));
+    assert!(!output.exists());
 }

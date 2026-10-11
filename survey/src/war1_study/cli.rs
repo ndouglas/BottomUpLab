@@ -1,4 +1,4 @@
-use super::{numerics, wire};
+use super::{archive, gate, numerics, source, wire};
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
@@ -11,6 +11,12 @@ pub struct CliFailure {
 fn failure(message: impl ToString) -> CliFailure {
     CliFailure {
         exit_code: 1,
+        message: message.to_string(),
+    }
+}
+fn input_failure(message: impl ToString) -> CliFailure {
+    CliFailure {
+        exit_code: 2,
         message: message.to_string(),
     }
 }
@@ -29,26 +35,27 @@ fn check_path(path: &Path) -> Result<(), CliFailure> {
 }
 fn load(path: &str) -> Result<wire::Manifest, CliFailure> {
     let path = Path::new(path);
-    check_path(path)?;
-    let meta = fs::symlink_metadata(path).map_err(failure)?;
+    check_path(path).map_err(|e| input_failure(e.message))?;
+    let meta = fs::symlink_metadata(path).map_err(input_failure)?;
     if !meta.is_file() || meta.len() > wire::LIMIT as u64 {
-        return Err(failure("manifest must be a bounded regular file"));
+        return Err(input_failure("manifest must be a bounded regular file"));
     }
     let mut bytes = Vec::new();
     File::open(path)
-        .map_err(failure)?
+        .map_err(input_failure)?
         .take(wire::LIMIT as u64 + 1)
         .read_to_end(&mut bytes)
-        .map_err(failure)?;
-    wire::decode_manifest(&bytes).map_err(failure)
+        .map_err(input_failure)?;
+    wire::decode_manifest(&bytes).map_err(input_failure)
 }
 pub fn validate_command(path: &str) -> Result<(), CliFailure> {
     load(path)?;
+    source::verify().map_err(input_failure)?;
     Ok(())
 }
 pub fn numerics_command(path: &str, output: &str) -> Result<(), CliFailure> {
     let manifest = load(path)?;
-    let export = numerics::export_numeric_inputs(&manifest).map_err(failure)?;
+    let export = numerics::export_numeric_inputs(&manifest).map_err(input_failure)?;
     let mut bytes = serde_json::to_vec(&export).map_err(failure)?;
     bytes.push(b'\n');
     if bytes.len() > wire::LIMIT {
@@ -77,13 +84,13 @@ pub fn main_args(args: &[String]) -> Result<(), CliFailure> {
     match args {
         [] => {
             println!(
-                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE"
+                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
             );
             Ok(())
         }
         [flag] if flag == "--help" || flag == "-h" => {
             println!(
-                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE"
+                "war1-study validate --manifest FILE | numerics --manifest FILE --out NEW_FILE | fixture --manifest FILE --out NEW_DIR | collect --declaration FILE --acceptance FILE --execution FILE --out NEW_DIR"
             );
             Ok(())
         }
@@ -92,6 +99,34 @@ pub fn main_args(args: &[String]) -> Result<(), CliFailure> {
             if cmd == "numerics" && flag == "--manifest" && outflag == "--out" =>
         {
             numerics_command(path, output)
+        }
+        [cmd, flag, path, outflag, output]
+            if cmd == "fixture" && flag == "--manifest" && outflag == "--out" =>
+        {
+            archive::collect_fixture(Path::new(path), Path::new(output)).map_err(|e| {
+                if e.census.planned == 0 {
+                    input_failure(e.detail)
+                } else {
+                    failure(e.detail)
+                }
+            })?;
+            Ok(())
+        }
+        [cmd, dflag, declaration, aflag, acceptance, eflag, execution, oflag, output]
+            if cmd == "collect"
+                && dflag == "--declaration"
+                && aflag == "--acceptance"
+                && eflag == "--execution"
+                && oflag == "--out" =>
+        {
+            let authorized = gate::preflight(
+                Path::new(declaration),
+                Path::new(acceptance),
+                Path::new(execution),
+            )
+            .map_err(input_failure)?;
+            archive::collect(authorized, Path::new(output)).map_err(|e| failure(e.detail))?;
+            Ok(())
         }
         _ => Err(CliFailure {
             exit_code: 2,

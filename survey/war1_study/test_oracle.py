@@ -132,6 +132,18 @@ class PreparedOracleTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(ValueError):
                 oracle.prepare_oracles(self.manifest, data)
 
+    def test_source_bound_export_accepts_well_formed_stamp_and_refuses_invalid_binding(self):
+        from copy import deepcopy
+
+        data = deepcopy(self.export)
+        data["binding_state"] = "source_bound"
+        data["compiled_inputs_sha256"] = "ab" * 32
+        self.assertEqual(len(oracle.prepare_oracles(self.manifest, data)), 12)
+        for stamp in (None, "", "AB" * 32, "ab" * 31, True):
+            data["compiled_inputs_sha256"] = stamp
+            with self.subTest(stamp=stamp), self.assertRaises(ValueError):
+                oracle.prepare_oracles(self.manifest, data)
+
     def test_modified_p_and_q_are_refused(self):
         from copy import deepcopy
 
