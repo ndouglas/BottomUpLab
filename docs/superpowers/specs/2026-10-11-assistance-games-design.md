@@ -102,8 +102,11 @@ receives a noisy report of each, and plays the off-switch game on the best of th
 ## Decision rules
 
 - Exact targets: agree within 1e-9, or exactly for rational quantities.
-- Direction claims: the stated ordering holds over the sweep's entire configured range; one
-  violation fails the claim.
+- Direction claims on exact quantities (Figure 3): the stated ordering holds over the sweep's
+  entire configured range; one violation fails the claim.
+- Direction claims on sampled quantities (Figure 4, estimated by Monte Carlo at 100,000 episodes
+  per sweep point with a fixed seed): the ordering holds on the means, and a violation counts only
+  when it exceeds two standard errors of the difference.
 - Dynamics: report the pair reached, the round it stabilized, and whether it equals the paper's
   equilibrium, for each named start, 20 seeds, both modes. No target.
 - Survey verdicts use the register's vocabulary; a failed exact target is reported as a
