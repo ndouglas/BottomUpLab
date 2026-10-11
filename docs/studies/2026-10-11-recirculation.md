@@ -100,9 +100,10 @@ in paper form. Hraber, Jones and Forrest, "The ecology of Echo," *Artificial Lif
 only full description of Echo's rules; tests relative species abundance and the species–area
 relation against a neutral shadow. Smith and Bedau, "Is Echo a complex adaptive system?"
 *Evolutionary Computation* 8 (2000): finds Echo's evolutionary activity bounded, with Bedau, Snyder
-and Packard's 1998 classification and Standish's 2000 Ecolab critique. Holland's "Echoing emergence"
-(SFI WP 93-04-023) and Forrest and Jones's "Modeling complex adaptive systems with Echo" (SFI WP
-94-12-064) are wanted; neither is online.
+and Packard's 1998 classification and Standish's 2000 Ecolab critique. Forrest and Jones, "Modeling
+complex adaptive systems with Echo" (SFI WP 94-11-064, 1994; RePEc misnumbers it 94-12-064): the
+species-abundance test against Preston's lognormal. Holland's "Echoing emergence" (SFI WP
+93-04-023) is wanted; it is not online.
 
 **Recycling and throughput in ecosystem theory (the claim itself).**
 Finn, *J. Theor. Biol.* 56 (1976): the cycling index; Allesina and Ulanowicz, *Comput. Biol. Chem.*
@@ -118,8 +119,16 @@ ecosystem level, the closest analytic statement of Holland's chain. Szwabiński 
 cheaters in decomposer communities and nitrogen retention.
 
 **Evolved food webs and digital ecosystems (does a web self-organize?).**
-Lindgren and Nordahl, "Cooperation and community structure in artificial ecosystems," *Artificial
-Life* 1 (1994); their "Artificial food webs" (*Artificial Life III*, 1994) is wanted. Caldarelli,
+Lindgren and Nordahl, "Artificial food webs," *Artificial Life III* (1994), pp. 73–104, extracted
+from the volume scan: explicit resource flows from an external environment, species interactions
+as games, a tag game for who eats whom, and "a higher degree of specialization" with camouflage
+and mimicry evolving; the closest artificial-life precedent for our step 3. Their "Cooperation and
+community structure in artificial ecosystems," *Artificial Life* 1 (1994). Johnson, "Evolution of a
+size-structured, predator-prey community," *Artificial Life III*, pp. 105–130: a lattice model with
+autotrophs, size classes and heritable diet, the predecessor of Loeuille and Loreau. Baas,
+"Emergence, hierarchies and hyperstructures," *Artificial Life III*, pp. 515–538, on the hierarchy
+pattern. Both proceedings volumes are local: *Artificial Life II* (1992) and *III* (1994), scans.
+Caldarelli,
 Higgs and McKane (1998), Drossel, Higgs and McKane (2001) and Quince, Higgs and McKane (2001): the
 Webworld lineage, where food-web structure emerges under coevolution. Loeuille and Loreau, *PNAS* 102
 (2005): size-structured webs from one trait. Ray, Tierra (1991): parasites and hyperparasites
@@ -145,8 +154,15 @@ Evol.* 2019), the classification.
 
 **Niche construction (the environment as the agents' product).**
 Laland, Odling-Smee and Feldman, *PNAS* 96 (1999); Krakauer, Page and Erwin, *Am. Nat.* 173 (2009):
-a shared constructed resource is a commons, stabilized by monopoly; Odling-Smee et al., *Q. Rev.
-Biol.* 88 (2013), wanted.
+a shared constructed resource is a commons, stabilized by monopoly; Odling-Smee, Erwin, Palkovacs,
+Feldman and Laland, *Q. Rev. Biol.* 88 (2013), the practical guide.
+
+**Diversity and stability (for the diversity link).**
+Yachi and Loreau, *PNAS* 96 (1999): the insurance hypothesis, biodiversity buffers productivity in
+a fluctuating environment, a candidate measure for step 2 beyond capacity alone. Quévreux and
+Loreau, *Front. Ecol. Evol.* 10 (2022): synchrony and stability in trophic metacommunities, the
+spatial version. Lachmann and Sella, "The computationally complete ant colony" (ECAL 1995), in
+`papers/multi-agent-coordination/`: global coordination without hierarchy, a counterpoint to Baas.
 
 **Not found:** a Sugarscape or other grid artificial society with decomposers or recycling. The
 nearest is Chapter II's pollution and a 2026 arXiv policy paper that extends it with mitigation.
