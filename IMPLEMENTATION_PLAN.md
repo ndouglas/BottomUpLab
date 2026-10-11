@@ -6,13 +6,13 @@ Owned by docs/superpowers/plans/2026-10-11-gate-assistance.md.
 **Goal**: Reviewed wire, sealed independent census, preservation receipts and registered caps
 **Success Criteria**: Independent protocol and numerical approvals, complete reference counts and hashes
 **Tests**: Reference manual witnesses, full independent comparisons, baseline exports
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 2: Kernel and complete game
 **Goal**: Exact own-only kernel and complete private-payoff schedule game
 **Success Criteria**: Full 839808 outcome/trace equality and all ties retained
 **Tests**: Physics/observation/canonical and synthetic/full game checks
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 3: Diagnostic and CLI
 **Goal**: Strict current-source reporting and checked transport
