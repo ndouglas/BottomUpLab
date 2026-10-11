@@ -107,7 +107,8 @@ fn pure_ranges_include_all_payoffs_and_empty_sets_stay_unavailable() -> Result<(
     Ok(())
 }
 #[test]
-fn all_45_axis_contrasts_match_committed_compact_reference() -> Result<(), Error> {
+fn compact_reference_settings_have_18_18_9_contrasts_and_share_invariant_supplied_group_net(
+) -> Result<(), Error> {
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/game-reference.json")).unwrap();
     let limits: serde_json::Value =

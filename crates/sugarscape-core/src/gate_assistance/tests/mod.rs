@@ -1,3 +1,4 @@
+mod diagnostics;
 mod full_reference;
 mod game;
 mod metrics;

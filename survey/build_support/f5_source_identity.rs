@@ -1,5 +1,6 @@
 //! Inputs bound to the F5 collector's code revision. Keep new compile-time includes in scope.
 use sha2::{Digest, Sha256};
+use std::{fs, path::Path};
 
 pub const DIRECTORIES: &[&str] = &[
     "survey/src",
@@ -9,6 +10,13 @@ pub const DIRECTORIES: &[&str] = &[
 // Literal include_str!/include_bytes! inputs plus repository-local build configuration.
 // New includes outside Rust source roots must be added here.
 pub const FILES: &[&str] = &[
+    "crates/sugarscape-core/build.rs",
+    "crates/sugarscape-core/build_support/surface_discovery.rs",
+    "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
+
     ".cargo/config",
     ".cargo/config.toml",
     "Cargo.lock",
@@ -314,4 +322,59 @@ pub fn fingerprint(
         hash.update(bytes);
     }
     Ok(format!("{:x}", hash.finalize()))
+}
+
+/// Required Gate host inputs; optional historical configuration paths remain optional.
+pub const GATE_REQUIRED: &[&str] = &[
+    "crates/sugarscape-core/build.rs",
+    "crates/sugarscape-core/build_support/surface_discovery.rs",
+    "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
+];
+
+#[allow(dead_code)] // Shared with the runtime selector for actual-reader tests.
+pub fn read_inputs(
+    root: &Path,
+    relative: &Path,
+    entries: &mut Vec<(String, Vec<u8>)>,
+) -> Result<(), String> {
+    let path = root.join(relative);
+    let metadata = match fs::symlink_metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            if relative
+                .to_str()
+                .is_some_and(|p| GATE_REQUIRED.contains(&p))
+            {
+                return Err(format!("missing required Gate input {}", path.display()));
+            }
+            return Ok(());
+        }
+        Err(error) => return Err(format!("{}: {error}", path.display())),
+    };
+    if metadata.is_dir() {
+        for entry in fs::read_dir(&path).map_err(|e| format!("{}: {e}", path.display()))? {
+            let entry = entry.map_err(|e| format!("{}: {e}", path.display()))?;
+            read_inputs(root, &relative.join(entry.file_name()), entries)?;
+        }
+    } else if metadata.is_file() {
+        let name = relative
+            .to_str()
+            .ok_or("source path must be UTF-8")?
+            .replace('\\', "/");
+        if selected(&name) {
+            entries.push((
+                name,
+                fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?,
+            ));
+        }
+    } else {
+        return Err(format!(
+            "source input must be a regular file or directory: {}",
+            path.display()
+        ));
+    }
+    Ok(())
 }

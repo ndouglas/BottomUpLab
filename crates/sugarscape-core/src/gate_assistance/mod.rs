@@ -19,58 +19,10 @@ pub use types::*;
 #[cfg(test)]
 mod tests;
 
-/// Explicit compiled dependency order for gate source receipts.
-pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
-    (
-        "crates/sugarscape-core/src/gate_assistance/mod.rs",
-        include_bytes!("mod.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/types.rs",
-        include_bytes!("types.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/controller.rs",
-        include_bytes!("controller.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/kernel.rs",
-        include_bytes!("kernel.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/observation.rs",
-        include_bytes!("observation.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/canonical.rs",
-        include_bytes!("canonical.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/metrics.rs",
-        include_bytes!("metrics.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/game.rs",
-        include_bytes!("game.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/gate_assistance/budget.rs",
-        include_bytes!("budget.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/surface_discovery/mod.rs",
-        include_bytes!("../surface_discovery/mod.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/surface_discovery/types.rs",
-        include_bytes!("../surface_discovery/types.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/surface_discovery/diagnostics.rs",
-        include_bytes!("../surface_discovery/diagnostics.rs"),
-    ),
-    (
-        "crates/sugarscape-core/src/surface_discovery/diagnostics/hash.rs",
-        include_bytes!("../surface_discovery/diagnostics/hash.rs"),
-    ),
-];
+mod source_inputs;
+pub use source_inputs::{REFERENCE_INPUTS, SOURCE_INPUTS};
+mod protocol;
+pub use protocol::*;
+mod diagnostics;
+mod references;
+pub use diagnostics::{diagnose, reconstruct_episode, report_integrity, summary_json};

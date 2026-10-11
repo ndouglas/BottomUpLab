@@ -130,3 +130,37 @@ fn embedded_map_changes_and_missing_map_invalidate_compiled_binding() {
     #[cfg(unix)]
     assert!(linked.unwrap_err().contains("symlink"));
 }
+
+#[test]
+fn source_reader_binds_gate_host_inputs_and_rejects_missing_files() {
+    let root = std::env::temp_dir().join(format!("war1-gate-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    for (path, bytes) in entries() {
+        let file = root.join(path);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(file, bytes).unwrap();
+    }
+    let added = [
+        "crates/sugarscape-core/build.rs",
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+        "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
+    ];
+    for path in added {
+        let file = root.join(path);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(file, b"original").unwrap();
+    }
+    let original = fingerprint(read(&root).unwrap().into_iter().map(Ok)).unwrap();
+    for path in added {
+        let file = root.join(path);
+        std::fs::write(&file, b"changed").unwrap();
+        assert!(verify(&root, &original).is_err(), "unbound {path}");
+        std::fs::remove_file(&file).unwrap();
+        assert!(read(&root).is_err(), "missing {path}");
+        std::fs::write(file, b"original").unwrap();
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

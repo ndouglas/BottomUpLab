@@ -18,13 +18,13 @@ Owned by docs/superpowers/plans/2026-10-11-gate-assistance.md.
 **Goal**: Strict current-source reporting and checked transport
 **Success Criteria**: Complete ordered report validation and operational error separation
 **Tests**: Tamper, CLI write/flush and source-bound integrity checks
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 4: Adapter and viewer
 **Goal**: Native bounded gate records and visible private/researcher views
 **Success Criteria**: Actual WASM parity and real-browser acceptance
 **Tests**: Input/import quotas, DOM privacy, worker cancellation/timeout
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 5: Frozen collection and delivery
 **Goal**: Exclusive first/repeat, independently validated findings and published visualization

@@ -562,3 +562,68 @@ fn source_identity_includes_all_current_discovery_fixture_inputs() {
         "compiled discovery fixture changes must affect source identity: {unbound:?}"
     );
 }
+
+#[test]
+fn source_identity_includes_gate_generator_inventory_and_references() {
+    use super::super::run::source_identity::{fingerprint, selected};
+    for path in [
+        "crates/sugarscape-core/build.rs",
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+        "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
+    ] {
+        assert!(selected(path), "unbound Gate input {path}");
+        let hash = |bytes: &[u8]| {
+            fingerprint([(path.to_owned(), bytes.to_vec())].into_iter().map(Ok)).unwrap()
+        };
+        assert_ne!(hash(b"original"), hash(b"changed"), "{path}");
+    }
+}
+
+#[test]
+fn source_reader_requires_every_gate_generator_input() {
+    use super::super::run::source_identity::{read_inputs, GATE_REQUIRED};
+    let tmp = owned_tempdir();
+    for path in GATE_REQUIRED {
+        let file = tmp.path().join(path);
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, b"owned input").unwrap();
+        let mut entries = vec![];
+        read_inputs(tmp.path(), std::path::Path::new(path), &mut entries).unwrap();
+        assert_eq!(entries, vec![(path.to_string(), b"owned input".to_vec())]);
+        fs::remove_file(file).unwrap();
+        assert!(
+            read_inputs(tmp.path(), std::path::Path::new(path), &mut vec![])
+                .unwrap_err()
+                .contains("missing required Gate input")
+        );
+    }
+}
+
+#[test]
+fn source_reader_preserves_optional_non_gate_missing_paths_and_selection() {
+    use super::super::run::source_identity::read_inputs;
+    let tmp = owned_tempdir();
+    for path in [
+        ".cargo/config",
+        "crates/sugarscape-core/Cargo.lock",
+        "survey/src/absent.rs",
+    ] {
+        let mut entries = vec![];
+        read_inputs(tmp.path(), std::path::Path::new(path), &mut entries).unwrap();
+        assert!(entries.is_empty());
+    }
+    for (path, selected) in [
+        ("survey/src/present.rs", true),
+        ("survey/src/unselected.txt", false),
+    ] {
+        let file = tmp.path().join(path);
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(file, b"original semantics").unwrap();
+        let mut entries = vec![];
+        read_inputs(tmp.path(), std::path::Path::new(path), &mut entries).unwrap();
+        assert_eq!(entries.len(), usize::from(selected));
+    }
+}

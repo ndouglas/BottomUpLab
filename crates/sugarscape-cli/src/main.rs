@@ -7,6 +7,7 @@ mod burrow;
 mod burrow_access;
 mod deduction;
 mod experiment_view;
+mod gate_assistance;
 mod shared_surface;
 mod surface_discovery;
 
@@ -33,6 +34,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Run the registered exhaustive paid gate assistance diagnostic.
+    GateAssistance(gate_assistance::GateAssistanceArgs),
     /// Export or reconstruct bounded experiment display episodes.
     ExperimentView(experiment_view::ExperimentViewArgs),
     /// Run the experimental deduction JSON host.
@@ -191,6 +194,7 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<(), Failure> {
     match cli.command {
+        Command::GateAssistance(args) => gate_assistance::run(args),
         Command::ExperimentView(args) => experiment_view::run(args),
         Command::Deduction(args) => deduction::run(args),
         Command::SurfaceDiscovery(args) => surface_discovery::run(args),

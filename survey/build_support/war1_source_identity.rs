@@ -4,6 +4,8 @@ use std::{collections::BTreeSet, fs, path::Path};
 
 pub const DIRECTORIES: &[&str] = &["crates/sugarscape-core/src", "survey/src/war1"];
 pub const FILES: &[&str] = &[
+    "crates/sugarscape-core/build.rs",
+    "crates/sugarscape-core/build_support/surface_discovery.rs",
     "Cargo.toml",
     "Cargo.lock",
     "crates/sugarscape-core/Cargo.toml",
@@ -18,6 +20,10 @@ pub const FILES: &[&str] = &[
     "docs/superpowers/plans/2026-10-09-war-1-engagement.md",
 ];
 pub const REQUIRED_SOURCES: &[&str] = &[
+    "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
     "crates/sugarscape-core/src/lib.rs",
     "survey/src/war1/mod.rs",
     "survey/src/war1/cli.rs",
