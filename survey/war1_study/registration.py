@@ -133,13 +133,29 @@ def audit_literal_inputs(root: Path):
         raw = read_regular(path, min(METADATA_LIMIT, 64*1024**2 - retained))
         retained += len(raw)
         text = _audit_source_macro(raw.decode("utf-8"), path, root)
+        # Exactly one generated Gate receipt module is derived from the bound
+        # host generator and shared inventory; generated output is not an input.
+        if path == root / "crates/sugarscape-core/src/gate_assistance/diagnostics.rs":
+            generated = 'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))'
+            if text.count(generated) != 1:
+                raise ValueError("unsupported Gate generated receipt include")
+            text = text.replace(generated, "", 1)
         matches = list(pattern.finditer(text))
         if len(matches) != len(re.findall(r"include_(?:str|bytes)\s*!", text)) or re.search(r"\binclude\s*!", text):
             raise ValueError("unsupported or unresolved core include syntax")
         for match in matches:
             target = (path.parent / match.group(1)).resolve()
             if not target.is_relative_to(root / "crates/sugarscape-core/src"):
-                found.add(str(target.relative_to(root)))
+                relative = str(target.relative_to(root))
+                if relative in (
+                    "crates/sugarscape-core/build.rs",
+                    "crates/sugarscape-core/build_support/surface_discovery.rs",
+                ):
+                    # These mandatory source files are separate from the fixed
+                    # external asset inventory and must actually exist.
+                    read_regular(target, METADATA_LIMIT)
+                else:
+                    found.add(relative)
     if expected != found:
         raise ValueError("core literal inventory differs from actual include expressions")
     return found

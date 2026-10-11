@@ -12,6 +12,8 @@ pub const FILES: &[&str] = &[
     "Cargo.toml",
     "Cargo.lock",
     "crates/sugarscape-core/Cargo.toml",
+    "crates/sugarscape-core/build.rs",
+    "crates/sugarscape-core/build_support/surface_discovery.rs",
     "crates/sugarscape-core/assets/sugar-map.txt",
     "survey/Cargo.toml",
     "survey/Cargo.lock",

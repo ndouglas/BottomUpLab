@@ -99,3 +99,68 @@ fn committed_manifest_output_is_bounded_and_failed_child_is_reaped() {
     assert!(source::inputs::read_committed_manifest(&root, "missing").is_err());
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn gate_build_inputs_are_required_and_each_gate_dependency_changes_the_fingerprint() {
+    let root = std::path::Path::new(source::ROOT);
+    let entries = source::inputs::read(root, source::MANIFEST_PATH).unwrap();
+    let original = source::inputs::fingerprint(&entries, source::MANIFEST_PATH).unwrap();
+    for path in [
+        "crates/sugarscape-core/build.rs",
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+        "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
+        "crates/sugarscape-core/src/gate_assistance/diagnostics.rs",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
+    ] {
+        let index = entries.iter().position(|(p, _)| p == path).expect(path);
+        let mut mutated = entries.clone();
+        mutated[index].1.push(b' ');
+        assert_ne!(
+            source::inputs::fingerprint(&mutated, source::MANIFEST_PATH).unwrap(),
+            original,
+            "{path}"
+        );
+        if !path.contains("/src/") {
+            let mut missing = entries.clone();
+            missing.remove(index);
+            assert!(source::inputs::fingerprint(&missing, source::MANIFEST_PATH)
+                .unwrap_err()
+                .contains(path));
+        }
+    }
+}
+
+#[test]
+fn source_reader_refuses_missing_gate_host_inputs() {
+    let root = std::env::temp_dir()
+        .canonicalize()
+        .unwrap()
+        .join(format!("war1-gate-source-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    let entries =
+        source::inputs::read(std::path::Path::new(source::ROOT), source::MANIFEST_PATH).unwrap();
+    for (path, bytes) in &entries {
+        let target = root.join(path);
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(target, bytes).unwrap();
+    }
+    assert_eq!(
+        source::inputs::read(&root, source::MANIFEST_PATH).unwrap(),
+        entries
+    );
+    for path in [
+        "crates/sugarscape-core/build.rs",
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+    ] {
+        let target = root.join(path);
+        let bytes = std::fs::read(&target).unwrap();
+        std::fs::remove_file(&target).unwrap();
+        assert!(source::inputs::read(&root, source::MANIFEST_PATH)
+            .unwrap_err()
+            .contains(path));
+        std::fs::write(target, bytes).unwrap();
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

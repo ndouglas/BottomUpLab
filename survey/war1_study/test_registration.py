@@ -77,7 +77,7 @@ class RegistrationTests(unittest.TestCase):
             with self.subTest(definition=original), tempfile.TemporaryDirectory(prefix="construction_test_include_") as temp:
                 root = Path(temp).resolve()
                 # Use actual source bytes; mutation is confined to this temp tree.
-                shutil.copytree(ROOT/"crates/sugarscape-core/src", root/"crates/sugarscape-core/src")
+                shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
                 (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
                 (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
                 self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
@@ -111,6 +111,39 @@ class RegistrationTests(unittest.TestCase):
                 link.symlink_to(ROOT/"crates/sugarscape-core/src"/call)
                 with self.assertRaises(ValueError):
                     registration.audit_literal_inputs(root)
+
+    def test_gate_host_inputs_are_mandatory(self):
+        for path in ("crates/sugarscape-core/build.rs", "crates/sugarscape-core/build_support/surface_discovery.rs"):
+            with self.subTest(path=path):
+                self.assertIn(path, registration.SOURCE_REQUIRED)
+
+    def test_gate_generated_include_accepts_only_the_exact_bound_output(self):
+        import shutil
+        with tempfile.TemporaryDirectory(prefix="construction_test_gate_include_") as temp:
+            root = Path(temp).resolve()
+            shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
+            (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
+            (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
+            self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
+            path = root/"crates/sugarscape-core/src/gate_assistance/diagnostics.rs"
+            original = path.read_text()
+            expression = 'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))'
+            for replacement in (expression.replace("OUT_DIR", "OTHER_DIR"),
+                                expression.replace("gate_source_receipts.rs", "forged.rs"),
+                                expression.replace("/gate_source", "/../gate_source"),
+                                expression + ";" + expression):
+                with self.subTest(replacement=replacement):
+                    path.write_text(original.replace(expression, replacement))
+                    with self.assertRaises(ValueError):
+                        registration.audit_literal_inputs(root)
+            path.write_text(original)
+            for name in ("build.rs", "build_support/surface_discovery.rs"):
+                target = root/"crates/sugarscape-core"/name
+                raw = target.read_bytes()
+                target.unlink()
+                with self.subTest(missing=name), self.assertRaises((ValueError, OSError)):
+                    registration.audit_literal_inputs(root)
+                target.write_bytes(raw)
 
     def test_inventory_matches_native_domain_and_excludes_receipts(self):
         selected = "survey/war1_study/fixtures/construction-manifest.json"
