@@ -237,7 +237,30 @@ fn exact_reconstruction_rejects_edited_native_and_local_claims() {
 }
 #[test]
 fn catalog_registers_only_implemented_spatial_adapters() {
-    assert_eq!(browser::catalog().len(), 15);
+    assert_eq!(
+        browser::catalog()
+            .iter()
+            .map(|study| study.id)
+            .collect::<Vec<_>>(),
+        [
+            StudyId::Wink,
+            StudyId::Testimony,
+            StudyId::TestimonyGame,
+            StudyId::StrategicReporting,
+            StudyId::StrategyInference,
+            StudyId::AdversarialAudit,
+            StudyId::SharedSurface,
+            StudyId::ActiveSurface,
+            StudyId::BurrowExcavation,
+            StudyId::BurrowAccess,
+            StudyId::ForagingFixed,
+            StudyId::ForagingPassage,
+            StudyId::ForagingConstruction,
+            StudyId::ProtectionRecaching,
+            StudyId::DeceptionGestures,
+            StudyId::SurfaceDiscovery,
+        ]
+    );
     let spatial: Vec<_> = browser::catalog()
         .into_iter()
         .filter(|d| d.family == StudyFamily::Spatial)

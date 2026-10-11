@@ -872,3 +872,95 @@ The boundary remains one compilation plus its applicable actual environments,
 taking the maximum across the 16 compilations. Strict limits-reference now binds
 the actual Amendment 3 independent reviewer receipt; native accounting, browser
 feasibility and final precollection source freeze remain separate later gates.
+
+## Final precollection source and runtime registration
+
+The completed engineering gates and immutable registration below supersede the
+pending engineering-gate state recorded in earlier sections. Every earlier byte
+of this protocol remains preserved. Judged collection is still locked until a
+fresh independent precollection review, the commit containing this binding, and
+the root's internal release. No first/repeat scientific result is claimed here.
+
+The retained `task-8-measurement-freeze.json` in
+`.superpowers/sdd/2026-10-10-surface-experiment-discovery/` is **441941 bytes**,
+SHA256 **`51a3c17792520415c30b8917a451b432a5985c11aa9f0e70f05741a1f871dbed`**. It registers
+1711 source files and 202 runtime artifacts,
+all 93 independent-reference receipts, exact gate commands/exits/logs,
+host/toolchain/build settings and executable hashes, compiled F5/W1 input
+inventories, actual browser proof and the collection/validation scripts.
+The preparation base is `a8ac3c98ea303a38e3ad3289da24091c7e94d6de`; the later release records
+the actual frozen commit. There is no self-referential manifest or commit hash.
+
+The full measurement source scope is every tracked regular file under `crates`,
+`web`, `survey`, `data`, `sweeps` and `.cargo`, plus root Cargo/toolchain files
+and every declared F5/W1 selected dependency (including fixed historical docs).
+Three historical `docs/examples/burrow` JSON fixtures are additionally bound as
+test-only gate support inputs: two core fixtures with exact `cfg(test)`
+reachability proof and one CLI integration-test fixture. They
+are outside the declared collector input lists; selectors are unchanged.
+The 294 core literal include sites have separate per-collector membership:
+F5 selects 292 sites, W1 selects 66. All three new discovery reference JSON
+inputs are selected by both. Existing W1-unselected sites have exact paths,
+callers and source context retained; no universal W1 closure is claimed.
+Every resolved input is bound by the full measurement or gate-support inventory.
+Scientific compiled identity separately binds its declared 21 exact files:
+`bea9272bcd6e9aab412d1aafd36dc9facd0ffffd8b10ccfd7e5bb2aaac9fa055`.
+The mutable protocol/footer, manifest itself and future delivery documents are
+outside that source scope. The three prefreeze catalog-test repairs preserve the
+original 15-study order and require one appended discovery descriptor; they
+change no production rules. Their source deltas and refreshed gates are retained.
+
+| Runtime | SHA256 |
+| --- | --- |
+| `target/release/sugarscape` | `e13624cd7ff97892a04b714409b33a225a7ffe82b0d1d8a9b4b8aa91b78b8d0a` |
+| `web/src/wasm-pkg/sugarscape_bg.wasm` | `7a358d1405d3c8c9d54a1ad85279da8844ee8f9737b8d894d323bc8e1b0448eb` |
+| `web/dist/assets/index-eec_yMAX.js` | `d320471a144bdf1a3479f134f055a5ddc413584bf5612f02ff66a7608e757e44` |
+| `web/dist/assets/index-Cqd0mjGM.css` | `f035e943b986789fd847023cabd5a648fea893faaaf019e2e98251a09a083938` |
+| `web/dist/assets/sim-worker-DVTzCc_i.js` | `1bc3ce0d7aa20040197ce58024c435b3895ae2880f14c1397640889bad019ff3` |
+| `web/dist/assets/worker-BDG2SKAD.js` | `4c7ac3da7aff164751a193153af9a5c9e273c2090c0f352f016abbfb1a4cb322` |
+| `web/dist/assets/sugarscape_bg-BEkMjrrX.wasm` | `7a358d1405d3c8c9d54a1ad85279da8844ee8f9737b8d894d323bc8e1b0448eb` |
+
+The rebuilt production assets match the exact final bytes observed in the actual
+browser. Final Task 7 privacy proof includes completed, unsupported and comparison
+terminal panes; Agent/Public receive no archival evaluator payload. Actual
+served-browser bytes, worker requests/replies and native equality bind execution;
+direct worker-subtarget response-body access was unavailable. Existing lifecycle,
+resource and original-study preservation receipts remain retained, with earlier
+pre-fix captures labeled historical.
+
+All required project gates pass on the registered source: workspace formatting,
+all-target/all-feature Clippy with warnings denied, full workspace tests, actual
+Node WASM tests, release CLI, web build/typecheck/full tests, and studio unittest.
+Scoped F5/W1 source-identity gates and matching fresh compiled stamps also pass.
+Exact counts, existing ignored/browser-only skips and optional packaging notices
+are retained in the bound logs and `task-8-precollection-report.md`. Host Cargo
+WASM targets with zero tests are not counted as actual WASM execution.
+
+Final ceilings remain **360,304 states, 993,058 branches and 1,443,627,008
+allocation bytes** per compilation and applicable environments. Browser limits
+remain 64 KiB input, 16 MiB record, 4,096 checkpoints, one worker request,
+60 seconds and two retained records. Native RSS, WASM linear memory and reference
+allocation estimates remain separate measurements. The named macOS reclaimable
+host-memory estimate is time-specific, not reserved or guaranteed available.
+
+The registered census remains 48 settings × 256 sequences = **12,288 episodes**,
+with 40 in-family and eight transfer settings, 24 primary stratum contrasts,
+10 both-role expectations, six role contrasts and 16 compilation owners. Priors,
+prices, horizon, mechanics, helper embedding, action/tie order and metrics remain
+those declared above. Zero/adverse outcomes, unavailable terminal values and
+partial charged costs are retained without survivor selection or favorable reruns.
+
+After release, the absolute frozen CLI is invoked into exclusive first stdout,
+stderr and status files, then exactly one exclusive repeat. All registered
+source/runtime/tool/reference hashes are checked immediately before each call.
+Full byte equality and independent disk-backed streaming reconstruction compare
+all 12,288 first-report Episodes with sealed independent reference rows and check
+all declared scalar populations, contrasts, both-role projections and source
+receipts. Failed outputs are preserved. The CLI success harness consumes the
+retained first report/status; it does not rerun the experiment.
+
+Later summary registration and findings documentation are delivery changes.
+The first-measurement manifest and report remain immutable; a separate final
+source manifest records the delivery delta and affected identity/browser checks.
+Scientific source/settings changes would require preserved originals and a
+separately registered revised series, never relabeling this measurement source.
