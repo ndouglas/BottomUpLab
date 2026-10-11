@@ -57,7 +57,7 @@ for (const [id, changes] of [
   Object.assign(obj(input.lab), changes); fixtures.push({ id, input });
 }
 describe('caching complete native/WASM parity without tolerance', () => {
-  it('retains sixteen runnable entries and seven spatial renderers', () => {
+  it('retains seventeen runnable entries and seven spatial renderers', () => {
     expect(catalog).toHaveLength(17); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
     for (const d of catalog) expect(rendererAvailable(d)).toBe(true);
   });

@@ -208,3 +208,29 @@ fn discovery_recorded_summary_preserves_complete_measured_census_and_transfer_nu
         .iter()
         .all(|row| row.get("episodes").is_none()));
 }
+
+#[test]
+fn gate_recorded_summary_retains_all_measured_strata_and_control_classifications() {
+    let value: Value = serde_json::from_str(&recorded_results_json().unwrap()).unwrap();
+    let summary = &value["studies"]["gate_assistance"];
+    assert_eq!(summary["version"], "gate-assistance-summary-v1");
+    assert_eq!(
+        summary["report_hash"],
+        "9bac206e4f8ac91cc101653ba4b52295526ad3596bdce0e9f85b83a3e2afed02"
+    );
+    assert_eq!(
+        summary["source_hash"],
+        "e774ebf0e4590138c435ebee7fe148f2e22c5c4de214e9feea9b8765549dd2b1"
+    );
+    assert_eq!(summary["settings"].as_array().unwrap().len(), 18);
+    assert_eq!(summary["contrasts"].as_array().unwrap().len(), 45);
+    for row in summary["settings"].as_array().unwrap() {
+        assert_eq!(row["stats"]["profiles"], "46656");
+        assert_eq!(row["controls"].as_array().unwrap().len(), 5);
+        assert!(row.get("rows").is_none());
+        for control in row["controls"].as_array().unwrap() {
+            assert!(control.get("episode").is_none());
+            assert!(control["classification"]["holder_regret"].is_string());
+        }
+    }
+}

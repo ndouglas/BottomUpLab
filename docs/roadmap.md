@@ -451,3 +451,8 @@ retained in history. Final-head CI/Pages and deployed smoke remain publication g
 - **Side-by-side comparison**: done (Milestone 7b).
 - **Recording**: done (Milestone 7b).
 - **Step back / timeline, stop rules, shortcuts**: done (Playground controls).
+
+
+## Gate assistance: measured bounded census (2026-10-11)
+
+The [Gate assistance guide](gate-assistance.md) records all 18 strata and 839,808 raw schedule pairs, one frozen first report and one byte-identical repeat. Six strata admit delivering pure equilibria, while the no-delivery all-Wait equilibrium persists everywhere. Costly blocked attempts, private regrets and group coordination gaps remain explicit. Browser recorded results expose the complete compact census independently of selected episodes. Learning, equilibrium selection and unrestricted affordance discovery remain prospective. Stable claims: [GATE-1–3](reproducibility.md#gate-1).

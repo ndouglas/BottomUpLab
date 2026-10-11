@@ -46,6 +46,50 @@ function renderDiscoverySummary(study: Record<string, Json>): HTMLElement {
     details('Complete exact projections and reference receipts', { settings: study.settings, role_projections: study.role_projections, reference_artifacts: study.reference_artifacts }),
     h('button', { onclick: () => downloadText('surface-discovery-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export full-census summary'));
 }
+/** Complete measured Gate census; selected runs never replace these retained values. */
+function renderGateSummary(study: Record<string, Json>): HTMLElement {
+  const settings = list(study.settings);
+  const stratum = (raw: Json | undefined): Record<string, Json> => {
+    const value = obj(raw); return { k: value.holding_cost, b: value.holder_share, d: value.distance };
+  };
+  const outcome = (raw: Json | undefined): Record<string, Json> => {
+    const c = obj(raw), o = obj(c.outcome);
+    return { 'Holder regret': c.holder_regret, 'Retriever regret': c.retriever_regret, pure: c.is_pure,
+      team_gap: c.team_gap, spent: o.spent, reward: o.reward, net: o.net, group_net: o.group_net,
+      delivery: o.delivery_round === null ? 'No delivery' : o.delivery_round,
+      'Holder attempts': o.holder_attempts, 'Holder blocked': o.holder_blocked,
+      'Retriever attempts': o.retriever_attempts, 'Retriever blocked': o.retriever_blocked, retriever_waits: o.retriever_waits };
+  };
+  const equilibria = settings.map(raw => {
+    const row = obj(raw), eq = obj(row.equilibrium), ranges = obj(eq.ranges), team = obj(row.team);
+    return { ...stratum(row.stratum), pure_count: eq.pure_count, delivering_pure_count: eq.delivering_pure_count,
+      holder_net_range: ranges.holder, retriever_net_range: ranges.retriever, group_net_range: ranges.group,
+      range_status: eq.range_unavailable ?? 'Available', team_profile: team.profile,
+      team_group_net: obj(obj(team.classification).outcome).group_net, solo_best: row.solo_best };
+  });
+  const controls = settings.flatMap(raw => { const row = obj(raw); return list(row.controls).map(rawControl => {
+    const control = obj(rawControl); return { ...stratum(row.stratum), selector: control.selector,
+      profile: control.profile, availability: control.unavailable ?? 'Available', ...outcome(control.classification) };
+  }); });
+  const sections: [string, Json[]][] = [
+    ['Every stratum and pure-equilibrium payoff range', equilibria],
+    ['All control outcomes and private incentives', controls],
+    ['Registered contrasts (upper minus lower; controls reselected)', list(study.contrasts)],
+    ['Compilation accounting', settings.map(raw => { const row = obj(raw); return { ...stratum(row.stratum), ...obj(row.stats) }; })],
+  ];
+  return h('div', { class: 'gate-recorded-summary' },
+    h('h4', {}, 'Full census · Gate assistance'),
+    h('p', {}, 'All 18 registered strata and 839,808 raw schedule pairs. Pure equilibria retain every private-payoff tie. Representatives describe the set; they do not predict equilibrium selection or learned cooperation.'),
+    h('p', {}, 'k is the cost of Hold, b is the Holder reward share, and d is the initial Holder distance. Pairs are Holder, then Retriever. Holder attempt arrays are Wait / Travel / Hold; Retriever arrays are outbound Move / Pickup / return Move / Deliver. Blocked attempts are paid. No delivery is a completed deadline outcome.'),
+    details('Measurement identity', { report_hash: study.report_hash, source_hash: study.source_hash }, true),
+    ...sections.map(([title, rows]) => {
+      const section = h('details', {}, h('summary', {}, `${title} (${rows.length})`));
+      section.addEventListener('toggle', () => { if (section.open && section.childNodes.length === 1) section.append(table(rows)); });
+      return section;
+    }),
+    details('Complete measured summary, caps and source receipts', study),
+    h('button', { onclick: () => downloadText('gate-assistance-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export Gate census summary'));
+}
 /** Full retained asset remains available; chart selection never trains or evaluates a policy. */
 export function renderRecorded(recorded: Json): HTMLElement {
   const studies = obj(obj(recorded).studies), selector = h('select', { 'aria-label': 'Recorded study' }, ...Object.keys(studies).map(key => h('option', { value: key }, label(key))));
@@ -53,6 +97,7 @@ export function renderRecorded(recorded: Json): HTMLElement {
   const show = () => {
     const study = obj(studies[selector.value]);
     if (study.version === 'surface-discovery-summary-v1') { content.replaceChildren(renderDiscoverySummary(study)); return; }
+    if (study.version === 'gate-assistance-summary-v1') { content.replaceChildren(renderGateSummary(study)); return; }
     const runs = list(study.runs);
     const runPicker = h('select', { 'aria-label': 'Recorded search run' }, ...runs.map((raw, i) => { const run = obj(raw); return h('option', { value: i }, `${valueText(run.method)} — seed ${valueText(run.seed)}`); }));
     const runSlot = h('div');

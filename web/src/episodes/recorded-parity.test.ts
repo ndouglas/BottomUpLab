@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
-import { initSync, experiment_recorded_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_recorded_json, experiment_run_json } from '../wasm-pkg/sugarscape.js';
 import type { Json } from './types';
 
 initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
@@ -18,3 +18,14 @@ it('actual WASM and native recorded exports retain the complete first-report sum
   const native = execFileSync(`${root}/target/release/sugarscape`, ['experiment-view', 'recorded'], options).trimEnd();
   expect(actual).toBe(native);
 });
+it('actual WASM recorded export includes the measured Gate census with every stratum and contrast', () => {
+  const gate = JSON.parse(experiment_recorded_json()).studies.gate_assistance;
+  expect(gate?.version).toBe('gate-assistance-summary-v1');
+  expect(gate?.settings).toHaveLength(18);
+  expect(gate?.contrasts).toHaveLength(45);
+  const measured = JSON.parse(readFileSync(`${root}/crates/sugarscape-core/src/browser_experiments/fixtures/gate-recorded.json`, 'utf8')) as Json;
+  expect(gate).toEqual(wire(measured));
+  const before = experiment_recorded_json();
+  experiment_run_json(JSON.stringify({ study: 'gate_assistance', stratum: { holding_cost: 1, holder_share: 3, distance: 0 }, profile: { holder: 540, retriever: 60 }, ids: { holder: 'Agent-A', retriever: 'Agent-B' } }));
+  expect(experiment_recorded_json()).toBe(before);
+}, 60_000);

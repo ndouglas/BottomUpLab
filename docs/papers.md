@@ -230,3 +230,8 @@ publication, remote verification and archival are [complete](studies/2026-10-08-
 observer estimates, diversion and owner economics remain distinct. Supplied ambiguous cues do not
 expose hidden stock or sender policy, and Sham moves zero food. The unresolved 1998 citation trail
 is a reading lead, not a confirmed reproduction failure or numerical animal target.
+
+
+## Gate assistance: original bounded construction (2026-10-11)
+
+The [Gate assistance census](gate-assistance.md) is an original supplied-capability finite game, not a claimed reproduction of a published learning model or a novelty claim. The [registered protocol](superpowers/protocols/2026-10-11-gate-assistance.md) fixes its physical and information assumptions. Complete measurement retains every one of 18 strata, 839,808 raw schedule pairs, private-payoff ties and 45 contrasts. Physical usefulness and equilibrium incentives differ: six strata have delivering equilibria, all retain non-delivery equilibrium, and high holding cost can remove group advantage. [GATE-1–3](reproducibility.md#gate-1) separate correctness, incentives and coordination; no equilibrium selection, learned cooperation or general affordance discovery was measured.

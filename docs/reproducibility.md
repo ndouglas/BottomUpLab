@@ -663,3 +663,14 @@ and are not redistributed or replaced by this register.
 [gsfinite]: superpowers/specs/2026-10-03-geosim-finite-technology-amendment.md
 [rousseau]: https://library.uc.edu.kh/userfiles/pdf/53.Democracy%20and%20war%20%20institutions%20norms%20and%20the%20evolution%20of%20international%20conflict%20.pdf#page=358
 [farolreadme]: ../README.md#el-farol-and-the-minority-game-arthur-1994-challet--zhang-1997
+
+
+## Gate assistance: complete finite-game census (2026-10-11)
+
+Original bounded construction under the [registered protocol](superpowers/protocols/2026-10-11-gate-assistance.md); [all findings and identities](gate-assistance.md). One frozen first report and one exact repeat, independently validated across 839,808 rows, 18 strata, 90 full control histories and 45 contrasts. These claim statuses apply to the supplied finite game.
+
+| Stable claim | Status and evidence | Warranted conclusion and unresolved scope |
+|---|---|---|
+| <a id="gate-1"></a>GATE-1 | Supported within registered physics/cost checks: all rows and retained control histories agree with sealed independent references; blocked paid attempts and deadline costs retained. | Holding enables the specified delivery path; payment and information boundaries match the registered model. This supplies no biological or general affordance-discovery validation. |
+| <a id="gate-2"></a>GATE-2 | Qualified private-incentive result: delivering pure equilibria in six of 18 strata (70 at d=0, 11 at d=1), plus all-Wait everywhere; every private tie and raw suffix retained. | Assistance can be individually stable for tested reward splits, but physical usefulness alone does not make helping profitable. Equilibrium selection and learned cooperation remain unmeasured. |
+| <a id="gate-3"></a>GATE-3 | Qualified coordination result: low-cost team maxima 6/5 (k=1) and 4/3 (k=2); best-group equilibrium attains them only in the six delivering strata. Team maximum is zero at k=4. | Both incentive gaps and multiplicity persist under identical execution information. Team superiority is parameter-specific; broader robustness and selection dynamics need separate registration. |
