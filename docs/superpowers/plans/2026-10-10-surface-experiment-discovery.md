@@ -339,14 +339,14 @@ Here limits is the registered Limits reference and writer implements Write; the 
 **Files:** Discovery adapter/projection/examples, common browser dispatch/codecs/catalog/tests, WASM experiment-view tests.
 **Consumes:** Complete native Episode. **Produces:** Sixteenth catalog entry, bounded exact exports.
 
-- [ ] **Step 1: Write strict input/native-payload RED.** Predetermined default:
+- [x] **Step 1: Write strict input/native-payload RED.** Predetermined default:
 
 ~~~json
 {"study":"surface_discovery","protocol":{"investigator":"A","policy":"RawAdaptive","ids":{"surface":"status-field","agents":["Agent-A","Agent-B"]}},"environment":{"InFamily":"SharedPersistent"},"sequence":0}
 ~~~
 
 Reject sequence 256, unknown/missing fields, invalid IDs/policies/mechanisms, KnownRaw+DataFlip, oversized inputs before planner execution. Preserve valid opaque renaming. Compare payload to wire::lossless_value(&native), complete checkpoint reference and all 15 old catalog entries. Run cargo test -p sugarscape-core browser_experiments::tests::discovery.
-- [ ] **Step 2: Implement single-episode/projection wrapper.** FamilySurface descriptor controls.settings lists 48 fixed settings and sequences 0..255. Compile/replay/run selected setting only. Public projection permits clock/reset/public stop/status; local permits own prefix/credits/issued bit/belief/inference status/decision/alternatives/prediction/last paid read/nominal discovery. Actual field/peer state/lineage only Researcher. No controller uses display data; after-slot precedes reset, private choice never peer pane; last read is historical rather than current storage knowledge.
+- [x] **Step 2: Implement single-episode/projection wrapper.** FamilySurface descriptor controls.settings lists 48 fixed settings and sequences 0..255. Compile/replay/run selected setting only. Public projection permits clock/reset/public stop/status; local permits own prefix/credits/issued bit/belief/inference status/decision/alternatives/prediction/last paid read/nominal discovery. Actual field/peer state/lineage only Researcher. No controller uses display data; after-slot precedes reset, private choice never peer pane; last read is historical rather than current storage knowledge.
 
 Add dispatch arms in the existing common modules, keeping the public boundary unchanged:
 
@@ -362,9 +362,9 @@ StudyId::SurfaceDiscovery => super::discovery::rules_identity(),
 ~~~
 
 Append discovery::descriptor() once in catalog(). The new adapter wraps native Episode as lossless payload, builds owned/public/researcher checkpoints with record::push_checkpoint, and calls record::check_bounds before returning. New records take the inherited EpisodeKind/EPISODE_VERSION/Semantics::Trajectory; their rules_identity names surface-discovery protocol 1 and hashes native engine dependencies, adapter schema and reviewed references separately from historical measurement hashes.
-- [ ] **Step 3: GREEN bounds/wire/source reconstruction.** Unbounded integers/rationals use canonical decimal strings through existing wire helper; bounded selector sequence/checkpoint index keep inherited validated types. Preflight/count before retaining large components; final maximum 16 MiB/4,096 checkpoints. Same-source import reconstructs exact full export. Altered event/alternative/cost/identity rejects. Update necessary common source guards with before/after receipts and unchanged original payloads; preserve old source/report identities and contextual stale-import rejection.
-- [ ] **Step 4: Actual WASM feasibility gate.** Existing experiment_run_json/validate_json dispatch tests cover all 48 settings at sequences 0/255 plus independent witnesses. Measure actual WASM time/memory and compiled policy/record sizes; browser worst-case compile/replay/serialization must fit 60 seconds/16 MiB/4,096 checkpoints. Test real pending worker cancellation. If infeasible retain evidence and review exact source-bound table delivery or explicit amendment; no shorter horizon/action pruning/approximation. Gate precedes collection.
-- [ ] **Step 5: Independent review and commit.** Focused core/actual Node WASM tests and web WASM build; field provenance/native parity/source guard review. Commit feat(experiments): expose bounded surface discovery episodes.
+- [x] **Step 3: GREEN bounds/wire/source reconstruction.** Unbounded integers/rationals use canonical decimal strings through existing wire helper; bounded selector sequence/checkpoint index keep inherited validated types. Preflight/count before retaining large components; final maximum 16 MiB/4,096 checkpoints. Same-source import reconstructs exact full export. Altered event/alternative/cost/identity rejects. Update necessary common source guards with before/after receipts and unchanged original payloads; preserve old source/report identities and contextual stale-import rejection.
+- [ ] **Step 4: Actual WASM feasibility gate.** Actual Node/native feasibility is independently approved; the real pending-worker cancellation portion is shared with Task 7 browser acceptance and remains open until that receipt exists. Existing experiment_run_json/validate_json dispatch tests cover all 48 settings at sequences 0/255 plus independent witnesses. Measure actual WASM time/memory and compiled policy/record sizes; browser worst-case compile/replay/serialization must fit 60 seconds/16 MiB/4,096 checkpoints. Test real pending worker cancellation. If infeasible retain evidence and review exact source-bound table delivery or explicit amendment; no shorter horizon/action pruning/approximation. Gate precedes collection.
+- [x] **Step 5: Independent review and commit.** Focused core/actual Node WASM tests and web WASM build; field provenance/native parity/source guard review. Commit feat(experiments): expose bounded surface discovery episodes.
 
 ## Task 7 / Stage 4: Viewer and Browser Acceptance
 

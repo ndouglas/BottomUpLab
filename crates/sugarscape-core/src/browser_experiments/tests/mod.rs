@@ -23,3 +23,5 @@ mod caching_input;
 mod caching_protection;
 
 mod caching_deception;
+
+mod discovery;

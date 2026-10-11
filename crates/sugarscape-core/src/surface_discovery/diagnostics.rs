@@ -102,6 +102,25 @@ pub(super) fn content_hash(value: &impl Serialize) -> Result<String, Error> {
     Ok(digest.finish())
 }
 
+/// Current compiled dependencies, distinct from retained historical measurements.
+pub(crate) fn compiled_source_identity() -> Result<(Vec<ArtifactReceipt>, String), Error> {
+    let sources = protocol::sources();
+    let digest = content_hash(&sources)?;
+    Ok((sources, digest))
+}
+/// Hash a declared compiled-byte closure through the same canonical receipt codec.
+pub(crate) fn compiled_bytes_identity(inputs: &[(&str, &[u8])]) -> Result<String, Error> {
+    let sources: Vec<_> = inputs
+        .iter()
+        .map(|(path, bytes)| ArtifactReceipt {
+            path: (*path).into(),
+            bytes: bytes.len() as u64,
+            sha256: hash::sha256(bytes),
+        })
+        .collect();
+    content_hash(&sources)
+}
+
 impl PrefixRef {
     pub fn reconstruct(&self, histories: &[Prefix]) -> Result<Prefix, Error> {
         let index = usize::try_from(self.history).map_err(|_| Error::ArithmeticOverflow)?;

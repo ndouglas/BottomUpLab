@@ -21,3 +21,5 @@ mod metrics;
 pub use metrics::*;
 mod diagnostics;
 pub use diagnostics::*;
+
+pub(crate) use diagnostics::{compiled_bytes_identity, compiled_source_identity};

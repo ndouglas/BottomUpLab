@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json } from '../wasm-pkg/sugarscape.js';
 import { rendererAvailable } from './catalog';
+import { historicalSourceBytes } from './test-fixtures/historical-source';
 import type { EpisodeRecord, Json, StudyDescriptor } from './types';
 
 type ObjectJson = { [key: string]: Json };
@@ -138,8 +139,8 @@ for (const study of catalog.filter(study => study.family === 'spatial' && !['pro
 }
 
 describe('five spatial bridges and actual native/WASM complete records', () => {
-  it('catalog preserves five original spatial entries among fifteen runnable studies', () => {
-    expect(catalog).toHaveLength(15);
+  it('catalog preserves five original spatial entries among sixteen runnable studies', () => {
+    expect(catalog).toHaveLength(16);
     expect(catalog.filter(study => study.family === 'spatial' && !['protection_recaching', 'deception_gestures'].includes(study.id)).map(study => study.id)).toEqual(['burrow_excavation', 'burrow_access', 'foraging_fixed', 'foraging_passage', 'foraging_construction']);
     for (const descriptor of catalog.filter(study => study.family === 'spatial' && !['protection_recaching', 'deception_gestures'].includes(study.id))) expect(rendererAvailable(descriptor)).toBe(true);
   });
@@ -207,11 +208,23 @@ describe('spatial source identity integrity', () => {
       const mismatches: string[] = [];
       let canonical = '';
       for (const [path, expected] of Object.entries(identity.source_files).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) {
-        const actual = await hash(readFileSync(new URL(path, new URL('../../../', import.meta.url))));
+        const actual = await hash(await historicalSourceBytes(path, readFileSync(new URL(path, new URL('../../../', import.meta.url))), expected));
         if (actual !== expected) mismatches.push(path);
         canonical += `${path}\0${actual}\n`;
       }
       expect({ mismatches, source_sha256: await hash(new TextEncoder().encode(canonical)) }).toEqual({ mismatches: [], source_sha256: identity.source_sha256 });
+    });
+  }
+});
+
+// Each source guard must authenticate against its own immutable receipt, not
+// merely a historical digest supplied by the compatibility map.
+describe('spatial historical compatibility admission', () => {
+  const compatibility = JSON.parse(readFileSync(`${cwd}/web/src/episodes/test-fixtures/foraging-source-compatibility.json`, 'utf8')) as { sources: { path: string; historical_sha256: string }[] };
+  for (const receipt of compatibility.sources) {
+    it(`${receipt.path} rejects a different declared historical receipt`, async () => {
+      const live = readFileSync(new URL(receipt.path, new URL('../../../', import.meta.url)));
+      await expect(historicalSourceBytes(receipt.path, live, '0'.repeat(64))).rejects.toThrow();
     });
   }
 });

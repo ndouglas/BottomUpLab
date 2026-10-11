@@ -79,7 +79,7 @@ use spatial_test_support::{
 
 #[wasm_bindgen_test]
 fn runnable_catalog_and_five_legacy_spatial_defaults() {
-    assert_eq!(core::catalog().len(), 15);
+    assert_eq!(core::catalog().len(), 16);
     assert_eq!(spatial_defaults().len(), 5);
     for input in default_seed_cases() {
         let text = input.to_string();
@@ -211,5 +211,88 @@ fn caching_imports_reject_forged_evidence_source_version_and_input() {
             input["seed"] = json!(seed);
             errors(experiment_run_json(&input.to_string()), "input");
         }
+    }
+}
+
+#[wasm_bindgen_test]
+fn discovery_default_payload_and_export_reconstruct_through_public_boundary() {
+    let descriptor = core::catalog()
+        .into_iter()
+        .find(|s| s.id == core::StudyId::SurfaceDiscovery)
+        .unwrap();
+    let raw = experiment_run_json(&descriptor.default_input.to_string()).unwrap();
+    let record: Value = serde_json::from_str(&raw).unwrap();
+    assert_eq!(record["study"], "surface_discovery");
+    assert_eq!(experiment_validate_json(&raw).unwrap(), raw);
+    assert!(
+        !record["payload"]["decisions"][0]["decision"]["alternatives"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    let mut bad = descriptor.default_input.clone();
+    bad["sequence"] = json!(256);
+    errors(experiment_run_json(&bad.to_string()), "surface_discovery");
+    let mut forged = record.clone();
+    forged["rules_identity"] = json!("stale-source");
+    errors(
+        experiment_validate_json(&forged.to_string()),
+        "rules_identity",
+    );
+    let mut forged = record;
+    forged["payload"]["metrics"][0]["spent"] = json!("0");
+    errors(experiment_validate_json(&forged.to_string()), "episode");
+}
+
+#[wasm_bindgen_test]
+fn discovery_wasm_registered_compilation_resource_receipts() {
+    use sugarscape_core::surface_discovery as d;
+    let limits = d::Limits::registered().unwrap();
+    let settings = d::registered_settings();
+    let mut keys = Vec::new();
+    for (protocol, environment) in &settings {
+        let prior = match (protocol.policy, environment) {
+            (d::PolicyKind::KnownRaw, d::Environment::InFamily(model)) => {
+                d::OwnPrior::PointMass(*model)
+            }
+            _ => d::OwnPrior::Uniform,
+        };
+        if !keys.contains(&(protocol.clone(), prior)) {
+            keys.push((protocol.clone(), prior));
+        }
+    }
+    for (protocol, prior) in keys {
+        let start = js_sys::Date::now();
+        let policy = d::CompiledPolicy::build(&protocol, prior, &limits).unwrap();
+        let planner_ms = js_sys::Date::now() - start;
+        let start = js_sys::Date::now();
+        let replay = d::Replay::build(&protocol, &policy, &limits).unwrap();
+        let replay_ms = js_sys::Date::now() - start;
+        let mut episodes = 0;
+        let mut maximum_native_bytes = 0;
+        for (p, environment) in &settings {
+            if *p != protocol
+                || (protocol.policy == d::PolicyKind::KnownRaw
+                    && prior
+                        != match environment {
+                            d::Environment::InFamily(model) => d::OwnPrior::PointMass(*model),
+                            _ => continue,
+                        })
+            {
+                continue;
+            }
+            for sequence in [0, 255] {
+                let episode =
+                    d::run_episode(&protocol, *environment, sequence, &policy, &replay).unwrap();
+                maximum_native_bytes =
+                    maximum_native_bytes.max(serde_json::to_vec(&episode).unwrap().len());
+                episodes += 1;
+            }
+        }
+        console_log!(
+            "DISCOVERY_WASM_RESOURCES {}",
+            json!({"protocol":protocol,"prior":prior,"planner_ms":planner_ms,"replay_ms":replay_ms,"planner_stats":policy.stats(),"final_replay_stats":replay.stats(),"compiled_policy_shallow_bytes":std::mem::size_of_val(&policy),"private_cache_serialization":"not provided by native API","selected_endpoint_episodes":episodes,"maximum_native_episode_bytes":maximum_native_bytes})
+        );
+        assert!(replay.stats().decision_states <= limits.states);
     }
 }

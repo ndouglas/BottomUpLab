@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json, protection_episode_json, deception_episode_json } from '../wasm-pkg/sugarscape.js';
 import { projectCheckpoint } from './projection';
 import { rendererAvailable } from './catalog';
+import { historicalSourceBytes as cachingIdentityBytes } from './test-fixtures/historical-source';
 import type { EpisodeRecord, Json, StudyDescriptor } from './types';
 type Obj = { [key: string]: Json };
 const root = fileURLToPath(new URL('../../../', import.meta.url));
@@ -56,8 +57,8 @@ for (const [id, changes] of [
   Object.assign(obj(input.lab), changes); fixtures.push({ id, input });
 }
 describe('caching complete native/WASM parity without tolerance', () => {
-  it('retains fifteen runnable entries and seven spatial renderers', () => {
-    expect(catalog).toHaveLength(15); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
+  it('retains sixteen runnable entries and seven spatial renderers', () => {
+    expect(catalog).toHaveLength(16); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
     for (const d of catalog) expect(rendererAvailable(d)).toBe(true);
   });
   it('lossless parser preserves max integers, strings and floats', () => {
@@ -131,28 +132,6 @@ describe('caching import authority and strict bounds', () => {
 // Test-only historical source authentication; production episode identities stay frozen.
 type HistoricalSourceReceipt = { path: string; fixture: string; historical_sha256: string; reviewed_sha256: string };
 const foragingCompatibility = JSON.parse(readFileSync(`${root}/web/src/episodes/test-fixtures/foraging-source-compatibility.json`, 'utf8')) as { sources: HistoricalSourceReceipt[] };
-async function cachingIdentityBytes(path: string, live: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
-  if (path !== 'crates/sugarscape-core/src/lib.rs') {
-    const receipt = foragingCompatibility.sources.find(source => source.path === path);
-    if (!receipt) return live;
-    // Both identities are pinned: this authenticates historical evidence without
-    // claiming that the reviewed incoming foraging sources are unchanged.
-    expect(await sha(live), `${path}: reviewed incoming source bytes`).toBe(receipt.reviewed_sha256);
-    const historical = bytes(`${root}/${receipt.fixture}`);
-    expect(await sha(historical), `${path}: original historical source bytes`).toBe(receipt.historical_sha256);
-    return historical;
-  }
-  const historical = bytes(`${root}/web/src/episodes/test-fixtures/pre-war-core-lib.rs.txt`);
-  expect(await sha(historical)).toBe('6ac710e9fe3521e6591dc8edc02b884e2aaae55a36298ab7313d9a9fb4c85f4f');
-  const reviewedAdditions = '\npub mod surface_discovery;\n\n#[cfg(all(feature = "war-benchmarks", not(target_arch = "wasm32")))]\npub mod war;\n';
-  // Compare every byte, including whitespace; no stripping or hash exemption.
-  const additionBytes = new TextEncoder().encode(reviewedAdditions);
-  const expectedLive = new Uint8Array(historical.length + additionBytes.length);
-  expectedLive.set(historical);
-  expectedLive.set(additionBytes, historical.length);
-  expect(new Uint8Array(live), 'live lib.rs differs beyond the reviewed discovery export and native W1 gate').toEqual(expectedLive);
-  return historical;
-}
 describe('caching source identity integrity', () => {
   for (const receipt of foragingCompatibility.sources) {
     it(`${receipt.path} authenticates reviewed live bytes and original historical bytes`, async () => {
@@ -204,7 +183,7 @@ describe('caching source identity integrity', () => {
     let canonical = '';
     for (const [path, digest] of Object.entries(identity.source_files).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) {
       expect(path).toMatch(/^(Cargo\.lock|crates\/sugarscape-core\/src\/.+\.rs)$/); expect(path.split('/')).not.toContain('..');
-      const actual = await sha(await cachingIdentityBytes(path, bytes(`${root}/${path}`))); expect(actual, path).toBe(digest); canonical += `${path}\0${actual}\n`;
+      const actual = await sha(await cachingIdentityBytes(path, bytes(`${root}/${path}`), digest)); expect(actual, path).toBe(digest); canonical += `${path}\0${actual}\n`;
     }
     expect(await sha(canonical)).toBe(identity.source_sha256);
   });

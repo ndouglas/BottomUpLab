@@ -84,6 +84,11 @@ pub enum Input {
         ticks: u32,
         sample_every: u32,
     },
+    SurfaceDiscovery {
+        protocol: crate::surface_discovery::Protocol,
+        environment: crate::surface_discovery::Environment,
+        sequence: u16,
+    },
     SharedSurface {
         protocol: crate::shared_surface::Protocol,
         environment: crate::shared_surface::Environment,
@@ -135,6 +140,7 @@ impl Input {
             Self::ForagingFixed { .. } => StudyId::ForagingFixed,
             Self::ForagingPassage { .. } => StudyId::ForagingPassage,
             Self::ForagingConstruction { .. } => StudyId::ForagingConstruction,
+            Self::SurfaceDiscovery { .. } => StudyId::SurfaceDiscovery,
             Self::SharedSurface { .. } => StudyId::SharedSurface,
             Self::ActiveSurface { .. } => StudyId::ActiveSurface,
             Self::Wink { .. } => StudyId::Wink,
@@ -163,6 +169,7 @@ pub fn normalize_input(json: &str) -> Result<Input, Vec<FieldError>> {
         | Input::ForagingFixed { .. }
         | Input::ForagingPassage { .. }
         | Input::ForagingConstruction { .. } => spatial::validate_input(&input)?,
+        Input::SurfaceDiscovery { .. } => super::discovery::validate_input(&input)?,
         Input::Wink { .. } => {}
         Input::SharedSurface { .. } | Input::ActiveSurface { .. } => {
             super::surfaces::validate_input(&input)?
