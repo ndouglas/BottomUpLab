@@ -1,5 +1,11 @@
 //! Registered paid gate assistance, with one own-state controller and kernel.
+mod budget;
 mod canonical;
+mod game;
+pub use budget::{CompileStats, Limits};
+pub use game::{classify, compile, resolve, Analysis, Classification, GameTable, Row, Selector};
+mod metrics;
+pub use metrics::*;
 mod controller;
 mod kernel;
 mod observation;
@@ -38,6 +44,18 @@ pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
     (
         "crates/sugarscape-core/src/gate_assistance/canonical.rs",
         include_bytes!("canonical.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/gate_assistance/metrics.rs",
+        include_bytes!("metrics.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/gate_assistance/game.rs",
+        include_bytes!("game.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/gate_assistance/budget.rs",
+        include_bytes!("budget.rs"),
     ),
     (
         "crates/sugarscape-core/src/surface_discovery/mod.rs",

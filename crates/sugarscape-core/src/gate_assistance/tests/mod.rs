@@ -1,3 +1,6 @@
+mod full_reference;
+mod game;
+mod metrics;
 use super::*;
 
 fn config(k: u8, b: u8, d: u8) -> Config {

@@ -32,7 +32,7 @@ pub(super) fn history_error(s: impl Into<String>) -> Error {
 }
 
 // deserialize_with makes nullable fields required, rather than serde's implicit None.
-fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
+pub(super) fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
     Option::<T>::deserialize(d)
@@ -115,7 +115,7 @@ macro_rules! mixed_enum_deserialize {
 
 // Native field objects never use serde's positional struct representation.
 // Delegating the original MapAccess preserves duplicate-field detection.
-fn deserialize_object<'de, D, T>(d: D) -> Result<T, D::Error>
+pub(super) fn deserialize_object<'de, D, T>(d: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
@@ -872,3 +872,23 @@ pub(super) fn validate_feedback(
     }
     Ok(())
 }
+
+// Object-only wire structs for solver/metrics envelopes; semantic game validation
+// is performed by the solver and report integrity layer, not by generic maps.
+macro_rules! wire_struct {
+    ($name:ident { $($(#[$attr:meta])* $field:ident: $ty:ty),* $(,)? }) => {
+        #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+        pub struct $name { $($(#[$attr])* pub $field: $ty),* }
+        impl<'de> serde::Deserialize<'de> for $name {
+            fn deserialize<D: serde::Deserializer<'de>>(d:D)->Result<Self,D::Error> {
+                #[derive(serde::Deserialize)]
+                #[serde(deny_unknown_fields)]
+                struct Wire { $($(#[$attr])* $field: $ty),* }
+                let w:Wire=super::types::deserialize_object(d)?;
+                Ok(Self { $($field:w.$field),* })
+            }
+        }
+    };
+}
+pub(super) use unit_enum;
+pub(super) use wire_struct;

@@ -12,13 +12,13 @@ Owned by docs/superpowers/plans/2026-10-11-gate-assistance.md.
 **Goal**: Exact own-only kernel and complete private-payoff schedule game
 **Success Criteria**: Full 839808 outcome/trace equality and all ties retained
 **Tests**: Physics/observation/canonical and synthetic/full game checks
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 3: Diagnostic and CLI
 **Goal**: Strict current-source reporting and checked transport
 **Success Criteria**: Complete ordered report validation and operational error separation
 **Tests**: Tamper, CLI write/flush and source-bound integrity checks
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 4: Adapter and viewer
 **Goal**: Native bounded gate records and visible private/researcher views

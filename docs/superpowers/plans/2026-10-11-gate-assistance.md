@@ -10,7 +10,7 @@
 
 **Spec:** [Approved gate design](../specs/2026-10-11-gate-assistance-design.md), commit 161a664, approved by the user “LGTM!” on 2026-10-11.
 
-**Status:** Execution approved by the user’s “LGTM!” on 2026-10-11. Tasks 1–2 are complete with independently approved protocol/references and kernel. Task 3 is beginning; no scientific measurement has begun.
+**Status:** Execution approved by the user’s “LGTM!” on 2026-10-11. Tasks 1–3 are complete with independently approved protocol/references, kernel, and complete game. Task 4 is beginning; no scientific measurement has begun.
 
 ## Global Constraints
 

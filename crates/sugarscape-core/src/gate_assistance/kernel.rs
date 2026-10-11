@@ -1,4 +1,6 @@
+use super::budget::{Budget, EpisodeCharge};
 use super::choose;
+type ChargeHook<'a, 'b> = Option<&'a mut EpisodeCharge<'b>>;
 use super::observation::observe;
 use super::types::*;
 
@@ -13,7 +15,11 @@ struct World {
     outcome: Outcome,
 }
 impl World {
-    fn new(config: &Config, profile: Profile) -> Result<Self, Error> {
+    fn new(
+        config: &Config,
+        profile: Profile,
+        charge: &mut ChargeHook<'_, '_>,
+    ) -> Result<Self, Error> {
         let state = PhysicalState {
             positions: [
                 if config.stratum.distance() == 0 {
@@ -47,7 +53,7 @@ impl World {
                 LocalEntry::Observed(observations[i].clone()),
             ]
         });
-        Ok(Self {
+        let world = Self {
             state,
             histories,
             observations,
@@ -68,7 +74,11 @@ impl World {
                 retriever_blocked: [0; 4],
                 retriever_waits: 0,
             },
-        })
+        };
+        if let Some(charge) = charge.as_deref_mut() {
+            charge.initial(config, profile, &world.histories, &world.outcome)?;
+        }
+        Ok(world)
     }
     fn view(&self, role: Role, clock: Clock) -> View {
         let i = role.index();
@@ -97,15 +107,40 @@ impl World {
             physical: self.state.clone(),
         })
     }
-    fn public(&mut self, clock: Clock, termination: Option<Termination>) {
-        for history in &mut self.histories {
-            history.push(LocalEntry::Public { clock, termination });
+    // Preflight candidate payload and Event work before authoritative state or
+    // append-only histories change. No capture or extra observation is involved.
+    fn commit(
+        &mut self,
+        state: PhysicalState,
+        mut outcome: Outcome,
+        event: Option<Event>,
+        entries: [Vec<LocalEntry>; 2],
+        charge: &mut ChargeHook<'_, '_>,
+    ) -> Result<(), Error> {
+        outcome.spent = state.spent;
+        outcome.reward = state.reward;
+        outcome.net =
+            std::array::from_fn(|i| i16::from(state.reward[i]) - i16::from(state.spent[i]));
+        outcome.group_net = outcome.net[0]
+            .checked_add(outcome.net[1])
+            .ok_or(Error::ArithmeticOverflow)?;
+        if let Some(charge) = charge.as_deref_mut() {
+            charge.boundary(event.as_ref(), &entries, &outcome)?;
         }
-    }
-    fn observation(&mut self, role: Role, clock: Clock) {
-        let i = role.index();
-        self.observations[i] = observe(&self.state, role, clock);
-        self.histories[i].push(LocalEntry::Observed(self.observations[i].clone()));
+        self.state = state;
+        self.outcome = outcome;
+        if let Some(event) = event {
+            self.events.push(event);
+        }
+        for (i, entries) in entries.into_iter().enumerate() {
+            for entry in entries {
+                if let LocalEntry::Observed(ref observation) = entry {
+                    self.observations[i] = observation.clone();
+                }
+                self.histories[i].push(entry);
+            }
+        }
+        Ok(())
     }
     fn action(
         &mut self,
@@ -113,6 +148,7 @@ impl World {
         role: Role,
         clock: Clock,
         intent: Primitive,
+        charge: &mut ChargeHook<'_, '_>,
     ) -> Result<bool, Error> {
         let token = self.words[role.index()].token(clock.round)?;
         let paid = match token {
@@ -176,9 +212,7 @@ impl World {
         if delivered {
             outcome.delivery_round = Some(clock.round);
         }
-        self.state = after;
-        self.outcome = outcome;
-        self.events.push(Event {
+        let event = Event {
             clock,
             kind: EventKind::Action {
                 role,
@@ -188,17 +222,23 @@ impl World {
                 paid,
             },
             before,
-            after: self.state.clone(),
+            after: after.clone(),
+        };
+        let mut entries = std::array::from_fn(|_| {
+            vec![LocalEntry::Public {
+                clock,
+                termination: None,
+            }]
         });
-        self.public(clock, None);
-        self.histories[role.index()].push(LocalEntry::OwnAction {
+        entries[role.index()].push(LocalEntry::OwnAction {
             clock,
             token,
             intent,
             result,
             paid,
         });
-        self.observation(role, clock);
+        entries[role.index()].push(LocalEntry::Observed(observe(&after, role, clock)));
+        self.commit(after, outcome, Some(event), entries, charge)?;
         Ok(delivered)
     }
     fn finish(
@@ -208,6 +248,7 @@ impl World {
         round: u8,
         termination: Termination,
         capture: &mut CaptureHook<'_>,
+        charge: &mut ChargeHook<'_, '_>,
     ) -> Result<Episode, Error> {
         let clock = Clock {
             round,
@@ -224,29 +265,25 @@ impl World {
             ];
         }
         after.validate()?;
-        self.state = after;
-        self.events.push(Event {
+        let event = Event {
             clock,
             kind: EventKind::Terminal(termination),
             before,
-            after: self.state.clone(),
+            after: after.clone(),
+        };
+        let entries = std::array::from_fn(|i| {
+            vec![
+                LocalEntry::Public {
+                    clock,
+                    termination: Some(termination),
+                },
+                LocalEntry::Settlement {
+                    clock,
+                    reward: after.reward[i],
+                },
+            ]
         });
-        self.public(clock, Some(termination));
-        for role in [Role::Holder, Role::Retriever] {
-            let i = role.index();
-            self.histories[i].push(LocalEntry::Settlement {
-                clock,
-                reward: self.state.reward[i],
-            });
-        }
-        self.outcome.spent = self.state.spent;
-        self.outcome.reward = self.state.reward;
-        self.outcome.net = std::array::from_fn(|i| {
-            i16::from(self.state.reward[i]) - i16::from(self.state.spent[i])
-        });
-        self.outcome.group_net = self.outcome.net[0]
-            .checked_add(self.outcome.net[1])
-            .ok_or(Error::ArithmeticOverflow)?;
+        self.commit(after, self.outcome.clone(), Some(event), entries, charge)?;
         self.outcome.validate()?;
         self.capture(clock, capture)?;
         Ok(Episode {
@@ -352,7 +389,7 @@ pub(super) fn transaction(
 }
 
 pub fn run_episode(config: &Config, profile: Profile) -> Result<Episode, Error> {
-    execute(config, profile, None)
+    execute(config, profile, None, None)
 }
 pub fn run_with_capture<F>(
     config: &Config,
@@ -362,16 +399,25 @@ pub fn run_with_capture<F>(
 where
     F: FnMut(&CapturePoint) -> Result<(), Error>,
 {
-    execute(config, profile, Some(capture))
+    execute(config, profile, Some(capture), None)
+}
+pub(super) fn run_budgeted(
+    config: &Config,
+    profile: Profile,
+    budget: &mut Budget,
+) -> Result<Episode, Error> {
+    let mut charge = EpisodeCharge::new(budget);
+    execute(config, profile, None, Some(&mut charge))
 }
 fn execute(
     config: &Config,
     profile: Profile,
     mut capture: CaptureHook<'_>,
+    mut charge: ChargeHook<'_, '_>,
 ) -> Result<Episode, Error> {
     config.validate()?;
     profile.validate()?;
-    let mut world = World::new(config, profile)?;
+    let mut world = World::new(config, profile, &mut charge)?;
     world.capture(
         Clock {
             round: 0,
@@ -387,14 +433,27 @@ fn execute(
             role: None,
         };
         let before = world.state.clone();
-        world.state.gate_open = false;
-        world.events.push(Event {
+        let mut after = before.clone();
+        after.gate_open = false;
+        let event = Event {
             clock,
             kind: EventKind::Reset,
             before,
-            after: world.state.clone(),
+            after: after.clone(),
+        };
+        let entries = std::array::from_fn(|_| {
+            vec![LocalEntry::Public {
+                clock,
+                termination: None,
+            }]
         });
-        world.public(clock, None);
+        world.commit(
+            after,
+            world.outcome.clone(),
+            Some(event),
+            entries,
+            &mut charge,
+        )?;
         world.capture(clock, &mut capture)?;
         for role in [Role::Holder, Role::Retriever] {
             let clock = Clock {
@@ -402,22 +461,48 @@ fn execute(
                 phase: Phase::BeforeAction,
                 role: Some(role),
             };
-            world.public(clock, None);
-            world.observation(role, clock);
+            let mut entries = std::array::from_fn(|_| {
+                vec![LocalEntry::Public {
+                    clock,
+                    termination: None,
+                }]
+            });
+            entries[role.index()].push(LocalEntry::Observed(observe(&world.state, role, clock)));
+            world.commit(
+                world.state.clone(),
+                world.outcome.clone(),
+                None,
+                entries,
+                &mut charge,
+            )?;
             world.capture(clock, &mut capture)?;
             let intent = choose(&world.view(role, clock))?;
             let clock = Clock {
                 phase: Phase::AfterAction,
                 ..clock
             };
-            let delivered = world.action(config, role, clock, intent)?;
+            let delivered = world.action(config, role, clock, intent, &mut charge)?;
             world.capture(clock, &mut capture)?;
             if delivered {
-                return world.finish(config, profile, round, Termination::Delivered, &mut capture);
+                return world.finish(
+                    config,
+                    profile,
+                    round,
+                    Termination::Delivered,
+                    &mut capture,
+                    &mut charge,
+                );
             }
         }
         if round == 6 {
-            return world.finish(config, profile, round, Termination::Deadline, &mut capture);
+            return world.finish(
+                config,
+                profile,
+                round,
+                Termination::Deadline,
+                &mut capture,
+                &mut charge,
+            );
         }
     }
     Err(history_error("six-round kernel failed to terminate"))
