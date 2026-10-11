@@ -166,3 +166,32 @@ with tempfile.TemporaryDirectory(prefix='construction_test_peak_',dir=Path('/tmp
         String::from_utf8_lossy(&result.stderr)
     );
 }
+
+#[test]
+fn compiled_fixture_refuses_full_synthetic_scientific_manifest_before_output() {
+    let code = r#"
+from pathlib import Path
+import subprocess,sys,tempfile
+from survey.war1_study.manifest import sample_manifest,validate_manifest
+root=Path.cwd()
+with tempfile.TemporaryDirectory(prefix='construction_test_science_refusal_') as temp:
+    directory=Path(temp).resolve()
+    raw=sample_manifest(root,lambda n: (7).to_bytes(n,'little'),command=('construction_test injected scientific-form inputs only',))
+    assert len(validate_manifest(raw,root).cases)==52224
+    manifest=directory/'synthetic.json'; manifest.write_bytes(raw)
+    output=directory/'must-not-exist'
+    result=subprocess.run((sys.argv[1],'fixture','--manifest',str(manifest),'--out',str(output)),capture_output=True)
+    assert result.returncode==2,(result.returncode,result.stderr)
+    assert not output.exists()
+"#;
+    let result = Command::new("python3")
+        .current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+        .args(["-c", code, env!("CARGO_BIN_EXE_war1-study")])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}

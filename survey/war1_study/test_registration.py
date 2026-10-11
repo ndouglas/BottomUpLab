@@ -74,5 +74,133 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(len(inventory["compiled_inputs_sha256"]), 64)
 
 
+class SyntheticPacketWorkflowTests(unittest.TestCase):
+    def test_freeze_build_declare_and_all_required_mutations(self):
+        """Real Git and receipt validators; only executable metadata is synthetic."""
+        import os
+        import subprocess
+        from copy import deepcopy
+        from contextlib import ExitStack
+        from survey.war1_study import preparation, archive_provenance as provenance, manifest as manifests
+        from survey.war1_study import test_oracle
+        from survey.war1_study.oracle import prepare_oracles
+        from survey.war1_study.test_preparation import synthetic_resources
+        with tempfile.TemporaryDirectory(prefix="construction_test_registration_") as temp:
+            root = Path(temp).resolve()
+            literals = provenance.literal_paths((ROOT/provenance.LITERAL_INVENTORY).read_bytes())
+            for relative in set(provenance.SOURCE_REQUIRED) | set(literals) | {registration.DEFAULT_MANIFEST}:
+                target = root/relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((ROOT/relative).read_bytes())
+            core = root/"crates/sugarscape-core/src/lib.rs"
+            core.write_text("// construction_test synthetic include closure; never compiled\n" + "\n".join(
+                'const _: &str = include_str!("' + os.path.relpath(root/path, core.parent) + '");' for path in literals))
+            raw = manifests.sample_manifest(root, lambda n: (7).to_bytes(n, "little"), command=("construction_test injected seeds only",))
+            selected = "survey/war1_study/manifests/construction_test_synthetic.json"
+            manifest_path = root/selected
+            manifest_path.parent.mkdir(parents=True)
+            manifest_path.write_bytes(raw)
+            m = manifests.validate_manifest(raw, root)
+            def git(*args):
+                return subprocess.run(("git", "-C", str(root), *args), check=True, capture_output=True).stdout.decode().strip()
+            git("init")
+            git("config", "user.name", "construction_test synthetic author")
+            git("config", "user.email", "construction-test@example.invalid")
+            git("add", ".")
+            git("commit", "-m", "construction_test normative fixture")
+            frozen_revision = git("rev-parse", "HEAD")
+            packet = root/"survey/war1_study/preparation/construction_test_packet"
+            packet.mkdir(parents=True)
+            inventory = registration.freeze(root, manifest_path, packet/"source-inventory.json")
+            binary = packet/"construction_test_scientific_binary"
+            binary.write_bytes(b"construction_test synthetic executable; never launched")
+            flags = [[k, "release" if k == "PROFILE" else ""] for k in (
+                "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "TARGET", "HOST", "PROFILE", "OPT_LEVEL", "DEBUG")]
+            def metadata(purpose, path, inv, digest, manifest_hash):
+                return dict(schema="war1-study-metadata-v1", root=str(root), selected_path=path, selected_purpose=purpose,
+                    registered_histories=0, reference_calls_checked=264, inventory=inv, rustc="construction_test rustc",
+                    cargo="construction_test cargo", platform="construction_test platform", features=["CARGO_FEATURE_WAR_STUDIES"], flags=flags,
+                    binding=dict(manifest_sha256=manifest_hash, compiled_inputs_sha256=inv["compiled_inputs_sha256"], executable_sha256=digest,
+                        declaration_sha256=None, acceptance_sha256=None, execution_approval_sha256=None))
+            science = metadata(m.purpose, selected, inventory, registration.artifact(binary)["sha256"], m.sha256)
+            fixture_inventory = registration.source_inventory(root, registration.DEFAULT_MANIFEST)
+            fixture = metadata("construction_fixture", registration.DEFAULT_MANIFEST, fixture_inventory,
+                hashlib.sha256(b"construction_test fake executable, never launched").hexdigest(),
+                hashlib.sha256((root/registration.DEFAULT_MANIFEST).read_bytes()).hexdigest())
+            fixture, resources, inputs, probe = synthetic_resources(packet/"resource-evidence", science, fixture)
+            def native(path):
+                return deepcopy(science if Path(path) == binary else fixture)
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(registration, "native_metadata", side_effect=native))
+                stack.enter_context(patch.object(preparation, "native_metadata", side_effect=native))
+                build = registration.build_receipt(root, m, inventory, binary,
+                    ("construction_test", "synthetic build; no native process"), packet/"build.json")
+                test_oracle.PreparedOracleTests.setUpClass()
+                export = deepcopy(test_oracle.PreparedOracleTests.export)
+                export.update(purpose=m.purpose, manifest_sha256=m.sha256, binding_state="source_bound", compiled_inputs_sha256=inventory["compiled_inputs_sha256"])
+                registration.save(packet/"numeric-export.json", export)
+                oracles = prepare_oracles(m, export)
+                registration.save(packet/"oracle-packet.json", provenance.oracle_packet(m, inventory["compiled_inputs_sha256"], oracles))
+                numeric = dict(schema="war1-study-numeric-v1", manifest_sha256=m.sha256,
+                    compiled_inputs_sha256=inventory["compiled_inputs_sha256"], binary_sha256=build["binary"]["sha256"],
+                    numeric_export=registration.artifact(packet/"numeric-export.json"), oracle_packet=registration.artifact(packet/"oracle-packet.json"),
+                    certificate_valid=True, mass_valid=True, width_valid=True, ulp_valid=True, ctmc_valid=True,
+                    unresolved_findings=[], oracle_ids=[o.arm_id for o in oracles])
+                registration.save(packet/"numeric.json", numeric)
+                registration.save(packet/"resources.json", resources)
+                git("add", ".")
+                git("commit", "-m", "construction_test excluded preparation receipts")
+                declaration_revision = git("rev-parse", "HEAD")
+                declaration = registration.declare(build, numeric, resources, packet/"declaration.json")
+                self.assertEqual(declaration["binary"], registration.artifact(binary))
+                self.assertEqual(declaration["normative_frozen_revision"], frozen_revision)
+                self.assertEqual(declaration["declaration_revision"], declaration_revision)
+                self.assertNotEqual(frozen_revision, declaration_revision)
+                self.assertEqual(declaration["registered_histories"], 0)
+                self.assertFalse(any("preparation/" in entry["path"] for entry in inventory["entries"]))
+                self.assertIn(selected, {entry["path"] for entry in inventory["entries"]})
+                for name, path in (("source", core), ("map", root/"crates/sugarscape-core/assets/sugar-map.txt"),
+                                   ("manifest", manifest_path), ("binary", binary)):
+                    with self.subTest(mutation=name):
+                        original = path.read_bytes()
+                        path.write_bytes(original+b"\nconstruction_test mutation")
+                        try:
+                            output = packet/(name+"-declaration.json")
+                            with self.assertRaises(ValueError):
+                                registration.declare(build, numeric, resources, output)
+                            self.assertFalse(output.exists())
+                            with self.assertRaises(ValueError):
+                                registration.build_receipt(root, m, inventory, binary, ("construction_test",), packet/(name+"-build.json"))
+                            self.assertFalse((packet/(name+"-build.json")).exists())
+                        finally:
+                            path.write_bytes(original)
+                for name in ("missing_certificate", "missing_forecast", "wrong_numeric_envelope"):
+                    with self.subTest(mutation=name):
+                        bad_numeric, bad_resources = deepcopy(numeric), deepcopy(resources)
+                        changed = {}
+                        if name == "missing_certificate":
+                            bad_numeric.pop("certificate_valid")
+                        elif name == "missing_forecast":
+                            bad_resources.pop("forecast_inputs")
+                        else:
+                            target = packet/"numeric-export.json"
+                            changed[target] = target.read_bytes()
+                            target.unlink()
+                            registration.save(target, dict(export, purpose="construction_fixture"))
+                            bad_numeric["numeric_export"] = registration.artifact(target)
+                        for target, value in ((packet/"numeric.json", bad_numeric), (packet/"resources.json", bad_resources)):
+                            changed[target] = target.read_bytes()
+                            target.unlink()
+                            registration.save(target, value)
+                        try:
+                            output = packet/(name+"-declaration.json")
+                            with self.assertRaises((ValueError, KeyError)):
+                                registration.declare(build, bad_numeric, bad_resources, output)
+                            self.assertFalse(output.exists())
+                        finally:
+                            for path, original in changed.items():
+                                path.write_bytes(original)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -27,11 +27,15 @@ def _json(root, path):
     return strict_json(raw, METADATA_LIMIT), raw
 
 
-def _artifact(root, path, descriptor):
+def validate_artifact_descriptor(descriptor):
     _fields(descriptor, {"path", "sha256", "bytes"}, "artifact")
     _text(descriptor["path"], "original artifact path", 4096)
     _hash(descriptor["sha256"])
     _uint(descriptor["bytes"], "artifact bytes", METADATA_LIMIT)
+
+
+def _artifact(root, path, descriptor):
+    validate_artifact_descriptor(descriptor)
     raw = read_regular(root / path, METADATA_LIMIT)
     _require(
         hashlib.sha256(raw).hexdigest() == descriptor["sha256"]
@@ -581,6 +585,69 @@ def validate_retained_receipts(root, header, manifest):
     return validate_preparation(root, manifest, d)
 
 
+def validate_resource_receipt(r, ids):
+    """Complete strict resource schema shared by preseed and saved packets."""
+    import math
+    _fields(r, RESOURCE_FIELDS, "resources")
+    _require(r["schema"] == "war1-study-resources-v1", "resource schema")
+    for key in ("manifest_sha256", "compiled_inputs_sha256", "binary_sha256"):
+        _hash(r[key])
+        _require(r[key] == ids[key], "resource binding")
+    _exact_integers(r["budgets"], LIMITS, "budgets")
+    _exact_integers(r["census"], POPULATION, "census")
+    for key in ("schema_bounds_valid", "aggregate_proof_valid", "forecast_valid"):
+        _require(r[key] is True, "resource decision")
+    _uint(r["reserved_bytes"], "reserved bytes", 4294967296)
+    _uint(r["failure_reserve_bytes"], "failure reserve", 4294967296)
+    _require(
+        1048576 <= r["failure_reserve_bytes"] <= r["reserved_bytes"]
+        and r["unavailable"] == [],
+        "resource reserve/availability",
+    )
+    _text(r["forecast_method"], "forecast method")
+    validate_artifact_descriptor(r["forecast_inputs"])
+    from decimal import Decimal
+
+    wall = r["forecast_wall_seconds"]
+    _require(
+        type(wall) in (int, float, Decimal)
+        and math.isfinite(wall)
+        and 0 < wall <= 43200,
+        "forecast wall",
+    )
+    _uint(r["forecast_peak_rss_bytes"], "forecast RSS", 2147483648)
+    _require(r["forecast_peak_rss_bytes"] > 0, "forecast RSS")
+    probes = r["fixture_probes"]
+    _require(isinstance(probes, list) and 1 <= len(probes) <= 32, "probe count")
+    for index, p in enumerate(probes):
+        _fields(
+            p,
+            {
+                "artifact",
+                "command",
+                "compiled_inputs_sha256",
+                "binary_sha256",
+                "wall_seconds",
+                "peak_rss_bytes",
+                "fixture_purpose",
+            },
+            "probe",
+        )
+        _command(p["command"])
+        _hash(p["compiled_inputs_sha256"])
+        _hash(p["binary_sha256"])
+        _require(p["fixture_purpose"] == "construction_fixture", "probe purpose")
+        _require(
+            type(p["wall_seconds"]) in (int, float, Decimal)
+            and math.isfinite(p["wall_seconds"])
+            and p["wall_seconds"] > 0,
+            "probe wall",
+        )
+        _uint(p["peak_rss_bytes"], "probe RSS", 2147483648)
+        _require(p["peak_rss_bytes"] > 0, "probe RSS")
+        validate_artifact_descriptor(p["artifact"])
+
+
 def validate_preparation(root, manifest, d):
     """Shared strict frozen build/numeric/resource packet validation.
 
@@ -740,21 +807,7 @@ def validate_preparation(root, manifest, d):
         "numeric source digest",
     )
     r = _artifact(root, "provenance/resources.json", d["resources"])
-    _fields(r, RESOURCE_FIELDS, "resources")
-    _require(r["schema"] == "war1-study-resources-v1", "resource schema")
-    for key in ("manifest_sha256", "compiled_inputs_sha256", "binary_sha256"):
-        _require(r[key] == ids[key], "resource binding")
-    _exact_integers(r["budgets"], LIMITS, "budgets")
-    _exact_integers(r["census"], POPULATION, "census")
-    for key in ("schema_bounds_valid", "aggregate_proof_valid", "forecast_valid"):
-        _require(r[key] is True, "resource decision")
-    _uint(r["reserved_bytes"], "reserved bytes", 4294967296)
-    _uint(r["failure_reserve_bytes"], "failure reserve", 4294967296)
-    _require(
-        1048576 <= r["failure_reserve_bytes"] <= r["reserved_bytes"]
-        and r["unavailable"] == [],
-        "resource reserve/availability",
-    )
+    validate_resource_receipt(r, ids)
     minimum_reserve = (
         sum(entry["bytes"] for entry in inventory["entries"])
         + len(manifest.cases) * (32768 + 1024)
@@ -765,48 +818,9 @@ def validate_preparation(root, manifest, d):
         r["reserved_bytes"] >= minimum_reserve,
         "reservation below independent source/row/audit bound",
     )
-    _text(r["forecast_method"], "forecast method")
     _artifact(root, "provenance/resource-forecast-inputs.json", r["forecast_inputs"])
-    from decimal import Decimal
-
-    wall = r["forecast_wall_seconds"]
-    _require(
-        type(wall) in (int, float, Decimal)
-        and math.isfinite(wall)
-        and 0 < wall <= 43200,
-        "forecast wall",
-    )
-    _uint(r["forecast_peak_rss_bytes"], "forecast RSS", 2147483648)
-    _require(r["forecast_peak_rss_bytes"] > 0, "forecast RSS")
-    probes = r["fixture_probes"]
-    _require(isinstance(probes, list) and 1 <= len(probes) <= 32, "probe count")
-    for index, p in enumerate(probes):
-        _fields(
-            p,
-            {
-                "artifact",
-                "command",
-                "compiled_inputs_sha256",
-                "binary_sha256",
-                "wall_seconds",
-                "peak_rss_bytes",
-                "fixture_purpose",
-            },
-            "probe",
-        )
-        _command(p["command"])
-        _hash(p["compiled_inputs_sha256"])
-        _hash(p["binary_sha256"])
-        _require(p["fixture_purpose"] == "construction_fixture", "probe purpose")
-        _require(
-            type(p["wall_seconds"]) in (int, float, Decimal)
-            and math.isfinite(p["wall_seconds"])
-            and p["wall_seconds"] > 0,
-            "probe wall",
-        )
-        _uint(p["peak_rss_bytes"], "probe RSS", 2147483648)
-        _require(p["peak_rss_bytes"] > 0, "probe RSS")
-        _artifact(root, f"provenance/fixture-probes/{index:06}.json", p["artifact"])
+    for index, probe in enumerate(r["fixture_probes"]):
+        _artifact(root, f"provenance/fixture-probes/{index:06}.json", probe["artifact"])
     oracles = validate_oracle_packet(packet, manifest, export)
     for oracle in oracles:
         if oracle.ctmc_one_vs_one and oracle.ctmc_one_vs_one["required_at_this_dt"]:

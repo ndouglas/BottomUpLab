@@ -173,15 +173,20 @@ def prepare_evidence(root: Path, fixture_binary: Path, scientific_binary: Path,
 
 def validate_preseed(root: Path):
     from .manifest import _fields
+    from .archive_provenance import validate_artifact_descriptor, validate_resource_receipt
     gate = load(root / PRESEED)
     _fields(gate, {"schema", "purpose", "registered_histories", "resources", "forecast_inputs"}, "preseed gate")
     if gate["schema"] != "war1-study-preseed-resources-v1" or gate["purpose"] != "construction_fixture" or type(gate["registered_histories"]) is not int or gate["registered_histories"] != 0:
         raise ValueError("construction preseed resource gate required")
     def linked(descriptor):
+        validate_artifact_descriptor(descriptor)
         if artifact(Path(descriptor["path"])) != descriptor:
             raise ValueError("preseed artifact changed")
         return load(Path(descriptor["path"]))
     resource = linked(gate["resources"])
+    validate_resource_receipt(resource, {key: resource[key] for key in ("manifest_sha256", "compiled_inputs_sha256", "binary_sha256")})
+    if gate["forecast_inputs"] != resource["forecast_inputs"]:
+        raise ValueError("preseed forecast descriptor differs from resource receipt")
     inputs = linked(gate["forecast_inputs"])
     metadata = native_metadata(Path(inputs["fixture_binary"]["path"]))
     if Path(metadata["root"]) != root.absolute():
@@ -198,12 +203,12 @@ def validate_resource_evidence(resource, inputs, probe, metadata):
     Saved-only analysis still uses the shared retained-schema validator.
     """
     from .manifest import _fields
-    from .archive_provenance import RESOURCE_FIELDS, _exact_integers
-    _fields(resource, RESOURCE_FIELDS, "resource receipt")
-    _exact_integers(resource["budgets"], LIMITS, "resource budgets")
-    _exact_integers(resource["census"], POPULATION, "resource census")
-    if resource["schema"] != "war1-study-resources-v1":
-        raise ValueError("resource receipt schema")
+    from .archive_provenance import validate_resource_receipt, validate_artifact_descriptor
+    ids = dict(manifest_sha256=metadata["binding"]["manifest_sha256"],
+        compiled_inputs_sha256=metadata["binding"]["compiled_inputs_sha256"], binary_sha256=metadata["binding"]["executable_sha256"])
+    validate_resource_receipt(resource, ids)
+    if artifact(Path(resource["forecast_inputs"]["path"])) != resource["forecast_inputs"] or canonical_bytes(load(Path(resource["forecast_inputs"]["path"]))) != canonical_bytes(inputs):
+        raise ValueError("resource forecast raw artifact/input binding")
     _fields(inputs, {"schema", "purpose", "schema_proof", "fixture_metadata", "scientific_metadata", "measured_cases", "synthetic", "forecast", "fixture_binary", "fixture_monitor", "fixture_probe", "synthetic_probe"}, "forecast inputs")
     if inputs["schema"] != "war1-study-resource-forecast-inputs-v1" or inputs["purpose"] != "construction_fixture":
         raise ValueError("construction forecast input schema")
@@ -221,11 +226,25 @@ def validate_resource_evidence(resource, inputs, probe, metadata):
     if probe.get("schema") != "war1-study-fixture-probe-v1" or probe.get("purpose") != "construction_fixture" or probe.get("cases") != inputs["measured_cases"]:
         raise ValueError("resource measured fixed fixture cases mismatch")
     for descriptor in (inputs["fixture_monitor"], inputs["fixture_probe"], inputs["synthetic_probe"]):
+        validate_artifact_descriptor(descriptor)
         if artifact(Path(descriptor["path"])) != descriptor:
             raise ValueError("resource probe descriptor changed")
     monitor = load(Path(inputs["fixture_monitor"]["path"]))
     from .archive_provenance import validate_monitor
     validate_monitor(monitor, dict(mode="construction_fixture", binding=fixture["binding"]))
+    if len(resource["fixture_probes"]) != 1:
+        raise ValueError("resource operational fixed probe census")
+    receipt_probe = resource["fixture_probes"][0]
+    expected_command = [inputs["fixture_binary"]["path"], "fixture", "--manifest",
+        str(Path(fixture["root"]) / fixture["selected_path"]), "--out", str(Path(inputs["fixture_probe"]["path"]).parent)]
+    if (receipt_probe["artifact"] != inputs["fixture_probe"]
+        or canonical_bytes(load(Path(inputs["fixture_probe"]["path"]))) != canonical_bytes(probe)
+        or receipt_probe["compiled_inputs_sha256"] != fixture["binding"]["compiled_inputs_sha256"]
+        or receipt_probe["binary_sha256"] != fixture["binding"]["executable_sha256"]
+        or receipt_probe["command"] != expected_command
+        or canonical_bytes(dict(wall=receipt_probe["wall_seconds"])) != canonical_bytes(dict(wall=monitor["wall_seconds"]))
+        or receipt_probe["peak_rss_bytes"] != monitor["peak_rss_bytes"]):
+        raise ValueError("resource fixed probe receipt/metadata binding")
     synthetic = load(Path(inputs["synthetic_probe"]["path"]))
     if synthetic.get("schema") != "war1-study-synthetic-probe-v1" or synthetic.get("purpose") != "construction_fixture" or synthetic.get("manifest_cases") != 52224 or synthetic.get("schema_proof") != proof:
         raise ValueError("synthetic full-workload proof mismatch")

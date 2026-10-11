@@ -3,11 +3,13 @@
 Scientific permission is validated from the retained receipt packet before the
 child starts; the child independently validates it before its channel handshake.
 """
+from contextlib import contextmanager
 import hashlib
 import math
 import os
 from pathlib import Path
 import signal
+import shutil
 import stat
 import socket
 import subprocess
@@ -25,6 +27,60 @@ MESSAGE_LIMIT = 16384
 LOG_LIMIT = 65536
 CAMPAIGN_LIMIT = 4294967296
 PARENT_RESERVE = 524288  # logs128KiB + outer failure256KiB + monitor/success64KiB each
+
+
+class _Errors(list):
+    """Bound diagnostics without losing the original or most recent failure."""
+    def append(self, value):
+        value = str(value).encode("utf-8")[:512].decode("utf-8", errors="ignore")
+        if len(self) < 32:
+            super().append(value)
+        else:
+            self[-1] = "additional failures; latest: " + value[:460]
+
+
+def _attempt(errors, context, operation):
+    try:
+        return operation()
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        errors.append(f"{context}: {error}")
+        return None
+
+
+def _revoke_success(out, errors):
+    marker = out / "success.json"
+    try:
+        marker.unlink(missing_ok=True)
+    except OSError as error:
+        errors.append(f"success revocation: {error}")
+        # If removal is denied but the created file remains writable, invalidate
+        # its bytes. A valid success receipt must never survive a failed publish.
+        def invalidate():
+            with marker.open("wb") as file:
+                file.flush()
+                os.fsync(file.fileno())
+        _attempt(errors, "success invalidation", invalidate)
+    def sync_directory():
+        fd = os.open(out, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    _attempt(errors, "success revocation sync", sync_directory)
+
+
+@contextmanager
+def _private_directory(errors):
+    path = Path(tempfile.mkdtemp(prefix="w1-", dir=Path("/tmp").resolve()))
+    try:
+        yield path
+    finally:
+        # Any post-launch failure result retains this same bounded error list.
+        try:
+            if path.exists():
+                _attempt(errors, "private directory final cleanup", lambda: shutil.rmtree(path))
+        except OSError as error:
+            errors.append(f"private directory cleanup status: {error}")
 
 
 def publication_budget(root):
@@ -168,7 +224,8 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
     if sys.platform not in ("darwin", "linux") or not hasattr(os, "wait4"):
         raise ValueError("individual wait4 monitoring unavailable")
     out = _checked_path(out)
-    with tempfile.TemporaryDirectory(prefix="w1-", dir=Path("/tmp").resolve()) as temporary:
+    errors = _Errors()
+    with _private_directory(errors) as temporary:
         temporary = Path(temporary)
         metadata, manifest, header = _inputs(command, out, temporary)
         server = socket.socket(socket.AF_UNIX)
@@ -180,7 +237,6 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
         server.setblocking(False)
         child = None
         channel = None
-        errors = []
         logs = {"stdout": bytearray(), "stderr": bytearray()}
         logfiles = {name: (temporary / name).open("xb") for name in logs}
         start = time.monotonic()
@@ -199,10 +255,10 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
                 tick = time.monotonic()
                 waited, status, usage = os.wait4(child.pid, os.WNOHANG)
                 if waited:
+                    reaped = True
                     child.returncode = os.waitstatus_to_exitcode(status)
                     final_peak = peak_bytes(usage.ru_maxrss, sys.platform)
                     peak = max(peak, final_peak)
-                    reaped = True
                 if channel is None:
                     try:
                         channel, _ = server.accept()
@@ -267,10 +323,10 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
                         waited, status, usage = os.wait4(child.pid, os.WNOHANG)
                         if not waited:
                             raise ValueError("active process RSS sampler unavailable") from None
+                        reaped = True
                         child.returncode = os.waitstatus_to_exitcode(status)
                         final_peak = peak_bytes(usage.ru_maxrss, sys.platform)
                         peak = max(peak, final_peak)
-                        reaped = True
                 try:
                     check_limits(time.monotonic() - start, peak, wall_seconds, rss_bytes)
                 except ValueError as error:
@@ -298,8 +354,14 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
                     errors.append(f"SIGTERM: {error}")
                 deadline = time.monotonic() + 5
                 while not reaped:
-                    waited, status, usage = os.wait4(child.pid, os.WNOHANG)
+                    try:
+                        waited, status, usage = os.wait4(child.pid, os.WNOHANG)
+                    except ChildProcessError as error:
+                        reaped = True
+                        errors.append(f"cleanup reap unavailable: {error}")
+                        break
                     if waited:
+                        reaped = True
                         child.returncode = os.waitstatus_to_exitcode(status)
                         try:
                             final_peak = peak_bytes(usage.ru_maxrss, sys.platform)
@@ -316,14 +378,17 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
                         time.sleep(0.025)
             if child is not None:
                 for name in logs:
-                    getattr(child, name).close()
+                    _attempt(errors, f"{name} pipe close", getattr(child, name).close)
             if channel is not None:
-                channel.close()
-            server.close()
-            for logfile in logfiles.values():
-                logfile.flush()
-                os.fsync(logfile.fileno())
-                logfile.close()
+                _attempt(errors, "channel close", channel.close)
+            _attempt(errors, "server close", server.close)
+            for name, logfile in logfiles.items():
+                _attempt(errors, f"{name} log flush", logfile.flush)
+                _attempt(errors, f"{name} log sync", lambda: os.fsync(logfile.fileno()))
+                _attempt(errors, f"{name} log close", logfile.close)
+            # Record cleanup errors before publishing. The context's finalizer
+            # may retry best-effort cleanup, but cannot discard this evidence.
+            _attempt(errors, "private directory cleanup", lambda: shutil.rmtree(temporary))
         elapsed = time.monotonic() - start
         if child is None or child.returncode != 0:
             errors.append(f"child exit: {None if child is None else child.returncode}")
@@ -357,26 +422,34 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
         except ValueError as error:
             errors.append(str(error))
         # Logs are bounded and counted in the reserved campaign metadata allowance.
-        destination = out if out.is_dir() else out.with_name(out.name + ".supervisor-failure")
+        try:
+            destination = out if out.is_dir() else out.with_name(out.name + ".supervisor-failure")
+        except OSError as error:
+            errors.append(f"publication destination status: {error}")
+            destination = out.with_name(out.name + ".supervisor-failure")
         if destination == out:
             try:
                 publication_budget(out)
             except (ValueError, OSError) as error:
                 errors.append(f"publication: {error}")
                 destination = out.with_name(out.name + ".supervisor-failure")
-        if not destination.exists():
-            destination.mkdir(mode=0o700)
+        def ensure_destination():
+            if not destination.exists():
+                destination.mkdir(mode=0o700)
+        _attempt(errors, "failure/log destination", ensure_destination)
         for name, raw in logs.items():
-            create_bytes(destination / f"supervisor-{name}.txt", bytes(raw), LOG_LIMIT)
-        if errors:
+            _attempt(errors, f"{name} log publication", lambda: create_bytes(
+                destination / f"supervisor-{name}.txt", bytes(raw), LOG_LIMIT))
+
+        def failure_result():
             native_failure = None
-            if (out / "failure.json").is_file():
-                try:
+            try:
+                if (out / "failure.json").is_file():
                     if archive is None or any(e.startswith("failure:") for e in archive.header["validation"]["errors"]):
                         raise ValueError("native failure receipt/prefix could not be independently validated")
-                    native_failure = load(out / "failure.json")
-                except ValueError as error:
-                    errors.append(f"native receipt: {error}")
+                    native_failure = strict_json(read_regular(out / "failure.json", 65536), 65536)
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                errors.append(f"native receipt: {error}")
             case = native_failure.get("case_failure") if native_failure else None
             result = dict(schema="war1-study-supervisor-failure-v1", errors=errors,
                 child_pid=None if child is None else child.pid, exit_code=None if child is None else child.returncode,
@@ -387,26 +460,26 @@ def supervise(command: tuple[str, ...], out: Path, wall_seconds: int, rss_bytes:
                 census=None if archive is None else archive.census,
                 partial_keys=[] if archive is None else archive.header["validation"]["partial_keys"],
                 acknowledged_archive_prefix=None if archive is None else archive.header["validation"]["acknowledged_archive_prefix"])
-            create_bytes(destination / "supervisor-failure.json", canonical_bytes(result), 262144)
+            _attempt(errors, "outer failure publication", lambda: create_bytes(
+                destination / "supervisor-failure.json", canonical_bytes(result), 262144))
             return result
-        candidate = load(out / "candidate-index.json")
-        result = dict(schema="war1-study-monitor-result-v1", mode=header["mode"], binding=header["binding"], child_pid=child.pid,
-            exit_code=0, platform=sys.platform, peak_method="os.wait4.ru_maxrss", wall_seconds=elapsed, peak_rss_bytes=peak,
-            wall_limit_seconds=43200, rss_limit_bytes=2147483648, campaign_limit_bytes=4294967296, source_valid=True, archive_valid=True)
-        validate_monitor(result, header)
-        create_bytes(out / "monitor.json", canonical_bytes(result), 65536)
-        descriptor = lambda name: dict(artifact(out / name), path=name)
-        success = dict(schema="war1-study-success-v1", mode=header["mode"], binding=header["binding"],
-            candidate=descriptor("candidate-index.json"), receipt=candidate["receipt"], census=candidate["census"], monitor=descriptor("monitor.json"))
+
+        if errors:
+            _revoke_success(out, errors)
+            return failure_result()
         try:
+            candidate = load(out / "candidate-index.json")
+            result = dict(schema="war1-study-monitor-result-v1", mode=header["mode"], binding=header["binding"], child_pid=child.pid,
+                exit_code=0, platform=sys.platform, peak_method="os.wait4.ru_maxrss", wall_seconds=elapsed, peak_rss_bytes=peak,
+                wall_limit_seconds=43200, rss_limit_bytes=2147483648, campaign_limit_bytes=4294967296, source_valid=True, archive_valid=True)
+            validate_monitor(result, header)
+            create_bytes(out / "monitor.json", canonical_bytes(result), 65536)
+            descriptor = lambda name: dict(artifact(out / name), path=name)
+            success = dict(schema="war1-study-success-v1", mode=header["mode"], binding=header["binding"],
+                candidate=descriptor("candidate-index.json"), receipt=candidate["receipt"], census=candidate["census"], monitor=descriptor("monitor.json"))
             create_bytes(out / "success.json", canonical_bytes(success), 65536)
-        except (ValueError, OSError):
-            # A failed parent-directory sync cannot leave a misleading marker.
-            (out / "success.json").unlink(missing_ok=True)
-            fd = os.open(out, os.O_RDONLY | os.O_DIRECTORY)
-            try:
-                os.fsync(fd)
-            finally:
-                os.close(fd)
-            raise
-        return result
+            return result
+        except (ValueError, OSError, KeyError, TypeError) as error:
+            errors.append(f"final publication: {error}")
+            _revoke_success(out, errors)
+            return failure_result()
