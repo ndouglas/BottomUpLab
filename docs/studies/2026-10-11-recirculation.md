@@ -133,8 +133,13 @@ Higgs and McKane (1998), Drossel, Higgs and McKane (2001) and Quince, Higgs and 
 Webworld lineage, where food-web structure emerges under coevolution. Loeuille and Loreau, *PNAS* 102
 (2005): size-structured webs from one trait. Ray, Tierra (1991): parasites and hyperparasites
 emerge, our only cited case of coevolved relational types. Chow et al., *Science* 305 (2004):
-adaptive radiation from resource competition in Avida; Olson et al. (ECAL 2013): evolved digital
-ecosystems as dynamic steady states; Lehman et al. (2018) for the anecdotes.
+adaptive radiation from resource competition in Avida; Adami and Brown (*Artificial Life IV*,
+1994), Avida's first paper; Olson et al. (ECAL 2013): evolved digital ecosystems as dynamic steady
+states; Taylor and Hallam, "Replaying the tape" (*Artificial Life VI*, 1998): contingency in an
+artificial evolutionary system, the frame for Meijer's result; Hogeweg, "MIRROR beyond MIRROR,
+puddles of life" (*Artificial Life*, 1989), scan: the earliest of these ecosystem models. Packard's
+"Intrinsic adaptation in a simple model for evolution" (*Artificial Life*, 1989, pp. 141–155) is
+wanted; the user has the volume in paper. Lehman et al. (2018) for the anecdotes.
 
 **Specialization and division of labor (Holland's pin factory).**
 Theraulaz, Bonabeau and Deneubourg (1998), already in `papers/multi-agent-coordination/`, and
