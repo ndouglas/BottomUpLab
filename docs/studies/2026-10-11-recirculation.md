@@ -137,9 +137,11 @@ adaptive radiation from resource competition in Avida; Adami and Brown (*Artific
 1994), Avida's first paper; Olson et al. (ECAL 2013): evolved digital ecosystems as dynamic steady
 states; Taylor and Hallam, "Replaying the tape" (*Artificial Life VI*, 1998): contingency in an
 artificial evolutionary system, the frame for Meijer's result; Hogeweg, "MIRROR beyond MIRROR,
-puddles of life" (*Artificial Life*, 1989), scan: the earliest of these ecosystem models. Packard's
-"Intrinsic adaptation in a simple model for evolution" (*Artificial Life*, 1989, pp. 141–155) is
-wanted; the user has the volume in paper. Lehman et al. (2018) for the anecdotes.
+puddles of life" (*Artificial Life*, 1989), scan: the earliest of these ecosystem models. Packard,
+"Intrinsic adaptation in a simple model for evolution" (*Artificial Life*, 1989, pp. 141–155),
+photographed from the user's copy and OCRed: evolution without an a priori fitness function,
+agents that sense, move, eat and reproduce on a torus with instant replenishment, the model Echo
+descends from. Lehman et al. (2018) for the anecdotes.
 
 **Specialization and division of labor (Holland's pin factory).**
 Theraulaz, Bonabeau and Deneubourg (1998), already in `papers/multi-agent-coordination/`, and
