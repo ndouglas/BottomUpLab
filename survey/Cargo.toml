@@ -11,11 +11,17 @@ publish = false
 [features]
 default = []
 war-benchmarks = ["sugarscape-core/war-benchmarks"]
+war-studies = ["war-benchmarks"]
 
 [[bin]]
 name = "war1"
 path = "src/bin/war1.rs"
 required-features = ["war-benchmarks"]
+
+[[bin]]
+name = "war1-study"
+path = "src/bin/war1_study.rs"
+required-features = ["war-studies"]
 
 [dependencies]
 # Native-only exact evidence binding; MIT OR Apache-2.0.

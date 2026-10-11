@@ -384,8 +384,9 @@ The [first focused literature pass](2026-10-09-war-literature-pass.md) is comple
 and its [implementation plan](../superpowers/plans/2026-10-09-war-1-engagement.md)
 have been implemented as a default-off native engineering runner. [W1 usage and
 limits](../war.md) describe literal book controls, reciprocal finite engagements,
-durable receipts and source/binary binding. The next scientific step is a separate
-prospective protocol declaring parameter arms, seed population, refinement grid,
-ensemble size, numerical tolerances, output budget and horizons, followed by
-approval before collection. No ensemble or calibration has run as this delivery.
+durable receipts and source/binary binding. The separate [W1-A preparation tooling](../war1-study.md)
+implements the approved prospective measurement roster and saved-only analysis.
+The next step is reviewed source/binary/resource preparation and independent
+readiness review, followed by explicit exact-population execution approval.
+No scientific ensemble or calibration has run as this delivery.
 Other existing campaigns retain their independent schedules.

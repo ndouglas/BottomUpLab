@@ -1,0 +1,1114 @@
+//! Compact fixed-block archive; a candidate index is never artifact success.
+use super::{
+    gate::{self, AuthorizedCampaign, CampaignBinding},
+    io,
+    observer::{self, CaseFailure, FrameSink, Outcome},
+    source, wire,
+};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::{
+    cell::Cell,
+    fs::File,
+    io::{BufRead, BufReader, Read},
+    path::Path,
+    rc::Rc,
+};
+use sugarscape_core::war::{Checkpoint, Frame};
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArchiveReceipt {
+    pub sha256: String,
+    pub bytes: u64,
+    pub acknowledged_cases: u64,
+}
+#[derive(Debug, Serialize)]
+pub struct CampaignFailure {
+    pub detail: String,
+    pub census: Census,
+    pub receipt: ArchiveReceipt,
+    pub case_failure: Option<CaseFailure>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Census {
+    pub planned: u64,
+    pub attempted: u64,
+    pub complete_valid: u64,
+    pub failed: u64,
+    pub invalid: u64,
+    pub partial: u64,
+    pub pending: u64,
+    pub unstarted: u64,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Header {
+    schema: String,
+    mode: String,
+    binding: CampaignBinding,
+    planned: u64,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+#[allow(clippy::large_enum_variant)]
+enum Row {
+    Start {
+        key: wire::Key,
+        seed: u64,
+        case_input_sha256: String,
+    },
+    Outcome {
+        outcome: Outcome,
+    },
+}
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum AuditRow {
+    Header {
+        schema: String,
+        key: wire::Key,
+        case_json: String,
+    },
+    Initial {
+        checkpoint_json: String,
+    },
+    Frame {
+        step: u64,
+        cause: String,
+        frame_json: String,
+    },
+    Terminal {
+        checkpoint_json: String,
+        completed_steps: u64,
+        observed_steps: u64,
+        active_steps: u64,
+    },
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct BlockDescriptor {
+    path: String,
+    sha256: String,
+    bytes: u64,
+    first_ordinal: u64,
+    acknowledged_cases: u64,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Candidate {
+    schema: String,
+    mode: String,
+    binding: CampaignBinding,
+    census: Census,
+    receipt: ArchiveReceipt,
+    blocks: Vec<BlockDescriptor>,
+    monitor: String,
+}
+#[derive(Clone)]
+struct Budget(Rc<Cell<u64>>);
+impl Budget {
+    fn new() -> Self {
+        Self(Rc::new(Cell::new(0)))
+    }
+    fn reserve(&self, n: u64) -> Result<(), String> {
+        let next = self
+            .0
+            .get()
+            .checked_add(n)
+            .ok_or("campaign budget overflow")?;
+        if next > io::CAMPAIGN_LIMIT - io::FAILURE_RESERVE {
+            return Err("campaign budget including failure reserve exceeded".into());
+        }
+        self.0.set(next);
+        Ok(())
+    }
+}
+fn save(out: &Path, name: &str, value: &impl Serialize, budget: &Budget) -> Result<(), String> {
+    let bytes = io::encode(value, io::METADATA_LIMIT, true)?;
+    budget.reserve(bytes.len() as u64)?;
+    io::save_bytes(&out.join(name), &bytes)
+}
+fn append(
+    j: &mut io::Journal,
+    value: &impl Serialize,
+    limit: usize,
+    budget: &Budget,
+) -> Result<Vec<u8>, String> {
+    let bytes = io::encode(value, limit, true)?;
+    budget.reserve(bytes.len() as u64)?;
+    j.append(value, limit)?;
+    Ok(bytes)
+}
+struct Audit {
+    journal: io::Journal,
+    budget: Budget,
+    steps: u64,
+    path: String,
+}
+impl FrameSink for Audit {
+    fn initial(&mut self, p: &Checkpoint) -> Result<(), String> {
+        append(
+            &mut self.journal,
+            &AuditRow::Initial {
+                checkpoint_json: String::from_utf8(observer::semantic_bytes(p)?)
+                    .map_err(|e| e.to_string())?,
+            },
+            io::ROW_LIMIT,
+            &self.budget,
+        )?;
+        Ok(())
+    }
+    fn frame(&mut self, f: &Frame) -> Result<(), String> {
+        append(
+            &mut self.journal,
+            &AuditRow::Frame {
+                step: f.step,
+                cause: "benchmark_exposure".into(),
+                frame_json: String::from_utf8(observer::semantic_bytes(f)?)
+                    .map_err(|e| e.to_string())?,
+            },
+            io::ROW_LIMIT,
+            &self.budget,
+        )?;
+        self.steps += 1;
+        Ok(())
+    }
+    fn terminal(&mut self, p: &Checkpoint, observed: u64) -> Result<(), String> {
+        append(
+            &mut self.journal,
+            &AuditRow::Terminal {
+                checkpoint_json: String::from_utf8(observer::semantic_bytes(p)?)
+                    .map_err(|e| e.to_string())?,
+                completed_steps: p.step,
+                observed_steps: observed,
+                active_steps: p.active_steps,
+            },
+            io::ROW_LIMIT,
+            &self.budget,
+        )?;
+        Ok(())
+    }
+}
+fn empty_failure(detail: String, planned: u64) -> CampaignFailure {
+    CampaignFailure {
+        detail,
+        census: Census {
+            planned,
+            unstarted: planned,
+            ..Default::default()
+        },
+        receipt: ArchiveReceipt {
+            sha256: wire::sha256(b""),
+            bytes: 0,
+            acknowledged_cases: 0,
+        },
+        case_failure: None,
+    }
+}
+#[allow(clippy::result_large_err)] // Frozen receipt API owns census and actual checkpoint evidence.
+pub fn collect(
+    authorized: AuthorizedCampaign,
+    out: &Path,
+    socket: &Path,
+) -> Result<ArchiveReceipt, CampaignFailure> {
+    let mut monitor = super::monitor::Monitor::connect(socket, authorized.parts().1)
+        .map_err(|e| empty_failure(e, 0))?;
+    collect_construction(authorized, out, Some(&mut monitor))
+}
+#[allow(clippy::result_large_err)]
+pub fn collect_fixture(
+    manifest_path: &Path,
+    out: &Path,
+) -> Result<ArchiveReceipt, CampaignFailure> {
+    let authorized = gate::fixture(manifest_path).map_err(|e| empty_failure(e, 0))?;
+    collect_construction(authorized, out, None)
+}
+#[allow(clippy::result_large_err)]
+pub fn collect_fixture_monitored(
+    manifest_path: &Path,
+    out: &Path,
+    socket: &Path,
+) -> Result<ArchiveReceipt, CampaignFailure> {
+    let authorized = gate::fixture(manifest_path).map_err(|e| empty_failure(e, 0))?;
+    let mut monitor = super::monitor::Monitor::connect(socket, authorized.parts().1)
+        .map_err(|e| empty_failure(e, 0))?;
+    collect_construction(authorized, out, Some(&mut monitor))
+}
+#[allow(clippy::result_large_err)]
+fn collect_construction(
+    authorized: AuthorizedCampaign,
+    out: &Path,
+    mut monitor: Option<&mut super::monitor::Monitor>,
+) -> Result<ArchiveReceipt, CampaignFailure> {
+    let (manifest, binding) = authorized.parts();
+    let mode = if manifest.purpose == "construction_fixture" {
+        "construction_fixture"
+    } else {
+        "prospective_seed_population"
+    };
+    let planned = manifest.cases.len() as u64;
+    let mut census = Census {
+        planned,
+        unstarted: planned,
+        ..Default::default()
+    };
+    let mut prefix = Sha256::new();
+    let mut receipt = ArchiveReceipt {
+        sha256: wire::sha256(b""),
+        bytes: 0,
+        acknowledged_cases: 0,
+    };
+    let mut case_failure = None;
+    let budget = Budget::new();
+    let mut created = false;
+    let mut probe_metrics = Vec::new();
+    let result = (|| -> Result<(), String> {
+        if mode == "prospective_seed_population"
+            && (monitor.is_none() || binding.execution_approval_sha256.is_none())
+        {
+            return Err("authorized scientific monitor required".into());
+        }
+        if let Some(m) = monitor.as_deref_mut() {
+            m.check()?;
+        }
+        let entries = source::inputs::read(Path::new(source::ROOT), source::MANIFEST_PATH)?;
+        let audit_bound: u64 = manifest
+            .arms
+            .iter()
+            .map(|arm| (arm.config.max_steps + 3) * io::ROW_LIMIT as u64)
+            .sum();
+        let reserved = audit_bound + planned * (io::ROW_LIMIT as u64 + 1024) + 1024 * 1024 * 1024;
+        if reserved > io::CAMPAIGN_LIMIT {
+            return Err("fixture reservation exceeds campaign cap".into());
+        }
+        io::create_directory(out)?;
+        created = true;
+        io::create_directory(&out.join("blocks"))?;
+        io::create_directory(&out.join("audits"))?;
+        io::create_directory(&out.join("source"))?;
+        save(
+            out,
+            "header.json",
+            &Header {
+                schema: "war1-study-archive-v1".into(),
+                mode: mode.into(),
+                binding: binding.clone(),
+                planned,
+            },
+            &budget,
+        )?;
+        budget.reserve(wire::SELECTED.len() as u64)?;
+        io::save_bytes(&out.join("manifest.json"), wire::SELECTED)?;
+        let mut inventory = vec![];
+        for (i, (path, bytes)) in entries.iter().enumerate() {
+            if let Some(m) = monitor.as_deref_mut() {
+                m.check()?;
+            }
+            budget.reserve(bytes.len() as u64)?;
+            io::save_bytes(&out.join(format!("source/{i:06}.bin")), bytes)?;
+            inventory.push(gate::Artifact {
+                path: path.clone(),
+                sha256: wire::sha256(bytes),
+                bytes: bytes.len() as u64,
+            });
+        }
+        save(
+            out,
+            "source-inventory.json",
+            &gate::SourceInventory {
+                schema: "war1-study-source-inventory-v1".into(),
+                compiled_inputs_sha256: binding.compiled_inputs_sha256.clone(),
+                entries: inventory,
+            },
+            &budget,
+        )?;
+        if !authorized.retained().is_empty() {
+            io::create_directory(&out.join("provenance"))?;
+            io::create_directory(&out.join("provenance/fixture-probes"))?;
+            for (name, descriptor) in authorized.retained() {
+                if let Some(m) = monitor.as_deref_mut() {
+                    m.check()?;
+                }
+                let bytes = io::read_input(Path::new(&descriptor.path))?;
+                if bytes.len() as u64 != descriptor.bytes
+                    || wire::sha256(&bytes) != descriptor.sha256
+                {
+                    return Err("preflight provenance changed before copy".into());
+                }
+                budget.reserve(bytes.len() as u64)?;
+                io::save_bytes(&out.join("provenance").join(name), &bytes)?;
+            }
+            io::sync_directory(&out.join("provenance/fixture-probes"))?;
+            io::sync_directory(&out.join("provenance"))?;
+        }
+        let mut blocks = vec![];
+        for (block_index, cases) in manifest.cases.chunks(128).enumerate() {
+            let path = format!("blocks/block-{block_index:06}.jsonl");
+            let mut journal = io::Journal::new(&out.join(&path), io::CAMPAIGN_LIMIT)?;
+            for case in cases {
+                let case_clock = std::time::Instant::now();
+                let arm = manifest
+                    .arms
+                    .iter()
+                    .find(|a| a.arm_id == case.arm_id)
+                    .ok_or("case arm absent")?;
+                let input = observer::semantic_bytes(&observer::CaseInput {
+                    config: arm.config.clone(),
+                    seed: case.seed,
+                })?;
+                let start = Row::Start {
+                    key: case.key(),
+                    seed: case.seed,
+                    case_input_sha256: wire::sha256(&input),
+                };
+                census.attempted += 1;
+                census.unstarted -= 1;
+                census.partial = 1;
+                case_failure = Some(CaseFailure {
+                    kind: "archive_start".into(),
+                    detail: "start not acknowledged".into(),
+                    key: case.key(),
+                    attempted_step: None,
+                    semantic_steps: 0,
+                    observed_steps: 0,
+                    durable_audit_steps: 0,
+                    final_checkpoint: None,
+                    acknowledged_archive_prefix: Some(receipt.clone()),
+                });
+                let start_clock = std::time::Instant::now();
+                let bytes = append(&mut journal, &start, 1024, &budget)?;
+                let start_seconds = start_clock.elapsed().as_secs_f64();
+                prefix.update(&bytes);
+                receipt.bytes += bytes.len() as u64;
+                receipt.sha256 = format!("{:x}", prefix.clone().finalize());
+                census.partial = 0;
+                census.pending = 1;
+                let mut audit = if case.replicate_index == 0 {
+                    let path = format!("audits/{}.jsonl", case.ordinal);
+                    let mut a = Audit {
+                        journal: io::Journal::new(&out.join(&path), io::CAMPAIGN_LIMIT)?,
+                        budget: budget.clone(),
+                        steps: 0,
+                        path,
+                    };
+                    append(
+                        &mut a.journal,
+                        &AuditRow::Header {
+                            schema: "war1-study-audit-v1".into(),
+                            key: case.key(),
+                            case_json: String::from_utf8(input).map_err(|e| e.to_string())?,
+                        },
+                        io::ROW_LIMIT,
+                        &budget,
+                    )?;
+                    Some(a)
+                } else {
+                    None
+                };
+                let mut measured = observer::ProbeMetrics::default();
+                let sink = audit.as_mut().map(|a| a as &mut dyn FrameSink);
+                let result = match monitor.as_deref_mut() {
+                    Some(m) if mode == "prospective_seed_population" => {
+                        observer::execute_authorized(case, arm, sink, &authorized, m)
+                    }
+                    Some(m) => observer::execute_measured(
+                        case,
+                        arm,
+                        sink,
+                        &mut || m.check(),
+                        &mut measured,
+                    ),
+                    None => {
+                        observer::execute_measured(case, arm, sink, &mut || Ok(()), &mut measured)
+                    }
+                };
+                let mut outcome = match result {
+                    Ok(value) => value,
+                    Err(mut e) => {
+                        e.acknowledged_archive_prefix = Some(receipt.clone());
+                        let detail = e.detail.clone();
+                        case_failure = Some(e);
+                        return Err(detail);
+                    }
+                };
+                case_failure = Some(CaseFailure {
+                    kind: "audit_finish".into(),
+                    detail: "audit closure not acknowledged".into(),
+                    key: case.key(),
+                    attempted_step: None,
+                    semantic_steps: outcome.completed_steps,
+                    observed_steps: outcome.observed_steps,
+                    durable_audit_steps: audit.as_ref().map_or(0, |a| a.steps),
+                    final_checkpoint: Some(outcome.final_checkpoint.clone()),
+                    acknowledged_archive_prefix: Some(receipt.clone()),
+                });
+                if let Some(a) = audit.as_mut() {
+                    let p = a.journal.finish()?;
+                    outcome.audit_descriptor = Some(observer::AuditDescriptor {
+                        path: a.path.clone(),
+                        sha256: p.sha256,
+                        bytes: p.bytes,
+                        acknowledged_steps: a.steps,
+                    });
+                }
+                case_failure = Some(CaseFailure {
+                    kind: "archive_outcome".into(),
+                    detail: "outcome not acknowledged".into(),
+                    key: case.key(),
+                    attempted_step: None,
+                    semantic_steps: outcome.completed_steps,
+                    observed_steps: outcome.observed_steps,
+                    durable_audit_steps: outcome
+                        .audit_descriptor
+                        .as_ref()
+                        .map_or(0, |d| d.acknowledged_steps),
+                    final_checkpoint: Some(outcome.final_checkpoint.clone()),
+                    acknowledged_archive_prefix: Some(receipt.clone()),
+                });
+                if let Some(m) = monitor.as_deref_mut() {
+                    m.progress(
+                        &case.key(),
+                        outcome.completed_steps,
+                        outcome.observed_steps,
+                        outcome
+                            .audit_descriptor
+                            .as_ref()
+                            .map_or(0, |d| d.acknowledged_steps),
+                    )?;
+                }
+                let outcome_clock = std::time::Instant::now();
+                let bytes = append(
+                    &mut journal,
+                    &Row::Outcome { outcome },
+                    io::ROW_LIMIT,
+                    &budget,
+                )?;
+                if mode == "construction_fixture" {
+                    measured.start_outcome_seconds =
+                        start_seconds + outcome_clock.elapsed().as_secs_f64();
+                    measured.case_overhead_seconds = (case_clock.elapsed().as_secs_f64()
+                        - measured.start_outcome_seconds
+                        - measured.measured_step_seconds)
+                        .max(0.0);
+                    probe_metrics.push(measured);
+                }
+                prefix.update(&bytes);
+                receipt.bytes += bytes.len() as u64;
+                receipt.acknowledged_cases += 1;
+                receipt.sha256 = format!("{:x}", prefix.clone().finalize());
+                census.pending = 0;
+                census.complete_valid += 1;
+                case_failure = None;
+            }
+            let p = journal.finish()?;
+            let descriptor = BlockDescriptor {
+                path,
+                sha256: p.sha256,
+                bytes: p.bytes,
+                first_ordinal: cases[0].ordinal,
+                acknowledged_cases: cases.len() as u64,
+            };
+            save(
+                out,
+                &format!("blocks/block-{block_index:06}.descriptor.json"),
+                &descriptor,
+                &budget,
+            )?;
+            blocks.push(descriptor);
+        }
+        if mode == "construction_fixture" {
+            #[derive(Serialize)]
+            struct Probe<'a> {
+                schema: &'static str,
+                purpose: &'static str,
+                cases: &'a [observer::ProbeMetrics],
+            }
+            save(
+                out,
+                "fixture-probe.json",
+                &Probe {
+                    schema: "war1-study-fixture-probe-v1",
+                    purpose: "construction_fixture",
+                    cases: &probe_metrics,
+                },
+                &budget,
+            )?;
+        }
+        let current_binding = source::verify()?;
+        if current_binding.manifest_sha256 != binding.manifest_sha256
+            || current_binding.compiled_inputs_sha256 != binding.compiled_inputs_sha256
+            || current_binding.executable_sha256 != binding.executable_sha256
+        {
+            return Err("source/binary changed before candidate publication".into());
+        }
+        validate_saved(out, manifest, binding, &blocks, &receipt, &mut || {
+            if let Some(m) = monitor.as_deref_mut() {
+                m.check()?;
+            }
+            Ok(())
+        })?;
+        if let Some(m) = monitor.as_deref_mut() {
+            m.check()?;
+        }
+        for dir in ["source", "audits", "blocks", ""] {
+            io::sync_directory(&out.join(dir))?;
+        }
+        let candidate = Candidate {
+            schema: "war1-study-candidate-index-v1".into(),
+            mode: mode.into(),
+            binding: binding.clone(),
+            census: census.clone(),
+            receipt: receipt.clone(),
+            blocks,
+            monitor: if mode == "construction_fixture" {
+                "construction_deterministic_no_scientific_resource_decision"
+            } else {
+                "verified_control_channel_parent_final_peak_pending"
+            }
+            .into(),
+        };
+        if let Err(error) = save(out, "candidate-index.json", &candidate, &budget) {
+            let path = out.join("candidate-index.json");
+            if path.exists() {
+                std::fs::remove_file(path)
+                    .map_err(|e| format!("{error}; candidate revocation failed: {e}"))?;
+                io::sync_directory(out)
+                    .map_err(|e| format!("{error}; candidate revocation sync failed: {e}"))?;
+            }
+            return Err(error);
+        }
+        Ok(())
+    })();
+    match result {
+        Ok(()) => Ok(receipt),
+        Err(mut detail) => {
+            detail = detail.chars().take(1024).collect();
+            if census.pending > 0 {
+                census.pending = 0;
+                census.partial = 1
+            }
+            if let Some(f) = &mut case_failure {
+                f.detail = detail.chars().take(1024).collect();
+                f.acknowledged_archive_prefix = Some(receipt.clone());
+            }
+            let mut failure = CampaignFailure {
+                detail: detail.clone(),
+                census,
+                receipt,
+                case_failure,
+            };
+            if created {
+                if let Err(e) = io::encode(&failure, 65536, true)
+                    .and_then(|bytes| io::save_bytes(&out.join("failure.json"), &bytes))
+                {
+                    detail.push_str(&format!("; failure receipt also failed: {e}"));
+                    failure.detail = detail;
+                }
+            }
+            Err(failure)
+        }
+    }
+}
+fn lines<T: serde::de::DeserializeOwned>(
+    path: &Path,
+    mut visit: impl FnMut(T) -> Result<(), String>,
+) -> Result<(), String> {
+    io::check_path(path)?;
+    let f = File::open(path).map_err(|e| e.to_string())?;
+    if !f.metadata().map_err(|e| e.to_string())?.is_file() {
+        return Err("nonregular archive".into());
+    }
+    let mut reader = BufReader::new(f);
+    loop {
+        let mut line = Vec::new();
+        let n = reader
+            .by_ref()
+            .take(io::ROW_LIMIT as u64 + 1)
+            .read_until(b'\n', &mut line)
+            .map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        if n > io::ROW_LIMIT || line.last() != Some(&b'\n') {
+            return Err("oversized/torn archive row".into());
+        }
+        wire::reject_numeric_underflow(&line)?;
+        visit(serde_json::from_slice(&line).map_err(|e| e.to_string())?)?;
+    }
+    Ok(())
+}
+fn validate_saved(
+    out: &Path,
+    manifest: &wire::Manifest,
+    binding: &CampaignBinding,
+    blocks: &[BlockDescriptor],
+    receipt: &ArchiveReceipt,
+    check: &mut dyn FnMut() -> Result<(), String>,
+) -> Result<(), String> {
+    check()?;
+    let header: Header = serde_json::from_slice(&io::read_input(&out.join("header.json"))?)
+        .map_err(|e| e.to_string())?;
+    if header.schema != "war1-study-archive-v1"
+        || header.mode != manifest.purpose
+        || header.binding != *binding
+        || header.planned != manifest.cases.len() as u64
+        || io::read_input(&out.join("manifest.json"))? != wire::SELECTED
+    {
+        return Err("saved header/manifest binding mismatch".into());
+    }
+    let packet: gate::SourceInventory =
+        serde_json::from_slice(&io::read_input(&out.join("source-inventory.json"))?)
+            .map_err(|e| e.to_string())?;
+    packet.validate(&binding.compiled_inputs_sha256)?;
+    let inventory = packet.entries;
+    if inventory.len() != source::INPUT_PATHS.len() {
+        return Err("saved source inventory size".into());
+    }
+    let mut entries = vec![];
+    for (i, item) in inventory.iter().enumerate() {
+        check()?;
+        let bytes = io::read_input(&out.join(format!("source/{i:06}.bin")))?;
+        if item.path != source::INPUT_PATHS[i]
+            || wire::sha256(&bytes) != item.sha256
+            || bytes.len() as u64 != item.bytes
+        {
+            return Err("saved source packet mismatch".into());
+        }
+        entries.push((item.path.clone(), bytes));
+    }
+    if source::inputs::fingerprint(&entries, source::MANIFEST_PATH)?
+        != binding.compiled_inputs_sha256
+    {
+        return Err("saved closure mismatch".into());
+    }
+    let mut ordinal = 0;
+    let mut started = false;
+    let mut hash = Sha256::new();
+    let mut total = 0;
+    for (i, block) in blocks.iter().enumerate() {
+        check()?;
+        let raw = io::read_bounded(&out.join(&block.path), 128 * (io::ROW_LIMIT + 1024))?;
+        if wire::sha256(&raw) != block.sha256 || raw.len() as u64 != block.bytes {
+            return Err("block descriptor mismatch".into());
+        }
+        hash.update(&raw);
+        total += raw.len() as u64;
+        let saved: BlockDescriptor = serde_json::from_slice(&io::read_input(
+            &out.join(format!("blocks/block-{i:06}.descriptor.json")),
+        )?)
+        .map_err(|e| e.to_string())?;
+        if saved.path != block.path
+            || saved.sha256 != block.sha256
+            || saved.bytes != block.bytes
+            || saved.first_ordinal != ordinal as u64
+            || saved.acknowledged_cases != manifest.cases[ordinal..].len().min(128) as u64
+        {
+            return Err("saved block closure mismatch".into());
+        }
+        lines::<Row>(&out.join(&block.path), |row| {
+            check()?;
+            let case = manifest.cases.get(ordinal).ok_or("extra archive key")?;
+            let arm = manifest
+                .arms
+                .iter()
+                .find(|a| a.arm_id == case.arm_id)
+                .ok_or("missing arm")?;
+            let input = observer::semantic_bytes(&observer::CaseInput {
+                config: arm.config.clone(),
+                seed: case.seed,
+            })?;
+            match row {
+                Row::Start {
+                    key,
+                    seed,
+                    case_input_sha256,
+                } => {
+                    if started
+                        || key != case.key()
+                        || seed != case.seed
+                        || case_input_sha256 != wire::sha256(&input)
+                    {
+                        return Err("wrong/duplicate start key".into());
+                    }
+                    started = true
+                }
+                Row::Outcome { outcome: o } => {
+                    if !started
+                        || o.key != case.key()
+                        || o.seed != case.seed
+                        || o.manifest_sha256 != binding.manifest_sha256
+                        || o.case_input_sha256 != wire::sha256(&input)
+                    {
+                        return Err("wrong outcome binding/order".into());
+                    }
+                    validate_outcome(&o, &arm.config)?;
+                    if case.replicate_index == 0 {
+                        validate_audit(out, &o, &input, check)?
+                    } else if o.audit_descriptor.is_some() {
+                        return Err("undeclared audit subset".into());
+                    }
+                    ordinal += 1;
+                    started = false
+                }
+            }
+            Ok(())
+        })?;
+    }
+    if started
+        || ordinal != manifest.cases.len()
+        || receipt.acknowledged_cases != ordinal as u64
+        || receipt.bytes != total
+        || receipt.sha256 != format!("{:x}", hash.finalize())
+    {
+        return Err("incomplete archive census/prefix".into());
+    }
+    Ok(())
+}
+fn validate_outcome(
+    o: &Outcome,
+    c: &sugarscape_core::war::config::EngagementConfig,
+) -> Result<(), String> {
+    observer::validate_checkpoint(&o.final_checkpoint)?;
+    if o.schema != "war1-study-outcome-v1"
+        || o.final_checkpoint.config != *c
+        || o.final_checkpoint.seed != o.seed
+        || o.initial_counts != [c.blue, c.red]
+        || o.final_counts
+            != [
+                o.final_checkpoint.blue_alive.len() as u32,
+                o.final_checkpoint.red_alive.len() as u32,
+            ]
+        || o.completed_steps != o.final_checkpoint.step
+        || o.observed_steps != o.completed_steps
+        || o.active_steps != o.final_checkpoint.active_steps
+        || o.calendar_time != o.completed_steps as f64 * c.dt
+        || o.active_time != o.active_steps as f64 * c.dt
+        || o.final_checkpoint.ending.as_ref() != Some(&o.ending)
+        || o.observations.len() != 4
+        || o.transcript_sha256.len() != 64
+    {
+        return Err("compact outcome clock/state mismatch".into());
+    }
+    for side in 0..2 {
+        if o.final_counts[side].checked_add(o.casualty_totals[side]) != Some(o.initial_counts[side])
+            || !o.contributed_exposure_totals[side].is_finite()
+            || o.contributed_exposure_totals[side] < 0.0
+        {
+            return Err("outcome accounting mismatch".into());
+        }
+    }
+    for (obs, t) in o.observations.iter().zip([1.0, 2.0, 4.0, 8.0]) {
+        if obs.step != (t / c.dt) as u64
+            || obs.counts[0] > c.blue
+            || obs.counts[1] > c.red
+            || obs.reference.is_some() == obs.reference_error.is_some()
+            || if obs.step > o.completed_steps {
+                obs.origin != "derived_absorbing"
+                    || obs.reason.is_none()
+                    || obs.counts != o.final_counts
+            } else {
+                obs.origin != "native" || obs.reason.is_some()
+            }
+        {
+            return Err("observation origin/count/time mismatch".into());
+        }
+    }
+    Ok(())
+}
+fn validate_audit(
+    out: &Path,
+    o: &Outcome,
+    input: &[u8],
+    check: &mut dyn FnMut() -> Result<(), String>,
+) -> Result<(), String> {
+    let d = o
+        .audit_descriptor
+        .as_ref()
+        .ok_or("missing declared audit")?;
+    if d.path != format!("audits/{}.jsonl", o.key.ordinal) {
+        return Err("audit path mismatch".into());
+    }
+    let (hash, bytes) = io::hash_file(&out.join(&d.path), io::CAMPAIGN_LIMIT)?;
+    if hash != d.sha256 || bytes != d.bytes || d.acknowledged_steps != o.completed_steps {
+        return Err("audit descriptor mismatch".into());
+    }
+    let mut stage = 0;
+    let mut count = 0;
+    let mut semantic = Sha256::new();
+    semantic.update(b"war1-study-transcript-v1\0");
+    let mut state = observer::Accounting::new(&o.final_checkpoint.config);
+    lines::<AuditRow>(&out.join(&d.path), |row| {
+        check()?;
+        match row {
+            AuditRow::Header {
+                schema,
+                key,
+                case_json,
+            } => {
+                let case: observer::CaseInput =
+                    serde_json::from_str(&case_json).map_err(|e| e.to_string())?;
+                if stage != 0
+                    || schema != "war1-study-audit-v1"
+                    || key != o.key
+                    || case_json.as_bytes() != input
+                    || case.config != o.final_checkpoint.config
+                    || case.seed != o.seed
+                {
+                    return Err("audit header mismatch".into());
+                }
+                observer::hash_part(&mut semantic, case_json.as_bytes());
+                stage = 1;
+            }
+            AuditRow::Initial { checkpoint_json } => {
+                let p = observer::read_checkpoint(&checkpoint_json)?;
+                observer::validate_checkpoint(&p)?;
+                if stage != 1
+                    || p.step != 0
+                    || p.config != o.final_checkpoint.config
+                    || p.seed != o.seed
+                    || p.blue_alive.len() != o.initial_counts[0] as usize
+                    || p.red_alive.len() != o.initial_counts[1] as usize
+                {
+                    return Err("audit initial mismatch".into());
+                }
+                observer::hash_part(&mut semantic, checkpoint_json.as_bytes());
+                stage = 2;
+            }
+            AuditRow::Frame {
+                step,
+                cause,
+                frame_json,
+            } => {
+                let f = observer::read_frame(&frame_json)?;
+                if stage != 2
+                    || step != count + 1
+                    || f.step != step
+                    || cause != "benchmark_exposure"
+                {
+                    return Err("audit frame ordering/cause".into());
+                }
+                state.accept(&o.final_checkpoint.config, &f)?;
+                observer::hash_part(&mut semantic, frame_json.as_bytes());
+                count += 1;
+            }
+            AuditRow::Terminal {
+                checkpoint_json,
+                completed_steps,
+                observed_steps,
+                active_steps,
+            } => {
+                let p = observer::read_checkpoint(&checkpoint_json)?;
+                if stage != 2
+                    || p != o.final_checkpoint
+                    || completed_steps != o.completed_steps
+                    || observed_steps != o.observed_steps
+                    || active_steps != o.active_steps
+                    || count != o.completed_steps
+                {
+                    return Err("audit terminal mismatch".into());
+                }
+                observer::hash_part(&mut semantic, checkpoint_json.as_bytes());
+                stage = 3;
+            }
+        }
+        Ok(())
+    })?;
+    if stage != 3
+        || format!("{:x}", semantic.finalize()) != o.transcript_sha256
+        || state.casualties != o.casualty_totals
+        || state.exposure != o.contributed_exposure_totals
+    {
+        return Err("audit transcript/accounting mismatch".into());
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+pub(super) fn construction_test_validate_saved(out: &Path) -> Result<(), String> {
+    let candidate: Candidate =
+        serde_json::from_slice(&io::read_input(&out.join("candidate-index.json"))?)
+            .map_err(|e| e.to_string())?;
+    validate_saved(
+        out,
+        &wire::decode_manifest(wire::SELECTED)?,
+        &candidate.binding,
+        &candidate.blocks,
+        &candidate.receipt,
+        &mut || Ok(()),
+    )
+}
+
+#[cfg(test)]
+#[test]
+fn synthetic_full_escaped_frames_and_checkpoints_fit_algebraic_certificate() {
+    use sugarscape_core::war::{
+        config::{EngagementConfig, Geometry, Side, CHECKPOINT_SCHEMA},
+        math::Probability,
+        Casualty, EndReason, Ending, Exposure,
+    };
+    let ending = Ending {
+        reason: EndReason::OneSideExtinction,
+        winner: Some(Side::Blue),
+        censored: false,
+    };
+    let probability = Probability {
+        hazard: f64::MAX,
+        dose: f64::MAX,
+        ideal: f64::MAX,
+        realized: f64::MAX,
+        saturated: false,
+    };
+    // Deliberately maximum-sized schema payload, not a valid physical history.
+    let frame = Frame {
+        step: 512,
+        start: [768; 2],
+        survivors: [768; 2],
+        active_steps: 512,
+        calendar_time: f64::MAX,
+        active_time: f64::MAX,
+        exposure: Exposure {
+            contact_pairs: u64::MAX,
+            exposed: [768; 2],
+            contributed_rate: [f64::MAX; 2],
+            integrated: [f64::MAX; 2],
+            target_probability: [Some(probability.clone()), Some(probability)],
+        },
+        casualties: (0..768)
+            .map(|_| Casualty {
+                id: 767,
+                side: Side::Blue,
+            })
+            .collect(),
+        ending: Some(ending.clone()),
+    };
+    let row = AuditRow::Frame {
+        step: 512,
+        cause: "benchmark_exposure".into(),
+        frame_json: String::from_utf8(observer::semantic_bytes(&frame).unwrap()).unwrap(),
+    };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(encoded.len() <= 24832, "escaped frame {}", encoded.len());
+    let checkpoint = Checkpoint {
+        schema: CHECKPOINT_SCHEMA.into(),
+        config: EngagementConfig {
+            blue: 768,
+            red: 768,
+            blue_rate: f64::MAX,
+            red_rate: f64::MAX,
+            dt: f64::MAX,
+            max_steps: 512,
+            geometry: Geometry::DuelContact,
+        },
+        seed: u64::MAX,
+        step: 512,
+        active_steps: 512,
+        blue_alive: vec![767; 768],
+        red_alive: vec![],
+        contact_rng: "\u{0000}".repeat(128),
+        casualty_rng: "\u{0000}".repeat(128),
+        ending: Some(ending),
+    };
+    let row = AuditRow::Terminal {
+        checkpoint_json: String::from_utf8(observer::semantic_bytes(&checkpoint).unwrap()).unwrap(),
+        completed_steps: 512,
+        observed_steps: 512,
+        active_steps: 512,
+    };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(
+        encoded.len() <= 5706,
+        "escaped checkpoint {}",
+        encoded.len()
+    );
+    let proposal: serde_json::Value = serde_json::from_slice(wire::PROPOSAL).unwrap();
+    let fixture: serde_json::Value = serde_json::from_slice(wire::SELECTED).unwrap();
+    let arm_id = proposal["arms"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(fixture["arms"].as_array().unwrap())
+        .map(|arm| arm["arm_id"].as_str().unwrap())
+        .max_by_key(|id| id.len())
+        .unwrap();
+    let key = wire::Key {
+        ordinal: 52223,
+        arm_id: arm_id.into(),
+        replicate_index: 1023,
+    };
+    let start = Row::Start {
+        key: key.clone(),
+        seed: u64::MAX,
+        case_input_sha256: "f".repeat(64),
+    };
+    assert!(io::encode(&start, 1024, true).unwrap().len() <= 231);
+    let outcome = Outcome {
+        schema: "war1-study-outcome-v1".into(),
+        key,
+        seed: u64::MAX,
+        case_input_sha256: "f".repeat(64),
+        manifest_sha256: "f".repeat(64),
+        completed_steps: 512,
+        observed_steps: 512,
+        active_steps: 512,
+        calendar_time: f64::MAX,
+        active_time: f64::MAX,
+        initial_counts: [768; 2],
+        final_counts: [768; 2],
+        ending: checkpoint.ending.clone().unwrap(),
+        observations: (0..4)
+            .map(|_| observer::Observation {
+                step: 512,
+                counts: [768; 2],
+                origin: "derived_absorbing".into(),
+                reason: Some("\u{0000}".repeat(128)),
+                reference: Some(observer::ReferenceWire {
+                    requested_time: f64::MAX,
+                    evaluated_time: f64::MAX,
+                    forces: [f64::MAX; 2],
+                    regime: "initial_extinction".into(),
+                    extinction_time: Some(f64::MAX),
+                    at_boundary: false,
+                    survivor: Some(Side::Blue),
+                }),
+                reference_error: Some(observer::ReferenceErrorWire {
+                    field: "\"".repeat(512),
+                    detail: "\"".repeat(512),
+                }),
+            })
+            .collect(),
+        casualty_totals: [768; 2],
+        contributed_exposure_totals: [f64::MAX; 2],
+        final_checkpoint: checkpoint,
+        transcript_sha256: "f".repeat(64),
+        audit_descriptor: Some(observer::AuditDescriptor {
+            path: "audits/52223.jsonl".into(),
+            sha256: "f".repeat(64),
+            bytes: u64::MAX,
+            acknowledged_steps: 512,
+        }),
+    };
+    let row = Row::Outcome { outcome };
+    let encoded = io::encode(&row, io::ROW_LIMIT, true).unwrap();
+    assert!(encoded.len() <= 19084, "compact outcome {}", encoded.len());
+}
+
+#[test]
+fn saved_validation_honors_monitor_stop_before_io() {
+    let manifest = wire::decode_manifest(wire::SELECTED).unwrap();
+    let binding = source::verify().unwrap();
+    let receipt = ArchiveReceipt {
+        sha256: String::new(),
+        bytes: 0,
+        acknowledged_cases: 0,
+    };
+    let result = validate_saved(
+        Path::new("/construction-test-missing"),
+        &manifest,
+        &binding,
+        &[],
+        &receipt,
+        &mut || Err("construction_test monitor stop".into()),
+    );
+    assert_eq!(result.unwrap_err(), "construction_test monitor stop");
+}

@@ -56,6 +56,8 @@ fn main() {
     )).expect("write BT compiled inputs");
     #[cfg(feature = "war-benchmarks")]
     war1_stamp(root, Path::new(&out));
+    #[cfg(feature = "war-studies")]
+    war1_study_stamp(root, Path::new(&out));
 }
 
 #[path = "build_support/bt_source_identity.rs"]
@@ -95,4 +97,94 @@ fn war1_stamp(root: &Path, out: &Path) {
     fs::write(out.join("war1_compiled_inputs.rs"), format!(
         "const COMPILED_W1_INPUTS_SHA256: &str = {identity:?};\nconst COMPILED_W1_INPUT_PATHS: &[&str] = &{paths:?};\nconst COMPILED_W1_TOOLCHAIN: &str = {compiler:?};\nconst COMPILED_W1_FLAGS: &[(&str,&str)] = &{flags:?};\n"
     )).expect("write W1 compiled inputs");
+}
+
+#[cfg(feature = "war-studies")]
+#[path = "build_support/war1_study_source_identity.rs"]
+mod war1_study_inputs;
+#[cfg(feature = "war-studies")]
+fn war1_study_stamp(root: &Path, out: &Path) {
+    use sha2::{Digest, Sha256};
+    println!("cargo:rerun-if-env-changed=WAR1_STUDY_MANIFEST");
+    let selected = std::env::var("WAR1_STUDY_MANIFEST")
+        .unwrap_or_else(|_| war1_study_inputs::DEFAULT_MANIFEST.into());
+    war1_study_inputs::validate_selection(&selected).expect("study manifest selection");
+    let entries = war1_study_inputs::read(root, &selected).expect("study compiled inputs");
+    let bytes = &entries
+        .iter()
+        .find(|(path, _)| path == &selected)
+        .expect("selected input present")
+        .1;
+    if selected != war1_study_inputs::DEFAULT_MANIFEST {
+        let tracked = std::process::Command::new("git")
+            .current_dir(root)
+            .args(["ls-files", "--error-unmatch", "--", &selected])
+            .output()
+            .expect("check committed study manifest");
+        assert!(
+            tracked.status.success(),
+            "selected scientific manifest must be committed"
+        );
+        let committed = war1_study_inputs::read_committed_manifest(root, &selected)
+            .expect("read bounded committed study manifest");
+        assert!(
+            committed == *bytes,
+            "selected manifest bytes must match HEAD"
+        );
+    }
+    for (path, _) in &entries {
+        println!("cargo:rerun-if-changed={}", root.join(path).display());
+    }
+    for path in war1_study_inputs::DIRECTORIES
+        .iter()
+        .copied()
+        .chain(["survey/war1_study"])
+    {
+        println!("cargo:rerun-if-changed={}", root.join(path).display());
+    }
+    let paths: Vec<_> = entries.iter().map(|e| e.0.as_str()).collect();
+    let identity = war1_study_inputs::fingerprint(&entries, &selected).expect("study source hash");
+    let manifest_hash = format!("{:x}", Sha256::digest(bytes));
+    let purpose = if selected == war1_study_inputs::DEFAULT_MANIFEST {
+        "construction_fixture"
+    } else {
+        "prospective_seed_population"
+    };
+    let compiler = std::process::Command::new(std::env::var_os("RUSTC").expect("RUSTC"))
+        .arg("-vV")
+        .output()
+        .expect("study rustc");
+    assert!(compiler.status.success());
+    let compiler = String::from_utf8(compiler.stdout).expect("rustc UTF8");
+    let flags: Vec<_> = [
+        "RUSTFLAGS",
+        "CARGO_ENCODED_RUSTFLAGS",
+        "TARGET",
+        "HOST",
+        "PROFILE",
+        "OPT_LEVEL",
+        "DEBUG",
+    ]
+    .into_iter()
+    .map(|name| (name, std::env::var(name).unwrap_or_default()))
+    .collect();
+    let mut features: Vec<_> = std::env::vars()
+        .filter(|(k, _)| k.starts_with("CARGO_FEATURE_"))
+        .map(|(k, _)| k)
+        .collect();
+    features.sort();
+    let root = root
+        .canonicalize()
+        .expect("canonical source root")
+        .to_str()
+        .expect("UTF8 root")
+        .to_owned();
+    let cargo_version = std::process::Command::new(std::env::var_os("CARGO").expect("CARGO"))
+        .arg("--version")
+        .output()
+        .expect("study cargo version");
+    assert!(cargo_version.status.success());
+    let cargo_version = String::from_utf8(cargo_version.stdout).expect("cargo UTF8");
+    fs::write(out.join("war1_study_manifest.json"), bytes).expect("embed selected manifest");
+    fs::write(out.join("war1_study_stamp.rs"),format!("pub const CARGO_VERSION:&str={cargo_version:?};\npub const ROOT:&str={root:?};\npub const MANIFEST_PATH:&str={selected:?};\npub const MANIFEST_SHA256:&str={manifest_hash:?};\npub const PURPOSE:&str={purpose:?};\npub const INPUTS_SHA256:&str={identity:?};\npub const INPUT_PATHS:&[&str]=&{paths:?};\npub const TOOLCHAIN:&str={compiler:?};\npub const FLAGS:&[(&str,&str)]=&{flags:?};\npub const FEATURES:&[&str]=&{features:?};\n")).expect("study stamp");
 }

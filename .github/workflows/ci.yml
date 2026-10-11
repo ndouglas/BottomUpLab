@@ -126,3 +126,19 @@ jobs:
       - run: cargo test --manifest-path survey/Cargo.toml --locked --features war-benchmarks --bin war1 --test war1_cli
       - run: cargo clippy -p sugarscape-core --all-targets --features war-benchmarks -- -D warnings
       - run: cargo clippy --manifest-path survey/Cargo.toml --bin war1 --test war1_cli --features war-benchmarks -- -D warnings
+  war-study:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: survey -> target
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13.5'
+      - run: python3 -m unittest discover -s survey/war1_study -p 'test_*.py'
+      - run: cargo test --manifest-path survey/Cargo.toml --locked --features war-studies --bin war1-study --test war1_study_cli
+      - run: cargo clippy --manifest-path survey/Cargo.toml --features war-studies --bin war1-study --test war1_study_cli -- -D warnings
