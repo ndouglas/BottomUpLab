@@ -542,3 +542,6 @@ The first 3,466,627-byte JSON and byte-identical repeat have SHA256 `213f9e14028
 See [Learning a shared surface](shared-surface.md) for the frozen paid-calibration, delayed communication, restart and DataFlip diagnostic.
 
 See the [experiment viewer guide](experiment-viewer.md) for browser episodes, checkpoint perspectives, and recorded results.
+
+
+See [Surface experiment discovery](surface-discovery.md) for the measured comparison of owned raw calibration actions with the supplied recipe, both investigator roles, and out-of-catalog transfer failures.

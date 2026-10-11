@@ -1,6 +1,7 @@
 //! Bounded, reproducible display adapters for retained experiment engines.
 pub mod caching;
 mod catalog;
+pub mod discovery;
 mod equivalence;
 mod input;
 mod record;
@@ -43,6 +44,7 @@ pub enum StudyId {
     AdversarialAudit,
     SharedSurface,
     ActiveSurface,
+    SurfaceDiscovery,
 }
 
 pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
@@ -55,6 +57,7 @@ pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
         | Input::ForagingFixed { .. }
         | Input::ForagingPassage { .. }
         | Input::ForagingConstruction { .. } => spatial::run(&input),
+        Input::SurfaceDiscovery { .. } => discovery::run(&input),
         Input::Wink { .. } => wink::run(&input),
         Input::SharedSurface { .. } | Input::ActiveSurface { .. } => surfaces::run(&input),
         Input::Testimony { .. } | Input::TestimonyGame { .. } => testimony::run(&input),

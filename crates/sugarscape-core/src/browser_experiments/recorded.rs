@@ -7,6 +7,7 @@ static STRATEGIC: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static STRATEGY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static AUDIT: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static GAME: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
+static DISCOVERY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 /// Embedded immutable assets are parsed once; no simulation state is cached.
 pub(super) fn retained(study: &str) -> Result<&'static Value, Vec<FieldError>> {
     let (slot, text) = match study {
@@ -40,7 +41,35 @@ pub(super) fn retained(study: &str) -> Result<&'static Value, Vec<FieldError>> {
     .as_ref()
     .map_err(Clone::clone)
 }
-/// Complete original GA/random campaigns, separately identified by study/source.
+/// This asset is the validated first-measurement Summary, not a live episode.
+fn discovery_summary() -> Result<&'static Value, Vec<FieldError>> {
+    DISCOVERY
+        .get_or_init(|| {
+            let text = include_str!("fixtures/discovery-recorded.json");
+            if text.len() > MAX_ASSET_BYTES {
+                return Err(super::error("fixture", "retained asset exceeds 5 MiB"));
+            }
+            let summary: crate::surface_discovery::Summary = serde_json::from_str(text)
+                .map_err(|error| super::error("fixture", error.to_string()))?;
+            if summary.version != "surface-discovery-summary-v1"
+                || [summary.report_hash.as_str(), summary.source_hash.as_str()]
+                    .iter()
+                    .any(|hash| {
+                        hash.len() != 64 || !hash.bytes().all(|byte| byte.is_ascii_hexdigit())
+                    })
+            {
+                return Err(super::error(
+                    "fixture",
+                    "missing measured discovery identity",
+                ));
+            }
+            lossless_value(&summary)
+        })
+        .as_ref()
+        .map_err(Clone::clone)
+}
+/// Original search campaigns and the complete measured discovery census.
+/// Each keeps its own original report/source identity.
 /// Curves use the declared columns and champion dictionary without dropping points.
 pub fn recorded_results_json() -> Result<String, Vec<FieldError>> {
     let mut studies = serde_json::Map::new();
@@ -60,6 +89,7 @@ pub fn recorded_results_json() -> Result<String, Vec<FieldError>> {
         object.remove("policies");
         studies.insert(study.into(), lossless_value(&value)?);
     }
+    studies.insert("surface_discovery".into(), discovery_summary()?.clone());
     record::bounded_json(
         &json!({"kind":"recorded_results","version":1,"studies":studies}),
         MAX_EPISODE_BYTES,

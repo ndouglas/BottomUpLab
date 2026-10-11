@@ -32,3 +32,23 @@ it('joins native public clocks and kind rather than array positions',()=>{
  expect(matchingCheckpoint([points[0]],at)).toBe(-1);
  expect(matchingCheckpoint([{...at,kind:'before_slot'}],at)).toBe(-1);
 });
+
+import { surfaceSettingLabel } from './comparison';
+import { obj } from './presentation';
+const raw = {study:'surface_discovery',protocol:{investigator:'A',policy:'RawAdaptive',ids:{surface:'status-field',agents:['Agent-A','Agent-B']}},environment:{InFamily:'SharedPersistent'},sequence:0};
+it('discovery matching excludes only protocol.policy',()=>{
+ const supplied=structuredClone(raw); supplied.protocol.policy='SuppliedAdaptive';
+ expect(comparisonKey(raw)).toBe(comparisonKey(supplied));
+ for(const other of [{...supplied,sequence:255},{...supplied,environment:{InFamily:'Inert'}},{...supplied,protocol:{...supplied.protocol,investigator:'B'}},{...supplied,protocol:{...supplied.protocol,ids:{surface:'other',agents:['Agent-A','Agent-B']}}}]) expect(comparisonKey(raw)).not.toBe(comparisonKey(other));
+});
+it('discovery offers only other matched primary policies with original IDs',()=>{
+ const settings=['RawAdaptive','SuppliedAdaptive','NoProbe','KnownRaw','InspectOnly'].map(policy=>({environment:raw.environment,protocol:{...raw.protocol,policy,ids:{surface:'other',agents:['x','y']}}}));
+ const descriptor={id:'surface_discovery',controls:{settings}} as unknown as StudyDescriptor;
+ expect(matchedInputs(raw,descriptor).map(input=>obj(obj(input).protocol).policy)).toEqual(['SuppliedAdaptive','NoProbe']);
+ expect(matchedInputs({...raw,protocol:{...raw.protocol,policy:'KnownRaw'}},descriptor)).toEqual([]);
+ expect(obj(obj(matchedInputs(raw,descriptor)[0]).protocol).ids).toEqual(raw.protocol.ids);
+});
+it('discovery labels actual investigator role and identifies controls',()=>{
+ expect(surfaceSettingLabel(raw)).toContain('Agent A / RawAdaptive');
+ expect(surfaceSettingLabel({...raw,protocol:{...raw.protocol,policy:'InspectOnly'}})).toContain('control');
+});

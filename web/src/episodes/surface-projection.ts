@@ -32,3 +32,8 @@ export function surfaceBelief(belief: Json): Json {
   return { SharedPersistent: models[0] ?? null, SharedResetting: models[1] ?? null,
     PrivatePersistent: models[2] ?? null, Inert: models[3] ?? null, target: b.target ?? null };
 }
+
+/** Labels classify native choices only; they never select or evaluate an action. */
+export function surfaceChoiceLabel(choice: Json): string {
+  return 'Calibration' in obj(choice) ? 'Owned paid calibration action' : choice === 'Stop' || choice === 'Continue' ? 'Free round-boundary choice' : 'Live routine choice';
+}

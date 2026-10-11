@@ -191,3 +191,6 @@ Guide values are extracted directly from the validated first report by a 64 KiB 
 All seven previous deduction/run commands reproduce both stdout and stderr with the frozen new binary. The original `shared-surface diagnose` also reproduces its retained 4,969,265,658 bytes exactly, SHA256 `d4978f0727d6eeb7558e74a83185f549d67ab7f422c38d2ef758f122a25a1370`, using streaming hash and byte comparison. All 101 protected old source/fixture/dependency hashes match; the original shared-surface guide remains an exact prefix with only a link to this guide appended. Prior experimental reports stay in place and read-only.
 
 See the [experiment viewer guide](experiment-viewer.md) for browser episodes, checkpoint perspectives, and recorded results.
+
+
+See [Surface experiment discovery](surface-discovery.md) for the measured comparison of owned raw calibration actions with the supplied recipe, both investigator roles, and out-of-catalog transfer failures.

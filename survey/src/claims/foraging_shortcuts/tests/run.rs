@@ -501,6 +501,7 @@ fn source_identity_includes_all_current_browser_fixture_inputs() {
         "crates/sugarscape-core/src/browser_experiments/fixtures/audit-recorded.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/caching-identities.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/caching-scenes.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/discovery-recorded.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/engine-identities.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-identities.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-scenes.json",
@@ -526,4 +527,38 @@ fn source_identity_includes_all_current_browser_fixture_inputs() {
             "compiled fixture changes must affect source identity: {path}"
         );
     }
+}
+
+#[test]
+fn source_identity_includes_all_current_discovery_fixture_inputs() {
+    use super::super::run::source_identity::{fingerprint, selected};
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap();
+    let mut unbound = Vec::new();
+    for path in [
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/planning-reference.json",
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/evaluation-reference.json",
+        "crates/sugarscape-core/src/surface_discovery/tests/fixtures/limits-reference.json",
+    ] {
+        let original = fs::read(root.join(path)).unwrap();
+        let mut changed = original.clone();
+        changed.push(b'\n');
+        let fixture_fingerprint = |bytes: &[u8]| {
+            fingerprint(
+                [(path.to_owned(), bytes.to_vec())]
+                    .into_iter()
+                    .filter(|(path, _)| selected(path))
+                    .map(Ok),
+            )
+            .unwrap()
+        };
+        if fixture_fingerprint(&original) == fixture_fingerprint(&changed) {
+            unbound.push(path);
+        }
+    }
+    assert!(
+        unbound.is_empty(),
+        "compiled discovery fixture changes must affect source identity: {unbound:?}"
+    );
 }

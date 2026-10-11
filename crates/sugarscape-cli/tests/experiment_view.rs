@@ -141,7 +141,30 @@ use spatial_test_support::{
 
 #[test]
 fn runnable_catalog_and_five_legacy_spatial_defaults() {
-    assert_eq!(core::catalog().len(), 15);
+    assert_eq!(
+        core::catalog()
+            .iter()
+            .map(|study| study.id)
+            .collect::<Vec<_>>(),
+        [
+            core::StudyId::Wink,
+            core::StudyId::Testimony,
+            core::StudyId::TestimonyGame,
+            core::StudyId::StrategicReporting,
+            core::StudyId::StrategyInference,
+            core::StudyId::AdversarialAudit,
+            core::StudyId::SharedSurface,
+            core::StudyId::ActiveSurface,
+            core::StudyId::BurrowExcavation,
+            core::StudyId::BurrowAccess,
+            core::StudyId::ForagingFixed,
+            core::StudyId::ForagingPassage,
+            core::StudyId::ForagingConstruction,
+            core::StudyId::ProtectionRecaching,
+            core::StudyId::DeceptionGestures,
+            core::StudyId::SurfaceDiscovery,
+        ]
+    );
     assert_eq!(spatial_defaults().len(), 5);
     for input in default_seed_cases() {
         let text = input.to_string();
