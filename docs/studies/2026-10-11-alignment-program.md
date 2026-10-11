@@ -76,7 +76,7 @@ lifetimes and populations. That is the gap.
 
 | Item | Papers | Size | Why first |
 |---|---|---|---|
-| 39 | Off-switch game and CIRL | small | closed-form results and figures; the base assistance game |
+| 39 | The paperclip game (CIRL) and the off-switch game | small | closed forms and figures; shows how an equilibrium is established: in the paperclip game the human's best response is to teach (make 1 and 1 over a middle band of θ) rather than demonstrate, and the robot's belief update and deployment choice follow; in the off-switch game, when the robot's uncertainty makes it defer. Russell's book retells both, with the user's copy as the second source |
 | 40 | AI Safety Gridworlds | medium | the environments and the paper's baseline agents' failures; SafeLife as the follow-up |
 | 41 | Negotiable RL and multi-principal assistance games | small | the weight-shift theorem and toy environment; the formal cousin of the caring example |
 | 42 | Hybrid human–machine populations (Booker, Guo, Fernández Domingos; Shirado's model) | medium | the second-species idea, already done on replicator dynamics; our lattice and network games are the next step |
