@@ -10,7 +10,7 @@
 
 **Spec:** [Approved gate design](../specs/2026-10-11-gate-assistance-design.md), commit 161a664, approved by the user “LGTM!” on 2026-10-11.
 
-**Status:** Execution approved by the user’s “LGTM!” on 2026-10-11. Tasks 1–5 are complete with independently approved native laboratory, diagnostic/source binding, and WASM adapter. Task 6 is beginning; no scientific measurement has begun.
+**Status:** Execution approved by the user’s “LGTM!” on 2026-10-11. Tasks 1–6 are complete with independently approved native laboratory, adapter, and browser visualization. Task 7 integration, frozen collection, and delivery are in progress; no scientific measurement has begun.
 
 ## Global Constraints
 

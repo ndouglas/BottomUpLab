@@ -140,7 +140,7 @@ for (const study of catalog.filter(study => study.family === 'spatial' && !['pro
 
 describe('five spatial bridges and actual native/WASM complete records', () => {
   it('catalog preserves five original spatial entries among sixteen runnable studies', () => {
-    expect(catalog).toHaveLength(16);
+    expect(catalog).toHaveLength(17);
     expect(catalog.filter(study => study.family === 'spatial' && !['protection_recaching', 'deception_gestures'].includes(study.id)).map(study => study.id)).toEqual(['burrow_excavation', 'burrow_access', 'foraging_fixed', 'foraging_passage', 'foraging_construction']);
     for (const descriptor of catalog.filter(study => study.family === 'spatial' && !['protection_recaching', 'deception_gestures'].includes(study.id))) expect(rendererAvailable(descriptor)).toBe(true);
   });

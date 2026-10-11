@@ -58,7 +58,7 @@ for (const [id, changes] of [
 }
 describe('caching complete native/WASM parity without tolerance', () => {
   it('retains sixteen runnable entries and seven spatial renderers', () => {
-    expect(catalog).toHaveLength(16); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
+    expect(catalog).toHaveLength(17); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
     for (const d of catalog) expect(rendererAvailable(d)).toBe(true);
   });
   it('lossless parser preserves max integers, strings and floats', () => {

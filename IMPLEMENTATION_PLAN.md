@@ -24,10 +24,10 @@ Owned by docs/superpowers/plans/2026-10-11-gate-assistance.md.
 **Goal**: Native bounded gate records and visible private/researcher views
 **Success Criteria**: Actual WASM parity and real-browser acceptance
 **Tests**: Input/import quotas, DOM privacy, worker cancellation/timeout
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 5: Frozen collection and delivery
 **Goal**: Exclusive first/repeat, independently validated findings and published visualization
 **Success Criteria**: Whole review, unchanged scientific settings, exact CI and Pages success
 **Tests**: Full required gates, streaming census, recorded parity and exact remote proof
-**Status**: Not Started
+**Status**: In Progress

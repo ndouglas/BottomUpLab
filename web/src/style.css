@@ -400,3 +400,21 @@ dialog.keep .row { display: flex; gap: 8px; justify-content: flex-end; }
 @media (max-width: 700px) { .spatial-cell { font-size: var(--glyph-size, .9rem); } }
 /* Matched policy labels must shrink with their containing row on narrow screens. */
 .episode-comparison .row > label { min-width: 0; max-width: 100%; }
+/* Gate episodes use the fixed physical graph and separately dated local maps. */
+.gate-graph { display: grid; grid-template-columns: minmax(0, 1fr) minmax(2.5rem, .45fr) minmax(0, 1fr) minmax(2.5rem, .45fr) minmax(0, 1fr); align-items: center; margin-block: 1rem; }
+.gate-cell { min-width: 0; border: 2px solid var(--border); padding: .65rem; background: var(--surface); text-align: center; overflow-wrap: anywhere; }
+.gate-cell h4 { font-size: 1.5rem; margin: .2rem; }
+.gate-cell p { margin: .4rem 0; }
+.gate-cell.unknown { border-style: dashed; color: var(--muted); }
+.gate-edge { border-top: 2px solid var(--border); text-align: center; font-size: .8rem; overflow-wrap: anywhere; }
+.gate-edge.gated { border-top: 4px double var(--accent); }
+.gate-edge[data-gate="false"] { border-top-style: solid; }
+.gate-agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: 1.5rem; }
+.gate-agent, .gate-researcher, .gate-result { min-width: 0; overflow-wrap: anywhere; }
+.gate-agent + .gate-agent { border-left: 1px solid var(--border); padding-left: 1rem; }
+.gate-word { display: flex; flex-wrap: wrap; gap: .4rem 1rem; list-style: none; padding: 0; }
+.gate-word li { border-bottom: 2px solid var(--border); padding: .3rem; }
+.gate-history { max-height: 24rem; overflow: auto; }
+.gate-history li { margin-block: .7rem; }
+.gate-history p { margin: .2rem; }
+@media (max-width: 540px) { .gate-cell { padding: .35rem; font-size: .85rem; } .gate-edge { font-size: .7rem; } .gate-agent + .gate-agent { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); } }
