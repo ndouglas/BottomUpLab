@@ -22,6 +22,7 @@ pub struct Outcome {
     pub active_time: f64,
     pub initial_counts: [u32; 2],
     pub final_counts: [u32; 2],
+    #[serde(deserialize_with = "ending_from_wire")]
     pub ending: Ending,
     #[serde(deserialize_with = "wire::bounded_vec::<_,_,4>")]
     pub observations: Vec<Observation>,
@@ -30,6 +31,7 @@ pub struct Outcome {
     #[serde(deserialize_with = "checkpoint_from_wire")]
     pub final_checkpoint: Checkpoint,
     pub transcript_sha256: String,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub audit_descriptor: Option<AuditDescriptor>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,8 +40,11 @@ pub struct Observation {
     pub step: u64,
     pub counts: [u32; 2],
     pub origin: String,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub reason: Option<String>,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub reference: Option<ReferenceWire>,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub reference_error: Option<ReferenceErrorWire>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,8 +54,10 @@ pub struct ReferenceWire {
     pub evaluated_time: f64,
     pub forces: [f64; 2],
     pub regime: String,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub extinction_time: Option<f64>,
     pub at_boundary: bool,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub survivor: Option<Side>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -561,6 +568,7 @@ struct CheckpointWire {
     contact_rng: String,
     #[serde(deserialize_with = "wire::bounded_text::<_,128>")]
     casualty_rng: String,
+    #[serde(deserialize_with = "nullable_ending_from_wire")]
     ending: Option<Ending>,
 }
 fn checkpoint_from_wire<'de, D: serde::Deserializer<'de>>(
@@ -601,6 +609,7 @@ struct FrameWire {
     exposure: sugarscape_core::war::Exposure,
     #[serde(deserialize_with = "wire::bounded_vec::<_,_,768>")]
     casualties: Vec<sugarscape_core::war::Casualty>,
+    #[serde(deserialize_with = "nullable_ending_from_wire")]
     ending: Option<Ending>,
 }
 pub(super) fn read_frame(text: &str) -> Result<Frame, String> {
@@ -617,4 +626,30 @@ pub(super) fn read_frame(text: &str) -> Result<Frame, String> {
         casualties: w.casualties,
         ending: w.ending,
     })
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EndingWire {
+    reason: sugarscape_core::war::EndReason,
+    #[serde(deserialize_with = "wire::required_nullable")]
+    winner: Option<Side>,
+    censored: bool,
+}
+impl From<EndingWire> for Ending {
+    fn from(w: EndingWire) -> Self {
+        Self {
+            reason: w.reason,
+            winner: w.winner,
+            censored: w.censored,
+        }
+    }
+}
+fn ending_from_wire<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Ending, D::Error> {
+    EndingWire::deserialize(d).map(Into::into)
+}
+fn nullable_ending_from_wire<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> Result<Option<Ending>, D::Error> {
+    Option::<EndingWire>::deserialize(d).map(|v| v.map(Into::into))
 }

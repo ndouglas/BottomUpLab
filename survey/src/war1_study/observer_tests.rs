@@ -230,3 +230,39 @@ fn strict_saved_payload_reader_rejects_nonzero_underflow_and_oversized_rng() {
     let bad = serde_json::to_string(&checkpoint).unwrap();
     assert!(observer::read_checkpoint(&bad).is_err());
 }
+
+#[test]
+fn saved_outcome_checkpoint_and_frame_require_nullable_keys() {
+    let m = wire::decode_manifest(wire::FIXTURE).unwrap();
+    let case = &m.cases[0];
+    let arm = m.arms.iter().find(|a| a.arm_id == case.arm_id).unwrap();
+    let outcome = observer::execute_case(case, arm, None).unwrap();
+    let original = serde_json::to_value(&outcome).unwrap();
+    assert!(serde_json::from_value::<observer::Outcome>(original.clone()).is_ok());
+    for pointer in [
+        "/audit_descriptor",
+        "/ending/winner",
+        "/final_checkpoint/ending/winner",
+    ] {
+        let mut bad = original.clone();
+        let (parent, key) = pointer.rsplit_once('/').unwrap();
+        bad.pointer_mut(parent)
+            .unwrap()
+            .as_object_mut()
+            .unwrap()
+            .remove(key);
+        assert!(
+            serde_json::from_value::<observer::Outcome>(bad).is_err(),
+            "{pointer}"
+        );
+    }
+    let mut engine = Engagement::new(arm.config.clone(), case.seed).unwrap();
+    let initial = serde_json::to_string(&engine.checkpoint()).unwrap();
+    assert!(initial.contains("\"ending\":null"));
+    assert!(observer::read_checkpoint(&initial).is_ok());
+    assert!(observer::read_checkpoint(&initial.replace(",\"ending\":null", "")).is_err());
+    let frame = serde_json::to_string(&engine.step().unwrap().unwrap()).unwrap();
+    assert!(frame.contains("\"ending\":null"));
+    assert!(observer::read_frame(&frame).is_ok());
+    assert!(observer::read_frame(&frame.replace(",\"ending\":null", "")).is_err());
+}

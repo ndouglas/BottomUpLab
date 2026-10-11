@@ -535,7 +535,9 @@ fn validate_saved(
 ) -> Result<(), String> {
     let header: Header = serde_json::from_slice(&io::read_input(&out.join("header.json"))?)
         .map_err(|e| e.to_string())?;
-    if header.binding != *binding
+    if header.schema != "war1-study-archive-v1"
+        || header.mode != "construction_fixture"
+        || header.binding != *binding
         || header.planned != manifest.cases.len() as u64
         || io::read_input(&out.join("manifest.json"))? != wire::SELECTED
     {
@@ -560,7 +562,7 @@ fn validate_saved(
         }
         entries.push((item.path.clone(), bytes));
     }
-    if source::inputs::fingerprint(entries, source::MANIFEST_PATH)?
+    if source::inputs::fingerprint(&entries, source::MANIFEST_PATH)?
         != binding.compiled_inputs_sha256
     {
         return Err("saved closure mismatch".into());
@@ -797,4 +799,18 @@ fn validate_audit(out: &Path, o: &Outcome, input: &[u8]) -> Result<(), String> {
         return Err("audit transcript/accounting mismatch".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+pub(super) fn construction_test_validate_saved(out: &Path) -> Result<(), String> {
+    let candidate: Candidate =
+        serde_json::from_slice(&io::read_input(&out.join("candidate-index.json"))?)
+            .map_err(|e| e.to_string())?;
+    validate_saved(
+        out,
+        &wire::decode_manifest(wire::SELECTED)?,
+        &candidate.binding,
+        &candidate.blocks,
+        &candidate.receipt,
+    )
 }

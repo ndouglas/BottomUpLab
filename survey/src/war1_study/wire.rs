@@ -306,3 +306,12 @@ pub(super) fn reject_numeric_underflow(bytes: &[u8]) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Nullable v1 fields must be present even when their value is null.
+pub(super) fn required_nullable<'de, D, T>(d: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de>,
+{
+    Option::<T>::deserialize(d)
+}

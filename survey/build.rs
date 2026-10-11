@@ -144,6 +144,12 @@ fn war1_study_stamp(root: &Path, out: &Path) {
     let selected = std::env::var("WAR1_STUDY_MANIFEST")
         .unwrap_or_else(|_| war1_study_inputs::DEFAULT_MANIFEST.into());
     war1_study_inputs::validate_selection(&selected).expect("study manifest selection");
+    let entries = war1_study_inputs::read(root, &selected).expect("study compiled inputs");
+    let bytes = &entries
+        .iter()
+        .find(|(path, _)| path == &selected)
+        .expect("selected input present")
+        .1;
     if selected != war1_study_inputs::DEFAULT_MANIFEST {
         let tracked = std::process::Command::new("git")
             .current_dir(root)
@@ -154,18 +160,13 @@ fn war1_study_stamp(root: &Path, out: &Path) {
             tracked.status.success(),
             "selected scientific manifest must be committed"
         );
-        let committed = std::process::Command::new("git")
-            .current_dir(root)
-            .args(["show", &format!("HEAD:{selected}")])
-            .output()
-            .expect("read committed study manifest");
+        let committed = war1_study_inputs::read_committed_manifest(root, &selected)
+            .expect("read bounded committed study manifest");
         assert!(
-            committed.status.success()
-                && committed.stdout == fs::read(root.join(&selected)).expect("selected manifest"),
+            committed == *bytes,
             "selected manifest bytes must match HEAD"
         );
     }
-    let entries = war1_study_inputs::read(root, &selected).expect("study compiled inputs");
     for (path, _) in &entries {
         println!("cargo:rerun-if-changed={}", root.join(path).display());
     }
@@ -177,10 +178,8 @@ fn war1_study_stamp(root: &Path, out: &Path) {
         println!("cargo:rerun-if-changed={}", root.join(path).display());
     }
     let paths: Vec<_> = entries.iter().map(|e| e.0.as_str()).collect();
-    let identity =
-        war1_study_inputs::fingerprint(entries.clone(), &selected).expect("study source hash");
-    let bytes = fs::read(root.join(&selected)).expect("selected study manifest");
-    let manifest_hash = format!("{:x}", Sha256::digest(&bytes));
+    let identity = war1_study_inputs::fingerprint(&entries, &selected).expect("study source hash");
+    let manifest_hash = format!("{:x}", Sha256::digest(bytes));
     let purpose = if selected == war1_study_inputs::DEFAULT_MANIFEST {
         "construction_fixture"
     } else {

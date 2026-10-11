@@ -29,11 +29,19 @@ pub struct NumericExport {
     pub manifest_sha256: String,
     pub rules_id: String,
     pub binding_state: String,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub compiled_inputs_sha256: Option<String>,
     #[serde(deserialize_with = "wire::bounded_vec::<_,_,18>")]
     pub states: Vec<NumericState>,
 }
 pub fn export_numeric_inputs(manifest: &wire::Manifest) -> Result<NumericExport, String> {
+    export_verified_numeric_inputs(manifest, &super::source::verify()?)
+}
+// The caller has just verified source and executable through the fixed gate context.
+pub(super) fn export_verified_numeric_inputs(
+    manifest: &wire::Manifest,
+    binding: &super::gate::CampaignBinding,
+) -> Result<NumericExport, String> {
     if manifest != &wire::decode_manifest(wire::SELECTED)? {
         return Err("numeric export requires the exact compiled selected manifest".into());
     }
@@ -79,7 +87,7 @@ pub fn export_numeric_inputs(manifest: &wire::Manifest) -> Result<NumericExport,
         manifest_sha256: wire::sha256(wire::SELECTED),
         rules_id: RULES_ID.into(),
         binding_state: "source_bound".into(),
-        compiled_inputs_sha256: Some(super::source::verify()?.compiled_inputs_sha256),
+        compiled_inputs_sha256: Some(binding.compiled_inputs_sha256.clone()),
         states,
     })
 }

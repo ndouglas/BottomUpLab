@@ -8,8 +8,11 @@ pub struct CampaignBinding {
     pub manifest_sha256: String,
     pub compiled_inputs_sha256: String,
     pub executable_sha256: String,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub declaration_sha256: Option<String>,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub acceptance_sha256: Option<String>,
+    #[serde(deserialize_with = "wire::required_nullable")]
     pub execution_approval_sha256: Option<String>,
 }
 pub struct AuthorizedCampaign {
@@ -41,7 +44,12 @@ impl SourceInventory {
         if self.schema != "war1-study-source-inventory-v1"
             || self.compiled_inputs_sha256 != expected
             || self.entries.is_empty()
-            || self.entries.len() > 4096
+            || self.entries.len() > source::inputs::MAX_ENTRIES
+            || self
+                .entries
+                .iter()
+                .try_fold(0u64, |sum, a| sum.checked_add(a.bytes))
+                .is_none_or(|sum| sum > source::inputs::MAX_SOURCE_BYTES as u64)
             || self.entries.windows(2).any(|w| w[0].path >= w[1].path)
             || self.entries.iter().any(|a| {
                 !source::inputs::valid_relative(&a.path)
@@ -278,6 +286,22 @@ pub fn preflight(
     acceptance: &Path,
     execution: &Path,
 ) -> Result<AuthorizedCampaign, String> {
+    // Context creation is deferred until after the mandatory execution read.
+    preflight_with_context(
+        declaration,
+        acceptance,
+        execution,
+        source::VerificationContext::compiled,
+        "prospective_seed_population",
+    )
+}
+fn preflight_with_context(
+    declaration: &Path,
+    acceptance: &Path,
+    execution: &Path,
+    context: impl FnOnce() -> Result<source::VerificationContext, String>,
+    required_purpose: &str,
+) -> Result<AuthorizedCampaign, String> {
     // The absent execution dependency is reported even when other receipts also fail.
     let (e, eb): (Execution, _) = read(execution).map_err(|e| format!("execution receipt: {e}"))?;
     let (a, ab): (Acceptance, _) =
@@ -285,9 +309,10 @@ pub fn preflight(
     let (d, db): (Declaration, _) =
         read(declaration).map_err(|e| format!("declaration receipt: {e}"))?;
     validate_receipt_links(&d, &a, &e, &db, &ab)?;
-    let mut binding = source::verify()?;
+    let context = context()?;
+    let mut binding = context.verify()?;
     let m = wire::decode_manifest(wire::SELECTED)?;
-    if source::PURPOSE != "prospective_seed_population" || m.purpose != source::PURPOSE {
+    if source::PURPOSE != required_purpose || m.purpose != required_purpose {
         return Err("construction fixture cannot authorize science".into());
     }
     let ids = &d.identities;
@@ -299,18 +324,6 @@ pub fn preflight(
         || ids.resolved_roster_sha256 != m.roster_sha256
     {
         return Err("source/binary/protocol/manifest binding mismatch".into());
-    }
-    if a.build_sha256 != d.build.sha256
-        || a.numeric_sha256 != d.numeric.sha256
-        || a.resources_sha256 != d.resources.sha256
-        || a.binary_sha256 != ids.binary_sha256
-        || a.manifest_sha256 != ids.manifest_sha256
-        || e.binary_sha256 != ids.binary_sha256
-        || e.manifest_sha256 != ids.manifest_sha256
-        || e.compiled_inputs_sha256 != ids.compiled_inputs_sha256
-        || e.source_inventory_sha256 != ids.source_inventory_sha256
-    {
-        return Err("readiness/execution evidence binding mismatch".into());
     }
     if artifact(&d.manifest)? != wire::SELECTED
         || d.source_inventory.sha256 != ids.source_inventory_sha256
@@ -327,7 +340,7 @@ pub fn preflight(
     let packet: SourceInventory = decode(&d.source_inventory)?;
     packet.validate(&ids.compiled_inputs_sha256)?;
     let inventory = packet.entries;
-    let current = source::inputs::read(Path::new(source::ROOT), source::MANIFEST_PATH)?;
+    let current = source::inputs::read(context.root(), source::MANIFEST_PATH)?;
     let expected: Vec<_> = current
         .iter()
         .map(|(path, bytes)| Artifact {
@@ -341,7 +354,7 @@ pub fn preflight(
     }
     for item in &inventory {
         let status = std::process::Command::new("git")
-            .current_dir(source::ROOT)
+            .current_dir(context.root())
             .args([
                 "status",
                 "--porcelain",
@@ -393,7 +406,7 @@ pub fn preflight(
         return Err("numeric readiness failed".into());
     }
     let exported: super::numerics::NumericExport = decode(&n.numeric_export)?;
-    if exported != super::numerics::export_numeric_inputs(&m)? {
+    if exported != super::numerics::export_verified_numeric_inputs(&m, &binding)? {
         return Err("numeric export differs from source-bound native certificate inputs".into());
     }
     artifact(&n.oracle_packet)?;
@@ -530,4 +543,24 @@ pub(super) fn validate_receipt_links(
         return Err("readiness/execution evidence binding mismatch".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+pub(super) fn construction_test_preflight(
+    context: source::VerificationContext,
+    declaration: &Path,
+    acceptance: &Path,
+    execution: &Path,
+) -> Result<AuthorizedCampaign, String> {
+    let m = wire::decode_manifest(wire::SELECTED)?;
+    if m.purpose != "construction_fixture" || m.cases.iter().any(|c| ![7, 8].contains(&c.seed)) {
+        return Err("construction_test requires seeds 7/8 fixture".into());
+    }
+    preflight_with_context(
+        declaration,
+        acceptance,
+        execution,
+        || Ok(context),
+        "construction_fixture",
+    )
 }

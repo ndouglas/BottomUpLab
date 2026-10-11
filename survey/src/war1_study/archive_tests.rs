@@ -14,6 +14,20 @@ fn fixture_archive_has_exact_population_candidate_and_no_success_marker() {
     assert_eq!(receipt.acknowledged_cases, 16);
     assert!(output.join("candidate-index.json").exists());
     assert!(!output.join("success.json").exists());
+    archive::construction_test_validate_saved(&output).unwrap();
+    let header_path = output.join("header.json");
+    let original = std::fs::read(&header_path).unwrap();
+    for (key, value) in [
+        ("schema", "unsupported"),
+        ("mode", "prospective_seed_population"),
+    ] {
+        let mut header: serde_json::Value = serde_json::from_slice(&original).unwrap();
+        header[key] = value.into();
+        std::fs::write(&header_path, serde_json::to_vec(&header).unwrap()).unwrap();
+        let error = archive::construction_test_validate_saved(&output).unwrap_err();
+        assert!(error.contains("header/manifest"), "{error}");
+    }
+    std::fs::write(header_path, original).unwrap();
     assert!(archive::collect_fixture(
         &std::path::Path::new(source::ROOT).join(source::MANIFEST_PATH),
         &output
