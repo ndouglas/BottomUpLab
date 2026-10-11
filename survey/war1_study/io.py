@@ -47,7 +47,7 @@ def strict_json(data: bytes, limit: int) -> Json:
             number = float(value)
             if not math.isfinite(number) or (value != 0 and number == 0):
                 raise ValueError("JSON number is nonfinite or underflows binary64")
-            return number
+            return value
         if isinstance(value, str):
             value.encode("utf-8", errors="strict")
         elif isinstance(value, dict):
@@ -81,6 +81,14 @@ def strict_json(data: bytes, limit: int) -> Json:
 
 
 def canonical_bytes(value: object) -> bytes:
+    def decimal_number(number):
+        if not isinstance(number, Decimal):
+            raise TypeError("unsupported JSON value")
+        resolved = float(number)
+        if not math.isfinite(resolved) or (number != 0 and resolved == 0):
+            raise ValueError("Decimal is nonfinite or underflows binary64")
+        return resolved
+
     try:
         return (
             json.dumps(
@@ -89,6 +97,7 @@ def canonical_bytes(value: object) -> bytes:
                 separators=(",", ":"),
                 ensure_ascii=False,
                 allow_nan=False,
+                default=decimal_number,
             )
             + "\n"
         ).encode("utf-8")

@@ -1,5 +1,6 @@
 """Strict JSON and bounded create-only filesystem behavior."""
 
+from decimal import Decimal
 import os
 from pathlib import Path
 import tempfile
@@ -8,13 +9,13 @@ from survey.war1_study import io
 
 
 class JsonTests(unittest.TestCase):
-    def test_strict_numbers_preserve_integer_and_binary64_types(self):
+    def test_strict_numbers_preserve_integer_and_decimal_types(self):
         self.assertEqual(
             io.strict_json(b'{"seed":18446744073709551615,"dt":0.015625}', 100),
             {"seed": 2**64 - 1, "dt": 0.015625},
         )
         self.assertIs(type(io.strict_json(b'{"n":7}', 100)["n"]), int)
-        self.assertIs(type(io.strict_json(b'{"n":7.0}', 100)["n"]), float)
+        self.assertIs(type(io.strict_json(b'{"n":7.0}', 100)["n"]), Decimal)
 
     def test_duplicate_nested_unknown_number_and_trailing_input_are_rejected(self):
         for data in (
@@ -69,6 +70,15 @@ class JsonTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             io.canonical_bytes({"n": float("nan")})
+
+
+class DecimalWireTests(unittest.TestCase):
+    def test_canonical_decimal_conversion_preserves_integer_seeds(self):
+        self.assertEqual(io.canonical_bytes({"x":Decimal("0.1"),"seed":2**64-1}),
+                         b'{"seed":18446744073709551615,"x":0.1}\n')
+        for value in (Decimal("1e-999"),Decimal("1e999"),Decimal("NaN")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                io.canonical_bytes({"x":value})
 
 
 class FileTests(unittest.TestCase):

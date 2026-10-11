@@ -67,10 +67,21 @@ class ManifestTests(unittest.TestCase):
             calls.append(n)
             return b"\x00" * 8
 
-        for command in ((), ["prepare"], ("x" * 193,), ("é" * 97,), ("x",) * 193):
+        for command in ((), ["prepare"], ("x" * 1025,), ("é" * 513,), ("x",) * 33):
             with self.subTest(command=command), self.assertRaises(ValueError):
                 manifest.sample_manifest(ROOT, entropy, command=command)
         self.assertEqual(calls, [])
+
+    def test_command_exact_utf8_bounds_are_accepted(self):
+        command=("é"*512,)*32
+        data=manifest.sample_manifest(ROOT,lambda n:b"\x07"*8,command=command)
+        self.assertEqual(manifest.validate_manifest(data,ROOT).raw["sampler"]["command"],list(command))
+
+    def test_sampler_version_is_bounded_and_must_be_supported(self):
+        raw=json.loads(self.science)
+        for version in ("v"*129, "v"*128, 1):
+            raw["sampler"]["version"]=version
+            self.reject(raw)
 
     def test_manifest_size_gate_runs_before_seed_list_allocation_and_draws(self):
         calls = []

@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from copy import deepcopy
+from decimal import Decimal
 import hashlib
 from pathlib import Path
 import re
@@ -39,9 +40,9 @@ def _fields(value, expected, context):
         raise ValueError(f"{context}: unknown or missing fields")
 
 
-def _text(value, context):
-    if not isinstance(value, str) or not value or len(value.encode("utf-8")) > 192:
-        raise ValueError(f"{context}: expected nonempty text within 192 UTF-8 bytes")
+def _text(value, context, maximum=192):
+    if not isinstance(value, str) or not value or len(value.encode("utf-8")) > maximum:
+        raise ValueError(f"{context}: expected nonempty text within {maximum} UTF-8 bytes")
 
 
 def _uint(value, context, maximum=2**64 - 1):
@@ -104,7 +105,7 @@ def _validate_arms(value, expected):
                     actual = arm["config"][name]
                     if name in ("blue_rate", "red_rate", "dt"):
                         try:
-                            matches = type(actual) in (int, float) and struct.pack(
+                            matches = type(actual) in (int, float, Decimal) and struct.pack(
                                 ">d", actual
                             ) == struct.pack(">d", config_value)
                         except (OverflowError, struct.error):
@@ -154,6 +155,7 @@ def validate_manifest(data: bytes, root: Path) -> Manifest:
         if purpose == "construction_fixture"
         else "os.urandom-u64le-v1"
     )
+    _text(sampler["version"], "sampler version", 128)
     if sampler["method"] != method or sampler["version"] != SAMPLER_VERSION:
         raise ValueError("sampler method/version mismatch")
     _uint(sampler["bytes_drawn"], "sampler bytes drawn")
@@ -163,11 +165,11 @@ def validate_manifest(data: bytes, root: Path) -> Manifest:
         raise ValueError("sampler draw byte census mismatch")
     if (
         not isinstance(sampler["command"], list)
-        or not 1 <= len(sampler["command"]) <= 192
+        or not 1 <= len(sampler["command"]) <= 32
     ):
         raise ValueError("sampler command must be a bounded nonempty argv")
     for item in sampler["command"]:
-        _text(item, "sampler command argument")
+        _text(item, "sampler command argument", 1024)
     if purpose == "construction_fixture" and sampler["command"] != [
         "construction-fixture-factory"
     ]:
@@ -270,10 +272,10 @@ def sample_manifest(
     The method labels the future preparation protocol. Synthetic factory output
     cannot establish genuine OS sampling or independently authorize collection.
     """
-    if not isinstance(command, tuple) or not 1 <= len(command) <= 192:
+    if not isinstance(command, tuple) or not 1 <= len(command) <= 32:
         raise ValueError("sampler command must be a bounded nonempty tuple")
     for item in command:
-        _text(item, "sampler command argument")
+        _text(item, "sampler command argument", 1024)
     arms = proposal(root)["arms"]
     count = sum(arm["replicates"] for arm in arms)
     sampler = {
