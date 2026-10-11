@@ -294,3 +294,84 @@ Report construction, serialization, source/reference receipts and browser Captur
 The fresh numerical author receives only this sealed protocol, the approved design and fixed handoff inputs, no production source or prior expected outputs. It implements `evaluate(k,b,d,h,r)->dict`, `decode_holder(h)->tuple[str,...]` and `decode_retriever(r)->tuple[str,...]` using Python standard library. Manually derived supplied-near and delayed-suffix unit traces must precede enumeration. Preserve failure/repair evidence and every raw suffix. It derives all 18 complete tables, best responses, all pure sets/ties, selected controls and full histories; 839,808 raw outcomes and up to 90 available control histories are requirements, not measured success claims. A separate fresh numerical reviewer seals its own checks before viewing author output. No numerical handoff precedes independent protocol approval.
 
 Capture limitations, logical versus actual memory and controller-family bounds must remain visible in findings. This experiment can establish the exact specified finite game's behavior; it cannot establish learning convergence, an equilibrium-selection mechanism, hidden mechanism discovery or general altruism. Do not change the registered physics after seeing outcomes without preserving this version and explicitly registering a separate series.
+
+## Engineering provenance addendum: Task 4 source binding
+
+Status: engineering registration awaiting fresh independent review before Task 4 runtime implementation. This addendum specifies required provenance behavior; it supplies no compiled generator, native/WASM parity, source-selector test or scientific collection evidence. It changes no physics, event, observation, resource accounting, report/summary fields, canonical Episode encoding or numerical judgment rule above.
+
+The numerical derivation remains governed by the retained sealed-v2 protocol: 41,300 bytes, raw SHA-256 `e5ebd9c47b75a589380209b17a3d5248ec0f0f8a018da0093057b6980ba57333`, retained as `sealed-inputs-v2/protocol.md` in the ignored numerical handoff. Those exact bytes are the complete prefix preceding this addendum. Governing input receipts in the approved fixtures continue to attest to that retained version. They must never be relabeled as receipts for the extended product protocol. Preserve all sealed numerical input versions and all three approved fixture byte strings; bind this extended engineering document separately in review/freeze evidence.
+
+### Raw receipts and ordered outer identities
+
+For every compiled input `(path, bytes)`, `Receipt.path` is its registered repository-relative label, `Receipt.bytes` is the checked exact byte length, and `Receipt.sha256` is lowercase SHA-256 of the exact raw bytes. It is never a one-item outer receipt identity. Ordered collections serialize as a compact UTF-8 JSON array without newline or BOM, retaining collection order and each receipt object's field order `path,bytes,sha256`; SHA-256 of that array is the collection's outer identity. Do not recursively sort these receipt-object fields or wrap an already computed outer identity again.
+
+Keep the existing `surface_discovery::compiled_bytes_identity` unchanged: its return value is an outer identity, not individual raw receipts. `Report.source_hash` remains that helper's result over the declared complete Gate diagnostic input collection. Trace and report-content identities retain the previously registered one-item paths and codecs. Raw exported-file receipts, including any CLI newline, remain separate.
+
+### Shared ordered compiled inventory
+
+Use one standalone `crates/sugarscape-core/src/gate_assistance/source_inputs.rs` module in both the Cargo host build crate and the target runtime crate. It declares ordered literal repository-relative labels paired with `include_bytes!` inputs; it depends on neither generated output nor Gate model types. Host and runtime must consume those same arrays. No independent host copy of the inventory is permitted.
+
+Register `SOURCE_INPUTS` in the following exact order. Existing entries retain their relative order; new diagnostic/generator inputs and all three consumed JSON fixtures extend the collection:
+
+1. `crates/sugarscape-core/src/gate_assistance/mod.rs`
+2. `crates/sugarscape-core/src/gate_assistance/types.rs`
+3. `crates/sugarscape-core/src/gate_assistance/controller.rs`
+4. `crates/sugarscape-core/src/gate_assistance/kernel.rs`
+5. `crates/sugarscape-core/src/gate_assistance/observation.rs`
+6. `crates/sugarscape-core/src/gate_assistance/canonical.rs`
+7. `crates/sugarscape-core/src/gate_assistance/metrics.rs`
+8. `crates/sugarscape-core/src/gate_assistance/game.rs`
+9. `crates/sugarscape-core/src/gate_assistance/budget.rs`
+10. `crates/sugarscape-core/src/surface_discovery/mod.rs`
+11. `crates/sugarscape-core/src/surface_discovery/types.rs`
+12. `crates/sugarscape-core/src/surface_discovery/diagnostics.rs`
+13. `crates/sugarscape-core/src/surface_discovery/diagnostics/hash.rs`
+14. `crates/sugarscape-core/src/gate_assistance/diagnostics.rs`
+15. `crates/sugarscape-core/src/gate_assistance/protocol.rs`
+16. `crates/sugarscape-core/src/gate_assistance/references.rs`
+17. `crates/sugarscape-core/src/gate_assistance/source_inputs.rs`
+18. `crates/sugarscape-core/build.rs`
+19. `crates/sugarscape-core/build_support/surface_discovery.rs`
+20. `crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json`
+21. `crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json`
+22. `crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json`
+
+Register `REFERENCE_INPUTS` as exactly entries 20, 21 and 22 above, in kernel (physics), game, limits order. The fixtures occur in both collections because they are both diagnostic compiled inputs and approved reference inputs; paths are unique within each collection. Their raw receipts describe the existing fixture bytes, without modifying or embedding a fourth JSON fixture.
+
+The intended new provenance source files are `crates/sugarscape-core/build.rs`, `crates/sugarscape-core/build_support/surface_discovery.rs` and `crates/sugarscape-core/src/gate_assistance/source_inputs.rs`. The reviewed Task 4 runtime surface additionally calls for the new Gate `diagnostics.rs`, `protocol.rs`, `references.rs`, owning `tests/diagnostics.rs`, the CLI `gate_assistance.rs` module and CLI integration tests. Existing Gate `mod.rs`, owning test registration and CLI `main.rs` will wire those modules. Only compiled diagnostic files belong in the ordered collection above; tests and delivery adapters remain explicitly bound in the engineering/freeze inventory.
+
+Audit the actual final files, imports, path modules and literal/dynamic macros against this declaration before freeze. An additional consumed source/data file requires an explicit reviewed inventory extension; do not rely on a future file wildcard or silently omit a dependency. The complete build closure additionally includes crate facades, manifests/locks, dependencies, CLI/WASM adapters, build configuration, compiler/target/flags, generated artifacts and actual executable bytes, independently registered in external freeze evidence. Those freeze receipts do not add Report fields or replace the Gate input receipts.
+
+### Cargo host generation with unchanged SHA source
+
+Cargo auto-discovers the new core `build.rs`; add no dependency or manifest change. It loads `#[path = "build_support/surface_discovery.rs"] mod surface_discovery;`. That wrapper loads `#[path = "../src/surface_discovery/diagnostics/hash.rs"] mod hash;` and exposes only the small call needed for raw SHA-256. This creates the existing restricted visibility ancestor `crate::surface_discovery` inside the separate host build crate. Preserve the old SHA file, its visibility and all other old scientific source bytes. Use the path module rather than textual inclusion of the SHA file, whose inner module documentation must remain unchanged. Actual compilation must verify this arrangement; registration alone is not that proof. No copied SHA implementation, runtime filesystem lookup, external hashing executable or Python build requirement is authorized.
+
+The host consumes the shared arrays, computes checked byte lengths and raw digests, and deterministically writes Rust receipt tuple constants plus source/reference outer identities to `OUT_DIR/gate_source_receipts.rs`. The small host receipt serializer must reproduce exactly the registered receipt codec. Validate nonempty canonical relative ASCII path labels, rejecting empty/dot/dot-dot components, absolute paths, backslashes, controls, quote and other JSON-special characters; reject duplicate labels within a collection. Checked arithmetic, missing inputs and generation/write failures must fail with input/output context. Runtime receipt construction preserves the existing strict `Receipt` type.
+
+Emit `cargo:rerun-if-changed` for every declared input, including the generator, wrapper, shared inventory and all three JSON fixtures. Resolve watched source locations from `CARGO_MANIFEST_DIR`; never put absolute checkout paths, timestamps, target details or OUT_DIR paths into scientific labels or receipt content. The generator runs on the host for native and WASM targets; target code includes only the generated data and its ordinary embedded source/reference bytes.
+
+Hash the generator, wrapper and input declaration as ordinary source bytes; they contain no computed digest of themselves. Exclude `OUT_DIR/gate_source_receipts.rs` from both input arrays and its own hash. It is a deterministic derived build artifact whose bytes/receipt can be archived separately at freeze. Do not recursively select target/OUT_DIR, ignored numerical evidence or other generated outputs as scientific source inputs. This removes the self-hash cycle while retaining the generator/input closure.
+
+### Runtime agreement and external reference attestations
+
+Before report acceptance, runtime must reconstruct the generated tuples in exact registered order and validate their paths, sizes, digests and uniqueness. Cross-check the generated source/reference aggregate identities against fresh unchanged `compiled_bytes_identity` calls over the corresponding runtime-embedded byte arrays. Independently recomputed host tuples and outer hashes, alongside this runtime comparison, must establish that metadata describes the bytes actually embedded. Reject forged, stale, missing, duplicate or reordered source/reference receipts; a stored passed flag cannot authorize changed metadata. Evidence must include independently computed raw tuples and known SHA vectors, rather than only equality of two outputs from the same host generator.
+
+Receipts already inside the approved fixtures attest to retained external numerical artifacts and governing sealed inputs. They do not assert that ignored full census tables, boundary evidence, derivations or sealed documents were compiled. The build/runtime must not require those ignored files to be present. The authorized root independently rehashes the actual retained external artifacts before scientific collection, preserving their separate receipts and paths.
+
+Populate portable expected Row-array outer identity constants in `references.rs` only from the independently approved `numerical-author/portable-row-identities.json`, as reviewed in `numerical-reviewer/portable-row-identities-review.md`. Bind that metadata's exact raw receipt and its approval in external review/freeze evidence; its copied constants are bound through `references.rs`. Do not embed a fourth JSON file or alter an approved fixture. The expected comparison remains the existing helper applied once to `(approved row_receipt.path, current canonical native Row-array bytes)`, compared directly with the approved outer `receipt_identity`; the original row_receipt SHA remains a raw external-byte attestation. Portable row equality does not replace full independent census verification or external artifact receipt checks.
+
+### F5, W1 and incoming W1-A selectors
+
+The actual F5 selector `survey/build_support/f5_source_identity.rs` automatically selects only `.rs` files beneath its source directories, including `crates/sugarscape-core/src`. Explicitly add both `crates/sugarscape-core/build.rs` and `crates/sugarscape-core/build_support/surface_discovery.rs`, and the three exact kernel/game/limits JSON paths above, to its fixed `FILES` inventory. `source_inputs.rs` and the other Gate Rust modules are already beneath its Rust source directory. Every further consumed non-Rust input must have an exact fixed entry.
+
+The actual W1 selector `survey/build_support/war1_source_identity.rs` recursively selects all files under `crates/sugarscape-core/src`, so the shared inventory and three JSON files are already selected. Explicitly add the two outside-core/src generator/wrapper paths to its `FILES` inventory, making them required inputs through its existing fingerprint rules. Verify actual reader membership rather than adding redundant recursive reads that introduce duplicate entries.
+
+Incoming main additionally contains `survey/build_support/war1_study_source_identity.rs` for W1-A. Its actual core/src recursive selection includes the Gate Rust/JSON inputs, but omits the same outside-core/src generator/wrapper files. After proper integration, add those two exact paths to its `FILES` inventory and required closure. Preserve main's foreign work. Its fixed `core-literal-inputs-v1.txt` is restricted to designated external asset families; it must not be repurposed for arbitrary build artifacts.
+
+For each selector, audit literal includes, path modules and the one derived OUT_DIR inclusion through its exact generator/input closure. Source mutation checks must exercise the two outside-core/src files, the shared inventory, runtime source and each consumed JSON, and establish that actual selection/fingerprints change. Missing required files must reject. Never broadly permit unknown dynamic macro paths. Preserve historical measurements/source identities; newly computed selector stamps legitimately change with these new compiled dependencies. No unrelated collector science is authorized by these engineering checks.
+
+### Required evidence before implementation acceptance and collection
+
+The authorized Task 4 owner must verify host wrapper compilation, default native/WASM core compilation, workspace Clippy and edited-file formatting; independently recompute all raw tuples/ordered outer hashes and test runtime agreement, order/uniqueness and known SHA vectors. Disposable input mutations must verify Cargo regeneration and corresponding raw/outer identity changes for source, reference, inventory and generator bytes; malformed paths and missing inputs must fail. Equal source bytes must yield equal receipts across clean/incremental builds, checkout paths and targets. Retain every failed gate and superseded artifact.
+
+Test report receipt tampering and stale source binding without a successful scientific diagnose. Verify actual F5/W1/W1-A membership and scoped source mutation tests after their proper integration, and prove old scientific source and approved fixture bytes unchanged. At freeze independently bind the actual Cargo/compiler/flags/adapters/executable closure and rehash external numerical evidence. No successful diagnose is permitted before Task 7's exact reviewed freeze/internal release. Fresh independent engineering protocol review precedes runtime implementation; later compilation, implementation review and freeze evidence remain separate gates.
