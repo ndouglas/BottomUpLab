@@ -311,4 +311,20 @@ mod tests {
         assert_eq!(back, c);
         assert!(serde_json::from_str::<AssistanceConfig>(r#"{"nodes":64}"#).is_err());
     }
+
+    #[test]
+    fn schema_round_trips_and_only_game_mode_and_bins_apply_at_reset() {
+        use crate::model::{ModelConfig, ModelWorld};
+        for config in [
+            ModelConfig::Assistance(AssistanceConfig::default()),
+            ModelConfig::Assistance(AssistanceConfig {
+                game: Game::OffSwitch,
+                ..Default::default()
+            }),
+        ] {
+            crate::schema::check_schema(&schema(), &config, || {
+                ModelWorld::new(config.clone(), 1).unwrap()
+            });
+        }
+    }
 }

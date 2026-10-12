@@ -828,6 +828,10 @@ fn presets_list_every_model_with_sugarscape_configs_untagged() {
             .map(String::from)
     };
     assert_eq!(model("ii-2-unit"), None);
+    assert_eq!(
+        model("assistance-paperclips-expert").as_deref(),
+        Some("assistance")
+    );
     let geosim_ids = list
         .iter()
         .filter(|p| p["config"]["model"] == "geosim")
@@ -1973,4 +1977,31 @@ fn auction_short_sessions_match_native_protocol_fingerprints() {
         sim.step(4);
         assert_eq!(sim.fingerprint(), expected);
     }
+}
+
+#[wasm_bindgen_test]
+fn assistance_presets_match_the_native_golden_entries() {
+    // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: the quadrature and the polar
+    // Gaussian draw use portable arithmetic only, so WASM repeats the native fingerprints.
+    for (id, expected) in [
+        ("assistance-paperclips-expert", "0x8fd885fe3802d2e6"),
+        ("assistance-paperclips-teaching", "0x0c46787ac6c9534a"),
+        ("assistance-paperclips-iterated", "0xec28281c6d0c7e05"),
+        ("assistance-paperclips-learning", "0xd8e78448a7bbbc84"),
+        ("assistance-offswitch-rational", "0x29c39465b35ad31b"),
+        ("assistance-offswitch-toddler", "0x1cf06517a328f51b"),
+    ] {
+        let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
+        sim.step(200);
+        assert_eq!(sim.fingerprint(), expected, "{id}");
+        assert_ne!(sim.render("", "sugar").unwrap(), 0);
+    }
+    let sim = Sim::new(
+        &preset_json("assistance-offswitch-toddler"),
+        1,
+        JsValue::NULL,
+    )
+    .unwrap();
+    let view: serde_json::Value = serde_json::from_str(&sim.inspect(18, 0).unwrap()).unwrap();
+    assert_eq!(view["choice"], "act");
 }
