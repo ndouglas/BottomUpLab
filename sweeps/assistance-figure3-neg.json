@@ -1,0 +1,64 @@
+{
+  "name": "Assistance Games: Figure 3 at μ = −1/4",
+  "description": "The off-switch game's exact incentive Δ to wait (Hadfield-Menell et al. 2017, Theorem 2) over the belief standard deviation σ, one line per human temperature β, with the belief mean μ = −1/4. β = 0 is the rational human. Δ is exact, so one tick and one seed suffice; the grid is ours (the paper's axes are unlabeled). Where Δ ≤ 0 the robot switches itself off at μ < 0 and acts without asking at μ > 0.",
+  "base": {
+    "config": {
+      "model": "assistance",
+      "game": "off_switch",
+      "mu": -0.25,
+      "episodes_per_tick": 1
+    }
+  },
+  "x": {
+    "label": "σ",
+    "path": "sigma",
+    "values": [
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.25,
+      0.3,
+      0.35,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95,
+      1.0
+    ]
+  },
+  "series": {
+    "label": "β",
+    "path": "beta",
+    "values": [
+      0,
+      0.1,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1,
+      1.5,
+      2,
+      3,
+      4
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 1
+  },
+  "ticks": 1,
+  "metric": {
+    "kind": "final",
+    "series": "delta_exact"
+  }
+}

@@ -469,6 +469,12 @@ fn builtins_and_series_names_are_listed() {
             "auctions-bidders",
             "auctions-persistent",
             "auctions-duration",
+            "assistance-figure3-neg",
+            "assistance-figure3-zero",
+            "assistance-figure3-pos",
+            "assistance-figure4",
+            "assistance-figure4-incentive",
+            "assistance-equilibria",
             "polarity-predators"
         ]
     );
