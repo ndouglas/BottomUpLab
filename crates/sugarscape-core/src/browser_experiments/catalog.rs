@@ -12,6 +12,7 @@ pub enum StudyFamily {
     Surface,
     Spatial,
     Gate,
+    Key,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -39,12 +40,18 @@ pub fn catalog() -> Vec<StudyDescriptor> {
     studies.extend(super::caching::descriptors());
     studies.push(super::discovery::descriptor());
     studies.push(super::gate::descriptor());
+    studies.push(super::key::descriptor());
     studies
 }
 pub(crate) fn rules_identity(study: StudyId) -> Result<String, Vec<FieldError>> {
     match study {
-        StudyId::GateAssistance => super::gate::rules_identity(),
-        StudyId::SurfaceDiscovery => super::discovery::rules_identity(),
+        StudyId::KeyDelegation => super::key::rules_identity(),
+        StudyId::GateAssistance => {
+            super::record::historical::current(study, super::gate::rules_identity()?)
+        }
+        StudyId::SurfaceDiscovery => {
+            super::record::historical::current(study, super::discovery::rules_identity()?)
+        }
         StudyId::ProtectionRecaching | StudyId::DeceptionGestures => {
             super::caching::rules_identity(study)
         }

@@ -60,6 +60,13 @@ class RegistrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "source directory bound"):
                 list(registration._source_files(root, "tree"))
 
+    def test_key_compatibility_metadata_is_a_required_source(self):
+        from survey.war1_study import archive_provenance
+        path = "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json"
+        self.assertIn(path, archive_provenance.SOURCE_REQUIRED)
+        inventory = registration.source_inventory(ROOT, registration.DEFAULT_MANIFEST)
+        self.assertEqual(sum(e["path"] == path for e in inventory["entries"]), 1)
+
     def test_literal_inventory_matches_all_core_compile_time_includes(self):
         paths = registration.audit_literal_inputs(ROOT)
         self.assertEqual(len(paths), 229)
@@ -67,9 +74,10 @@ class RegistrationTests(unittest.TestCase):
         self.assertIn("docs/examples/burrow/access-explore.json", paths)
 
     def test_literal_source_macros_resolve_closed_paths_and_reject_forgery(self):
-        """Only the two checked concrete macro bodies and literal calls resolve."""
+        """Only the three checked concrete macro bodies and literal calls resolve."""
         import shutil
         definitions = (
+            "crates/sugarscape-core/src/browser_experiments/record.rs",
             "crates/sugarscape-core/src/browser_experiments/discovery/mod.rs",
             "crates/sugarscape-core/src/surface_discovery/diagnostics/protocol.rs",
         )
@@ -86,9 +94,10 @@ class RegistrationTests(unittest.TestCase):
                 path = root/original
                 text = path.read_text()
                 call = next(re.finditer(r'source!\("([^"\n]+)"\)', text)).group(1)
+                prefix = "../" if original.endswith("/record.rs") else "../../"
                 replacements = (
                     text.replace('$path:literal', '$path:expr'),
-                    text.replace('"../../", $path', '"../../../", $path'),
+                    text.replace('"'+prefix+'", $path', '"../../../", $path'),
                     text.replace('$path)).', '$other)).'),
                     text.replace('source!("'+call+'")', 'source!(concat!("'+call+'"))'),
                     text.replace('source!("'+call+'")', 'source!("../Cargo.toml")'),

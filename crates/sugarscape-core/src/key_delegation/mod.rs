@@ -19,6 +19,9 @@ mod protocol;
 mod references;
 mod source_inputs;
 pub use diagnostics::*;
+pub(crate) use source_inputs::{
+    compiled_bytes_identity, identity as receipt_identity, receipts as compiled_receipts,
+};
 pub use source_inputs::{
     reference_identity, reference_receipts, source_identity, source_receipts, Receipt,
     REFERENCE_INPUTS, SOURCE_INPUTS,

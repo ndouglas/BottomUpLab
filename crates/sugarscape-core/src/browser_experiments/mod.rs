@@ -5,6 +5,7 @@ pub mod discovery;
 mod equivalence;
 mod gate;
 mod input;
+mod key;
 mod record;
 mod recorded;
 pub use recorded::recorded_results_json;
@@ -47,12 +48,14 @@ pub enum StudyId {
     ActiveSurface,
     SurfaceDiscovery,
     GateAssistance,
+    KeyDelegation,
 }
 
 pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
     // Revalidate typed inputs too as other adapters acquire bounded selectors.
     let input = normalize_input(&record::bounded_json(input, MAX_INPUT_BYTES, "input")?)?;
-    match input {
+    let mut result = match input {
+        Input::KeyDelegation { .. } => key::run(&input),
         Input::GateAssistance { .. } => gate::run(&input),
         Input::ProtectionRecaching { .. } | Input::DeceptionGestures { .. } => caching::run(&input),
         Input::BurrowExcavation { .. }
@@ -65,7 +68,14 @@ pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
         Input::SharedSurface { .. } | Input::ActiveSurface { .. } => surfaces::run(&input),
         Input::Testimony { .. } | Input::TestimonyGame { .. } => testimony::run(&input),
         _ => reporting::run(&input),
+    }?;
+    if matches!(
+        result.study,
+        StudyId::GateAssistance | StudyId::SurfaceDiscovery
+    ) {
+        result.rules_identity = catalog::rules_identity(result.study)?;
     }
+    Ok(result)
 }
 pub(crate) fn error(field: &str, message: impl Into<String>) -> Vec<FieldError> {
     vec![FieldError::new(field, message)]

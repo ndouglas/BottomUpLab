@@ -634,6 +634,7 @@ fn key_source_closure_selects_references_and_requires_them() {
     use super::super::run::source_identity::{read_inputs, selected};
     let tmp = owned_tempdir();
     for path in [
+        "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
         "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

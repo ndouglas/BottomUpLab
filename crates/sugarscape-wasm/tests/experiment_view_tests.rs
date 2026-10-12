@@ -79,7 +79,7 @@ use spatial_test_support::{
 
 #[wasm_bindgen_test]
 fn runnable_catalog_and_five_legacy_spatial_defaults() {
-    assert_eq!(core::catalog().len(), 17);
+    assert_eq!(core::catalog().len(), 18);
     assert_eq!(spatial_defaults().len(), 5);
     for input in default_seed_cases() {
         let text = input.to_string();
@@ -362,4 +362,84 @@ fn gate_actual_wasm_strict_raw_inputs_and_raw_duplicate_keys() {
         experiment_run_json(&format!("{}{}", " ".repeat(core::MAX_INPUT_BYTES), input)),
         "input",
     );
+}
+
+#[wasm_bindgen_test]
+fn key_actual_wasm_capture_and_import_each_have_separate_request_budgets() {
+    use sugarscape_core::key_delegation as k;
+    let input = json!({"study":"key_delegation","stratum":{"transfer_enabled":true,"transfer_cost":1,"giver_share":3,"distance":0},"ids":{"giver":"@T@","receiver":"e\u{301}"},"selector":"SuppliedHandoff"});
+    let start = js_sys::Date::now();
+    let raw = experiment_run_json(&input.to_string()).unwrap();
+    let run_ms = js_sys::Date::now() - start;
+    assert!(
+        run_ms < 60000.0,
+        "selected key run exceeds 60-second request budget: {run_ms}"
+    );
+    let record: Value = serde_json::from_str(&raw).unwrap();
+    let config = k::Config::new(
+        k::Stratum::new(true, 1, 3, 0).unwrap(),
+        k::Ids::new("@T@".into(), "e\u{301}".into()).unwrap(),
+        k::InitialOwner::Giver,
+    )
+    .unwrap();
+    let mut captures = vec![];
+    let native = k::run_with_capture(&config, k::Profile::new(486, 60).unwrap(), &mut |point| {
+        captures.push(point.clone());
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(
+        record["payload"]["episode"],
+        core::wire::lossless_value(&native).unwrap()
+    );
+    assert_eq!(record["payload"]["classification_scope"], "main");
+    assert_eq!(
+        record["checkpoints"].as_array().unwrap().len(),
+        captures.len()
+    );
+    for (checkpoint, point) in record["checkpoints"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .zip(captures)
+    {
+        for (id, view) in ["@T@", "e\u{301}"].into_iter().zip(point.views) {
+            assert_eq!(
+                checkpoint["local"][id],
+                json!({"view":core::wire::lossless_value(&view).unwrap(),"map":{"cells":core::wire::lossless_value(&view.last_observation.cells).unwrap(),"observed_at":core::wire::lossless_value(&view.last_observation.clock).unwrap()}})
+            );
+        }
+        assert!(checkpoint["local"].get("unknown Agent").is_none());
+    }
+    let start = js_sys::Date::now();
+    let imported = experiment_validate_json(&raw).unwrap();
+    let import_ms = js_sys::Date::now() - start;
+    assert!(
+        import_ms < 60000.0,
+        "selected key import exceeds 60-second request budget: {import_ms}"
+    );
+    assert_eq!(imported, raw);
+    let memory: js_sys::WebAssembly::Memory = wasm_bindgen::memory().unchecked_into();
+    console_log!(
+        "KEY_WASM_RESOURCES {}",
+        json!({"run_ms":run_ms,"import_ms":import_ms,"wire_bytes":raw.len(),"checkpoints":record["checkpoints"].as_array().unwrap().len(),"compiler_stats":record["payload"]["compiler_stats"],"wasm_linear_memory_bytes":js_sys::Uint8Array::new(&memory.buffer()).length(),"per_request_timeout_ms":60000})
+    );
+    errors(
+        experiment_validate_json(&raw.replacen(
+            "\"classification_scope\":",
+            "\"classification_scope\":null,\"classification_scope\":",
+            1,
+        )),
+        "episode",
+    );
+}
+#[wasm_bindgen_test]
+fn key_actual_wasm_rejects_raw_null_duplicates_and_initial_ownership() {
+    for input in [
+        r#"{"study":"key_delegation","stratum":{"transfer_enabled":true,"transfer_cost":1,"giver_share":3,"distance":0},"ids":{"giver":"A","receiver":"B"},"selector":null}"#,
+        r#"{"study":"key_delegation","stratum":{"transfer_enabled":true,"transfer_cost":1,"giver_share":3,"distance":0},"ids":{"giver":"A","receiver":"B"},"profile":{"giver":0,"receiver":60},"initial_owner":"Receiver"}"#,
+        r#"{"study":"key_delegation","study":"wink","stratum":{"transfer_enabled":true,"transfer_cost":1,"giver_share":3,"distance":0},"ids":{"giver":"A","receiver":"B"},"selector":"SuppliedHandoff"}"#,
+    ] {
+        errors(experiment_run_json(input), "input");
+    }
 }

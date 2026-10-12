@@ -20,6 +20,7 @@ pub const FILES: &[&str] = &[
     "docs/superpowers/plans/2026-10-09-war-1-engagement.md",
 ];
 pub const REQUIRED_SOURCES: &[&str] = &[
+    "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
     "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

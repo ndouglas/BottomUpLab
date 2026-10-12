@@ -90,6 +90,7 @@ def validate_inventory(packet):
 
 
 SOURCE_REQUIRED = (
+    "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
     "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

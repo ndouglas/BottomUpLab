@@ -3,18 +3,24 @@ use super::{EpisodeRecord, StudyId};
 use serde_json::{Number, Value};
 const LEGACY_FLOAT_TOLERANCE: f64 = 1e-12;
 
-pub(super) fn records_equivalent(left: &EpisodeRecord, right: &EpisodeRecord) -> bool {
-    if left.study == StudyId::GateAssistance || right.study == StudyId::GateAssistance {
-        return left == right;
-    }
+pub(super) fn records_equivalent(
+    left: &EpisodeRecord,
+    right: &EpisodeRecord,
+    historical_identity: bool,
+) -> bool {
     if left.kind != right.kind
         || left.version != right.version
         || left.study != right.study
-        || left.rules_identity != right.rules_identity
+        || (left.rules_identity != right.rules_identity && !historical_identity)
         || left.semantics != right.semantics
         || left.checkpoints.len() != right.checkpoints.len()
     {
         return false;
+    }
+    if matches!(left.study, StudyId::GateAssistance | StudyId::KeyDelegation) {
+        return left.input == right.input
+            && left.checkpoints == right.checkpoints
+            && left.payload == right.payload;
     }
     let same = |mut path: Vec<String>, a: &Value, b: &Value| {
         values_equivalent(left.study, &mut path, a, b)

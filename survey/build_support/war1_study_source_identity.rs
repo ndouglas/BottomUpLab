@@ -9,6 +9,7 @@ use std::{
 pub const DEFAULT_MANIFEST: &str = "survey/war1_study/fixtures/construction-manifest.json";
 pub const DIRECTORIES: &[&str] = &["crates/sugarscape-core/src", "survey/src/war1_study"];
 pub const KEY_REQUIRED: &[&str] = &[
+    "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
     "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

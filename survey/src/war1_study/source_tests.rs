@@ -171,6 +171,7 @@ fn key_source_closure_requires_references() {
     let entries = source::inputs::read(root, source::MANIFEST_PATH).unwrap();
     let original = source::inputs::fingerprint(&entries, source::MANIFEST_PATH).unwrap();
     for path in [
+        "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
         "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

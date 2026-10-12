@@ -260,6 +260,7 @@ fn catalog_registers_only_implemented_spatial_adapters() {
             StudyId::DeceptionGestures,
             StudyId::SurfaceDiscovery,
             StudyId::GateAssistance,
+            StudyId::KeyDelegation,
         ]
     );
     let spatial: Vec<_> = browser::catalog()

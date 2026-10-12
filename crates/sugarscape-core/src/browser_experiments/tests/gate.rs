@@ -10,6 +10,7 @@ fn gate_default_is_appended_after_exact_legacy_catalog() {
     let studies = catalog();
     let ids: Vec<_> = studies
         .iter()
+        .take(17)
         .map(|s| serde_json::to_value(s.id).unwrap())
         .collect();
     assert_eq!(

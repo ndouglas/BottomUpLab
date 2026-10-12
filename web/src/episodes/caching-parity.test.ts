@@ -57,9 +57,12 @@ for (const [id, changes] of [
   Object.assign(obj(input.lab), changes); fixtures.push({ id, input });
 }
 describe('caching complete native/WASM parity without tolerance', () => {
-  it('retains seventeen runnable entries and seven spatial renderers', () => {
-    expect(catalog).toHaveLength(17); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
-    for (const d of catalog) expect(rendererAvailable(d)).toBe(true);
+  it('retains seventeen historical renderers and appends the native Key entry', () => {
+    expect(catalog).toHaveLength(18); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
+    for (const d of catalog.slice(0, 17)) expect(rendererAvailable(d)).toBe(true);
+    expect(catalog[17].id).toBe('key_delegation');
+    // Task 6 supplies the Key renderer; this task appends its native adapter.
+    expect(rendererAvailable(catalog[17])).toBe(false);
   });
   it('lossless parser preserves max integers, strings and floats', () => {
     expect(losslessNative('{"seed":18446744073709551615,"float":0.0,"string":"123\\\"45","negative":-1}')).toEqual({ seed: seeds[1], float: 0, string: '123"45', negative: '-1' });
@@ -156,7 +159,7 @@ describe('caching source identity integrity', () => {
     const live = new TextEncoder().encode('unlisted source bytes');
     expect(await cachingIdentityBytes('unlisted-source.rs', live)).toBe(live);
   });
-  it('authenticates the exact combined war, discovery and Gate additions against the frozen historical lib', async () => {
+  it('authenticates the exact combined war, discovery, Gate and Key additions against the frozen historical lib', async () => {
     const historical = bytes(`${root}/web/src/episodes/test-fixtures/pre-war-core-lib.rs.txt`);
     const authenticated = await cachingIdentityBytes('crates/sugarscape-core/src/lib.rs', bytes(`${root}/crates/sugarscape-core/src/lib.rs`));
     expect(authenticated).toEqual(historical);
@@ -166,6 +169,9 @@ describe('caching source identity integrity', () => {
     const live = new TextDecoder().decode(bytes(`${root}/${path}`));
     for (const changed of [
       `${live}\n// unrelated delta\n`,
+      live.replace('pub mod key_delegation;', 'pub mod other_key;'),
+      live.replace('\npub mod key_delegation;\n', '\n'),
+      live.replace('pub mod key_delegation;', 'pub mod key_delegation;\npub mod key_delegation;'),
       live.replace('pub mod gate_assistance;', 'pub mod other_gate;'),
       live.replace('\npub mod gate_assistance;\n', '\n'),
       live.replace('not(target_arch = "wasm32")', 'target_arch = "wasm32"'),

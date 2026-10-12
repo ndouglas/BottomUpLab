@@ -108,7 +108,7 @@ impl Receipt {
         Ok(())
     }
 }
-pub(super) fn receipts(inputs: &[(&str, &[u8])]) -> Result<Vec<Receipt>, Error> {
+pub(crate) fn receipts(inputs: &[(&str, &[u8])]) -> Result<Vec<Receipt>, Error> {
     inputs
         .iter()
         .map(|(path, bytes)| {
@@ -120,7 +120,7 @@ pub(super) fn receipts(inputs: &[(&str, &[u8])]) -> Result<Vec<Receipt>, Error> 
         })
         .collect()
 }
-pub(super) fn identity(receipts: &[Receipt]) -> Result<String, Error> {
+pub(crate) fn identity(receipts: &[Receipt]) -> Result<String, Error> {
     let mut paths = std::collections::BTreeSet::new();
     for r in receipts {
         r.validate()?;
@@ -143,4 +143,9 @@ pub fn source_identity() -> Result<String, Error> {
 }
 pub fn reference_identity() -> Result<String, Error> {
     identity(&reference_receipts()?)
+}
+
+/// Ordered raw-byte receipts, shared with the selected browser boundary.
+pub(crate) fn compiled_bytes_identity(inputs: &[(&str, &[u8])]) -> Result<String, Error> {
+    identity(&receipts(inputs)?)
 }

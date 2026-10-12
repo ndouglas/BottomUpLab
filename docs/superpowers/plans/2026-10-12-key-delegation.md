@@ -10,7 +10,7 @@
 
 **Spec:** [Key delegation design](../specs/2026-10-11-key-delegation-design.md), commit `1d42e54485d9918ef937398c44ecfbccba95e8e5`, approved by the user's “LGTM!” on 2026-10-12. This plan does not alter its physical rules.
 
-**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are complete, with reviewed protocol and exactly three independently approved reference fixtures. Tasks 2–3 native kernel, exhaustive game, metrics, and preallocation budgets are complete and independently approved. Task 4 source-bound diagnostic, strict CLI, collector provenance checks, and separately sealed streaming validators are complete and independently approved. Task 5 native browser adapter is next; Tasks 6–7 have not started. No scientific measurement has begun. Feasibility and precollection gates remain binding.
+**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are complete, with reviewed protocol and exactly three independently approved reference fixtures. Tasks 2–3 native kernel, exhaustive game, metrics, and preallocation budgets are complete and independently approved. Task 4 source-bound diagnostic, strict CLI, collector provenance checks, and separately sealed streaming validators are complete and independently approved. Task 5 native browser adapter, 85-case actual native/WASM verification, and scoped historical compatibility review are complete and independently approved. Task 6 web visualization is next; Task 7 collection has not started. No scientific measurement has begun. Feasibility and precollection gates remain binding.
 
 ## Global Constraints
 

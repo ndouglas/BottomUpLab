@@ -168,6 +168,7 @@ fn source_reader_binds_gate_host_inputs_and_rejects_missing_files() {
 #[test]
 fn key_source_closure_requires_references() {
     for path in [
+        "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
         "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",

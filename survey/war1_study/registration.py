@@ -73,6 +73,12 @@ _SOURCE_MACRO_BODIES = (
     r'''macro_rules! source {
         ($path:literal) => {
             (concat!("crates/sugarscape-core/src/", $path),
+             include_bytes!(concat!("../", $path)).as_slice(),)
+        };
+    }''',
+    r'''macro_rules! source {
+        ($path:literal) => {
+            (concat!("crates/sugarscape-core/src/", $path),
              include_bytes!(concat!("../../", $path)).as_slice(),)
         };
     }''',
@@ -115,7 +121,8 @@ def _audit_source_macro(text, path, root):
             raise ValueError("noncanonical source literal macro path")
         # Validate the expansion relative to the actual including file, then
         # require the path label and expanded target to agree in the bound tree.
-        target = _checked_path(path.parent / "../../" / relative).resolve()
+        prefix = "../" if '"../"' in match.group() else "../../"
+        target = _checked_path(path.parent / prefix / relative).resolve()
         if target != core / relative:
             raise ValueError("source literal macro outside bound core tree")
         read_regular(target, METADATA_LIMIT)
