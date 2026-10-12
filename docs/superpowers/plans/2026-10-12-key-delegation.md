@@ -10,7 +10,7 @@
 
 **Spec:** [Key delegation design](../specs/2026-10-11-key-delegation-design.md), commit `1d42e54485d9918ef937398c44ecfbccba95e8e5`, approved by the user's “LGTM!” on 2026-10-12. This plan does not alter its physical rules.
 
-**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are in progress; Tasks 2–7 have not started. No production key implementation or scientific measurement has begun. Independent registration, feasibility, and precollection gates remain binding.
+**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are complete, with reviewed protocol and exactly three independently approved reference fixtures. Task 2 native kernel implementation is next; Tasks 3–7 have not started. No scientific measurement has begun. Feasibility and precollection gates remain binding.
 
 ## Global Constraints
 

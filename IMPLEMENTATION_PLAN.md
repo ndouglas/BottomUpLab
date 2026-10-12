@@ -6,13 +6,13 @@
 **Goal**: Preserve old artifacts; register independently derived key game
 **Success Criteria**: Protocol and numerical independent approvals; sealed three fixtures
 **Tests**: Complete protocol arithmetic/census/controls/trace/cap and baseline checks
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 2: Kernel and game
 **Goal**: Atomic ownership, private histories and exhaustive schedule evaluation
 **Success Criteria**: All independent reference comparisons and precommit resource caps pass
 **Tests**: Strict wire, chronology, suffix activation, all pair/control/contrast tests
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 3: Diagnostic and CLI
 **Goal**: Source-bound strict reporting and streaming validator
