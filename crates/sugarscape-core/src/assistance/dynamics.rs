@@ -287,9 +287,24 @@ mod tests {
         let mut t = Tables::uniform(92);
         assert_eq!(robot_reply_to_tables(&t), [1, 1, 1]);
         assert_eq!(human_reply_to_tables(&t), expert_rule(92));
-        // Enough observations of the expert pair and both replies become the paper's.
+        // Observing the expert pair never shows action (1,1), whose row keeps the uniform prior
+        // (expected deployment reward 140/3 < 50), so H's (1,1) band is narrower than the paper's.
+        let mut expert_seen = Tables::uniform(92);
         for bin in 0..92 {
             let h = expert_rule(92)[bin];
+            for _ in 0..100 {
+                expert_seen.observe(bin, h, [0, 1, 2][h as usize], 1.0);
+            }
+        }
+        assert_eq!(robot_reply_to_tables(&expert_seen), [0, 1, 2]);
+        let narrow = human_reply_to_tables(&expert_seen)
+            .iter()
+            .filter(|&&a| a == 1)
+            .count();
+        assert!((1..10).contains(&narrow), "{narrow} bins make (1,1)");
+        // Observing the equilibrium pair makes both replies the paper's.
+        for bin in 0..92 {
+            let h = equilibrium_rule(92)[bin];
             for _ in 0..100 {
                 t.observe(bin, h, [0, 1, 2][h as usize], 1.0);
             }
@@ -297,9 +312,6 @@ mod tests {
         assert_eq!(robot_reply_to_tables(&t), [0, 1, 2]);
         assert_eq!(human_reply_to_tables(&t), equilibrium_rule(92));
         let post = robot_posterior_from_tables(&t, 1);
-        assert!(
-            (post.iter().sum::<f64>() - 1.0).abs() < 1e-12,
-            "an unseen action still gets a posterior"
-        );
+        assert!((post.iter().sum::<f64>() - 1.0).abs() < 1e-12);
     }
 }
