@@ -62,7 +62,7 @@ class RegistrationTests(unittest.TestCase):
 
     def test_literal_inventory_matches_all_core_compile_time_includes(self):
         paths = registration.audit_literal_inputs(ROOT)
-        self.assertEqual(len(paths), 229)
+        self.assertEqual(len(paths), 235)
         self.assertIn("data/anasazi/Map.txt", paths)
         self.assertIn("docs/examples/burrow/access-explore.json", paths)
 
@@ -80,7 +80,7 @@ class RegistrationTests(unittest.TestCase):
                 shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
                 (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
                 (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
-                self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
+                self.assertEqual(len(registration.audit_literal_inputs(root)), 235)
                 path = root/original
                 text = path.read_text()
                 call = next(re.finditer(r'source!\("([^"\n]+)"\)', text)).group(1)
@@ -124,7 +124,7 @@ class RegistrationTests(unittest.TestCase):
             shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
             (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
             (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
-            self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
+            self.assertEqual(len(registration.audit_literal_inputs(root)), 235)
             path = root/"crates/sugarscape-core/src/gate_assistance/diagnostics.rs"
             original = path.read_text()
             expression = 'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))'
