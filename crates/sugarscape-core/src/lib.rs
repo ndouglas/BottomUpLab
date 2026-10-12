@@ -79,3 +79,6 @@ pub mod war;
 
 /// Six-round paid gate assistance with local histories.
 pub mod gate_assistance;
+
+/// Six-round carrier-only paid key delegation with local histories.
+pub mod key_delegation;
