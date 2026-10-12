@@ -71,3 +71,9 @@ survey/out/collusion-memory1-operator-probe-20261011/
 
 # Local exact pricing generality counterexample certificates
 survey/out/collusion-memory1-generality-proof-20261012/
+
+# Local bounded native pricing history reconstruction and cloned interventions
+survey/out/collusion-memory1-native-history-20261012/
+
+# Local full-coverage saved-controller pricing panel
+survey/out/collusion-memory1-full-panel-20261012/
