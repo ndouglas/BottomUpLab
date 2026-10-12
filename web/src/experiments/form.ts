@@ -1,4 +1,4 @@
-import type { DemocraticPeaceConfig, GeosimConfig, AuctionsConfig, PolarityConfig, FieldError, ModelConfig, ModelKind, Param } from '../types';
+import type { AssistanceConfig, DemocraticPeaceConfig, GeosimConfig, AuctionsConfig, PolarityConfig, FieldError, ModelConfig, ModelKind, Param } from '../types';
 import type { Axis, Metric, ShorthandAxis, Sweep, SweepBase } from './types';
 import { formatValues, parseValues, type AxisScalar } from './values';
 
@@ -121,6 +121,12 @@ export function defaultForm(model: ModelKind = 'sugarscape', config?: ModelConfi
   if (model === 'polarity') {
     const p = config as PolarityConfig | undefined;
     return { ...form, description: 'Cederman predator-share settings; terminal sovereign count after the economic horizon or hegemony. Parameters and source profile are retained; ticks batch complete periods.', x: { path: 'predator_share', values: '0,0.05,0.1,0.2,0.4,0.6,0.8,1' }, ticks: p ? Math.ceil(p.horizon / p.periods_per_tick) : 1000, metric: { ...form.metric, kind: 'final', series: 'sovereign_count' } };
+  }
+  if (model === 'assistance' && config && (config as AssistanceConfig).game === 'off_switch') {
+    return { ...form, description: 'Figure 3 at the configured μ: the exact incentive Δ to wait against the belief standard deviation σ. Δ is exact, so one tick and one seed suffice.', x: { path: 'sigma', values: '0.05:1:0.05' }, seeds: 1, ticks: 1, metric: { ...form.metric, kind: 'final', series: 'delta_exact' } };
+  }
+  if (model === 'assistance') {
+    return { ...form, set: { mode: 'learning' }, description: "Fictitious play (our rule): the distance from the paper's equilibrium after 200 ticks against the weight of each observation.", x: { path: 'fictitious_weight', values: '0.25:2:0.25' }, ticks: 200, metric: { ...form.metric, kind: 'final', series: 'distance' } };
   }
   if (model === 'auctions') {
     return { ...form, set: { auction: 'mixture' }, description: 'Formats from first price (1) to second price (2), using mixture payment. Terminal policy revenue after the fixed horizon; one tick executes periods_per_tick auctions.', x: { path: 'auction_alpha', values: '1:2:0.1' }, ticks: config ? Math.ceil((config as AuctionsConfig).horizon / (config as AuctionsConfig).periods_per_tick) : 1000, metric: { ...form.metric, kind: 'final', series: 'terminal_revenue' } };

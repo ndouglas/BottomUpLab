@@ -37,6 +37,12 @@ sweeps/ants-flips.json
 sweeps/ants-n.json
 sweeps/ants-pull.json
 sweeps/ants-sources.json
+sweeps/assistance-equilibria.json
+sweeps/assistance-figure3-neg.json
+sweeps/assistance-figure3-pos.json
+sweeps/assistance-figure3-zero.json
+sweeps/assistance-figure4-incentive.json
+sweeps/assistance-figure4.json
 sweeps/auctions-biased.json
 sweeps/auctions-bidders.json
 sweeps/auctions-downward.json

@@ -270,13 +270,18 @@ pub(super) fn reject_numeric_underflow(bytes: &[u8]) -> Result<(), String> {
     let mut quoted = false;
     while i < bytes.len() {
         if quoted {
+            let Some(offset) = bytes[i..]
+                .iter()
+                .position(|&byte| byte == b'\\' || byte == b'"')
+            else {
+                break;
+            };
+            i += offset;
             if bytes[i] == b'\\' {
                 i += 2;
                 continue;
             }
-            if bytes[i] == b'"' {
-                quoted = false
-            }
+            quoted = false;
             i += 1;
             continue;
         }

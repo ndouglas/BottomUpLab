@@ -3,7 +3,7 @@
 //! paper (`source`) stay on the preset as its reference.
 
 /// Titles by preset id, in catalog order.
-pub const TITLES: [(&str, &str); 430] = [
+pub const TITLES: [(&str, &str); 436] = [
     (
         "ii-1-instant",
         "Sugar grows back at once: agents climb the best ridges and the poorly endowed starve",
@@ -1529,6 +1529,12 @@ pub const TITLES: [(&str, &str); 430] = [
     ("auctions-three-patient", "Three bidders put more weight on future rewards"),
     ("auctions-fringe", "A random bid joins the auction"),
     ("auctions-persistent", "Bidders keep experimenting for a hundred million auctions"),
+    ("assistance-paperclips-expert", "The human demonstrates and the robot copies, and at 0.49 that goes wrong"),
+    ("assistance-paperclips-teaching", "The human makes one of each to teach the robot"),
+    ("assistance-paperclips-iterated", "Best replies, turn by turn, settle on a teaching rule"),
+    ("assistance-paperclips-learning", "Two learners find an equilibrium, not always the paper's"),
+    ("assistance-offswitch-rational", "An uncertain robot lets itself be switched off"),
+    ("assistance-offswitch-toddler", "A confident robot facing an erratic human bypasses the switch"),
     (
         "collusion-calvano",
         "Two pricing algorithms learn to keep prices high, but not as a best response",

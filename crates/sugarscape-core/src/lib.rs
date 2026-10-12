@@ -82,3 +82,6 @@ pub mod gate_assistance;
 
 /// Six-round carrier-only paid key delegation with local histories.
 pub mod key_delegation;
+
+/// Assistance games: the paperclip game and the off-switch game (milestone 39).
+pub mod assistance;

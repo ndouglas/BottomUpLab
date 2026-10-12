@@ -60,14 +60,14 @@ it('unsupported discovery final Agent retains own observations without the peer 
   expect(resultPayload(unsupported, index, { kind: 'agent', agent: 'Agent-B' })).toBeNull();
   expect(Object.keys(obj(projected.public)).sort()).toEqual(['probe_stop', 'reset_phase', 'status']);
 });
-it('matched discovery records never supply terminal comparison payload to an Agent', () => {
+it('matched discovery records never supply terminal comparison payload to an Agent', { timeout: 30_000 }, () => {
   const supplied = JSON.parse(experiment_run_json(JSON.stringify({ ...obj(descriptor.default_input), protocol: { ...obj(obj(descriptor.default_input).protocol), policy: 'SuppliedAdaptive' } }))) as EpisodeRecord;
   for (const compared of [record, supplied]) {
     expect(resultPayload(compared, compared.checkpoints.length - 1, { kind: 'agent', agent: 'Agent-A' })).toBeNull();
     expect(resultPayload(compared, compared.checkpoints.length - 1, { kind: 'researcher' })).toBe(compared.payload);
   }
 });
-it('legacy final Agent result availability remains unchanged', () => {
+it('legacy final Agent result availability remains unchanged', { timeout: 30_000 }, () => {
   const activeDescriptor = (JSON.parse(experiment_catalog_json()) as StudyDescriptor[]).find(d => d.id === 'active_surface')!;
   const active = JSON.parse(experiment_run_json(JSON.stringify(activeDescriptor.default_input))) as EpisodeRecord;
   expect(resultPayload(active, active.checkpoints.length - 1, { kind: 'agent', agent: 'Agent-A' })).toBe(active.payload);

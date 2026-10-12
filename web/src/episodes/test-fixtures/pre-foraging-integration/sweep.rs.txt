@@ -1,0 +1,3067 @@
+//! Parameter sweeps (milestone 5): a grid of config values × seeds, each run
+//! summarized by one statistic. The CLI and the browser both call this
+//! module; see docs/superpowers/specs/2026-09-23-experiments-design.md.
+
+use std::collections::BTreeMap;
+use std::fmt::Write;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc;
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::config::FieldError;
+use crate::model::{ModelConfig, ModelWorld};
+use crate::presets;
+
+pub const MAX_X_VALUES: usize = 64;
+pub const MAX_SERIES_VALUES: usize = 16;
+pub const MAX_SEEDS: u32 = 100;
+pub const MAX_TICKS: u32 = 100_000;
+pub const MAX_POINTS: usize = 10_000;
+/// At most this many blocks per `timeseries` run: ceil(ticks / every).
+pub const MAX_BLOCKS: u32 = 2_000;
+
+/// Where every run's config starts: a preset of any model, or a config of any
+/// model (a sugarscape config in either shape).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Base {
+    Preset(String),
+    Config(Value),
+}
+
+/// One value of an axis: where it sits on the chart (`at`), an optional line
+/// name, and the dotted config paths it sets.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AxisValue {
+    pub at: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub set: BTreeMap<String, Value>,
+}
+
+impl AxisValue {
+    /// `name`, or `"<label> = <at>"`.
+    pub fn display_name(&self, label: &str) -> String {
+        self.name
+            .clone()
+            .unwrap_or_else(|| format!("{label} = {}", self.at))
+    }
+}
+
+/// An axis in full form. The shorthand `{ label?, path, values }` is expanded
+/// when read (Decision 1); axes are always written in full.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(try_from = "AxisInput")]
+pub struct Axis {
+    pub label: String,
+    pub values: Vec<AxisValue>,
+}
+
+/// Either axis form, as read.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AxisInput {
+    label: Option<String>,
+    path: Option<String>,
+    values: Vec<Value>,
+}
+
+impl TryFrom<AxisInput> for Axis {
+    type Error = String;
+
+    fn try_from(input: AxisInput) -> Result<Self, String> {
+        let Some(path) = input.path else {
+            let label = input.label.ok_or("an axis without a path needs a label")?;
+            let values = input
+                .values
+                .into_iter()
+                .map(serde_json::from_value)
+                .collect::<Result<_, _>>()
+                .map_err(|e| format!("axis value: {e}"))?;
+            return Ok(Axis { label, values });
+        };
+        // Value i sets `path`; it sits at the value itself when that is a
+        // number, otherwise at i.
+        let values = input
+            .values
+            .into_iter()
+            .enumerate()
+            .map(|(i, v)| AxisValue {
+                at: v.as_f64().unwrap_or(i as f64),
+                name: None,
+                set: BTreeMap::from([(path.clone(), v)]),
+            })
+            .collect();
+        Ok(Axis {
+            label: input.label.unwrap_or(path),
+            values,
+        })
+    }
+}
+
+/// Seeds `from, from + 1, …, from + count − 1`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Seeds {
+    pub from: u64,
+    pub count: u32,
+}
+
+/// What each run is summarized by, over one statistics series.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Metric {
+    /// The value at the last tick.
+    Final { series: String },
+    /// The mean over ticks `from..=to` (`to` defaults to the last tick).
+    WindowMean {
+        series: String,
+        from: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        to: Option<u32>,
+    },
+    /// Means over blocks of `every` ticks (see `blocks`).
+    Timeseries { series: String, every: u32 },
+}
+
+impl Metric {
+    /// The statistics series the metric reads.
+    pub fn series(&self) -> &str {
+        match self {
+            Metric::Final { series }
+            | Metric::WindowMean { series, .. }
+            | Metric::Timeseries { series, .. } => series,
+        }
+    }
+}
+
+/// A parameter sweep (the spec's "Sweep format").
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Sweep {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub base: Base,
+    /// Applied to every run, before the series and x values.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub set: BTreeMap<String, Value>,
+    pub x: Axis,
+    /// One line per value; `None` is one implicit line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub series: Option<Axis>,
+    pub seeds: Seeds,
+    pub ticks: u32,
+    pub metric: Metric,
+}
+
+/// One run of a sweep. `index` is its position in series-major, then x, then
+/// seed order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Point {
+    pub index: usize,
+    pub series: usize,
+    pub x: usize,
+    pub seed: u64,
+}
+
+impl Sweep {
+    /// Parses a sweep; errors have field `sweep`.
+    pub fn from_json(json: &str) -> Result<Sweep, Vec<FieldError>> {
+        serde_json::from_str(json).map_err(|e| vec![FieldError::new("sweep", e.to_string())])
+    }
+
+    /// Number of lines: the series axis's values, or 1 without one.
+    pub fn series_count(&self) -> usize {
+        self.series.as_ref().map_or(1, |axis| axis.values.len())
+    }
+
+    pub fn point_count(&self) -> usize {
+        self.series_count()
+            .saturating_mul(self.x.values.len())
+            .saturating_mul(self.seeds.count as usize)
+    }
+
+    /// A line's name: its series value's `display_name`, or the metric's
+    /// statistics series when there is no series axis (Decision 7).
+    pub fn series_name(&self, series: usize) -> String {
+        match &self.series {
+            Some(axis) => axis.values[series].display_name(&axis.label),
+            None => self.metric.series().to_string(),
+        }
+    }
+
+    /// Limits and metric bounds (Decisions 2 and 4); builds no config.
+    pub fn check_shape(&self) -> Result<(), Vec<FieldError>> {
+        let mut errors = Vec::new();
+        let mut check = |ok: bool, field: &str, message: String| {
+            if !ok {
+                errors.push(FieldError::new(field, message));
+            }
+        };
+        check(
+            !self.name.trim().is_empty(),
+            "name",
+            "must not be empty".into(),
+        );
+        check(
+            (1..=MAX_X_VALUES).contains(&self.x.values.len()),
+            "x.values",
+            format!("must list 1 to {MAX_X_VALUES} values"),
+        );
+        if let Some(axis) = &self.series {
+            check(
+                (1..=MAX_SERIES_VALUES).contains(&axis.values.len()),
+                "series.values",
+                format!("must list 1 to {MAX_SERIES_VALUES} values"),
+            );
+        }
+        check(
+            (1..=MAX_SEEDS).contains(&self.seeds.count),
+            "seeds.count",
+            format!("must be 1 to {MAX_SEEDS}"),
+        );
+        check(
+            self.seeds.from.saturating_add(u64::from(self.seeds.count)) <= u64::from(u32::MAX) + 1,
+            "seeds.from",
+            "seeds must stay ≤ 4294967295 (the playground's seed range)".into(),
+        );
+        check(
+            (1..=MAX_TICKS).contains(&self.ticks),
+            "ticks",
+            format!("must be 1 to {MAX_TICKS}"),
+        );
+        check(
+            self.point_count() <= MAX_POINTS,
+            "points",
+            format!(
+                "at most {MAX_POINTS} points (x values × series values × seeds); this sweep has {}",
+                self.point_count()
+            ),
+        );
+        match &self.metric {
+            Metric::Final { .. } => {}
+            Metric::WindowMean { from, to, .. } => {
+                let to = to.unwrap_or(self.ticks);
+                check(to <= self.ticks, "metric.to", "must be ≤ ticks".into());
+                check(
+                    *from <= to,
+                    "metric.from",
+                    "must be ≤ the window's end".into(),
+                );
+            }
+            Metric::Timeseries { every, .. } => {
+                check(
+                    (1..=self.ticks).contains(every),
+                    "metric.every",
+                    "must be 1 to ticks".into(),
+                );
+                check(
+                    *every == 0 || self.ticks.div_ceil(*every) <= MAX_BLOCKS,
+                    "metric.every",
+                    format!("at most {MAX_BLOCKS} blocks (ticks / every, rounded up)"),
+                );
+                check(
+                    self.x.values.len() == 1,
+                    "metric.kind",
+                    "a timeseries needs a single x value".into(),
+                );
+            }
+        }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
+    /// Point `index`, after `check_shape`.
+    pub fn point(&self, index: usize) -> Result<Point, Vec<FieldError>> {
+        self.check_shape()?;
+        let count = self.point_count();
+        if index >= count {
+            return Err(vec![FieldError::new(
+                "point",
+                format!("point {index} is out of range (the sweep has {count})"),
+            )]);
+        }
+        Ok(self.point_at(index))
+    }
+
+    fn point_at(&self, index: usize) -> Point {
+        let seeds = self.seeds.count as usize;
+        let xs = self.x.values.len();
+        Point {
+            index,
+            series: index / (seeds * xs),
+            x: index / seeds % xs,
+            seed: self.seeds.from + (index % seeds) as u64,
+        }
+    }
+
+    /// Index of the first point (lowest seed) at (series, x).
+    fn first_point(&self, series: usize, x: usize) -> usize {
+        (series * self.x.values.len() + x) * self.seeds.count as usize
+    }
+
+    /// Every point, after checking the shape and building every cell's config.
+    pub fn points(&self) -> Result<Vec<Point>, Vec<FieldError>> {
+        self.prepare().map(|(points, _)| points)
+    }
+
+    /// The points and each (series, x) cell's config, indexed
+    /// `series · nx + x`. Errors are deduplicated across cells (Decision 3).
+    /// The base is resolved once (a preset base looks through the catalog).
+    fn prepare(&self) -> Result<(Vec<Point>, Vec<ModelConfig>), Vec<FieldError>> {
+        self.check_shape()?;
+        let base = self.base_config()?;
+        let mut configs = Vec::new();
+        let mut errors: Vec<FieldError> = Vec::new();
+        for series in 0..self.series_count() {
+            for x in 0..self.x.values.len() {
+                match self.config_at(&base, series, x) {
+                    Ok(config) => configs.push(config),
+                    Err(errs) => {
+                        for e in errs {
+                            if !errors.contains(&e) {
+                                errors.push(e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        let points = (0..self.point_count()).map(|i| self.point_at(i)).collect();
+        Ok((points, configs))
+    }
+
+    /// The config `point` runs (it depends on the series and x value only).
+    /// `point` must come from this sweep (`points` or `point`).
+    pub fn config_for(&self, point: &Point) -> Result<ModelConfig, Vec<FieldError>> {
+        self.config_at(&self.base_config()?, point.series, point.x)
+    }
+
+    fn base_config(&self) -> Result<ModelConfig, Vec<FieldError>> {
+        match &self.base {
+            Base::Preset(id) => presets::find(id)
+                .map(|p| p.config)
+                .ok_or_else(|| vec![FieldError::new("base", format!("unknown preset {id:?}"))]),
+            Base::Config(value) => ModelConfig::from_value(value.clone())
+                .map_err(|e| vec![FieldError::new("base", e.message)]),
+        }
+    }
+
+    /// `base` (this sweep's resolved base config), then `set`, then the
+    /// series value's `set`, then the x value's `set` (each in key order),
+    /// then `validate` and the metric's series.
+    fn config_at(
+        &self,
+        base: &ModelConfig,
+        series: usize,
+        x: usize,
+    ) -> Result<ModelConfig, Vec<FieldError>> {
+        let mut config = base.clone();
+        let mut layers = vec![("set".to_string(), &self.set)];
+        if let Some(axis) = &self.series {
+            layers.push((format!("series[{series}].set"), &axis.values[series].set));
+        }
+        layers.push((format!("x[{x}].set"), &self.x.values[x].set));
+        for (field, set) in layers {
+            for (path, value) in set {
+                config = config
+                    .with_path(path, value)
+                    .map_err(|e| vec![FieldError::new(format!("{field}.{path}"), e.message)])?;
+            }
+        }
+        let prefix = format!(
+            "point {} (x={x}, series={series})",
+            self.first_point(series, x)
+        );
+        config.validate().map_err(|errs| {
+            errs.into_iter()
+                .map(|e| FieldError::new("points", format!("{prefix}: {}: {}", e.field, e.message)))
+                .collect::<Vec<_>>()
+        })?;
+        if let Some(max) = config.max_ticks().filter(|&max| self.ticks > max) {
+            let why = match config.kind() {
+                crate::model::ModelKind::DemocraticPeace => {
+                    let crate::model::ModelConfig::DemocraticPeace(c) = &config else {
+                        unreachable!()
+                    };
+                    format!("Democratic peace source horizon of {} periods requires {max} display ticks in this config", c.horizon_periods)
+                }
+                crate::model::ModelKind::Geosim => {
+                    let crate::model::ModelConfig::Geosim(c) = &config else {
+                        unreachable!()
+                    };
+                    format!("GeoSim source horizon of {} periods requires {max} display ticks in this config", c.horizon())
+                }
+                crate::model::ModelKind::Polarity => {
+                    format!("polarity reaches its economic horizon after {max} display ticks in this config")
+                }
+                crate::model::ModelKind::Tags => {
+                    format!("the tags model stops at its last generation, {max} in this config")
+                }
+                crate::model::ModelKind::Ethno => {
+                    format!(
+                        "the ethnocentrism model stops at its last period, {max} in this config"
+                    )
+                }
+                crate::model::ModelKind::Dpd => {
+                    format!("the demographic PD stops at its last cycle, {max} in this config")
+                }
+                crate::model::ModelKind::Image => {
+                    format!("image scoring stops at its last generation, {max} in this config")
+                }
+                _ => format!(
+                    "the Long House Valley stops at its end year, \
+                     {max} ticks after its start year in this config"
+                ),
+            };
+            return Err(vec![FieldError::new(
+                "ticks",
+                format!("must be ≤ {max}: {why}"),
+            )]);
+        }
+        let name = self.metric.series();
+        if !config.series_names().iter().any(|n| n == name) {
+            return Err(vec![FieldError::new(
+                "metric.series",
+                format!("{prefix}: no statistics series {name:?} in this config"),
+            )]);
+        }
+        Ok(config)
+    }
+}
+
+/// Writes non-finite numbers as JSON `null` and reads `null` back as NaN
+/// (Decision 5).
+mod nan_as_null {
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(v: &f64, s: S) -> Result<S::Ok, S::Error> {
+        if v.is_finite() {
+            s.serialize_f64(*v)
+        } else {
+            s.serialize_none()
+        }
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {
+        Ok(Option::<f64>::deserialize(d)?.unwrap_or(f64::NAN))
+    }
+}
+
+/// `nan_as_null` for each element.
+mod nan_as_null_vec {
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(v: &[f64], s: S) -> Result<S::Ok, S::Error> {
+        s.collect_seq(v.iter().map(|x| x.is_finite().then_some(*x)))
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<f64>, D::Error> {
+        Ok(Vec::<Option<f64>>::deserialize(d)?
+            .into_iter()
+            .map(|x| x.unwrap_or(f64::NAN))
+            .collect())
+    }
+}
+
+/// A run's metric: one value, or one per block for `timeseries`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Outcome {
+    Scalar {
+        #[serde(with = "nan_as_null")]
+        value: f64,
+    },
+    Series {
+        #[serde(with = "nan_as_null_vec")]
+        values: Vec<f64>,
+    },
+}
+
+/// One finished run: `{ point, series, x, seed, value | values }`
+/// (series and x are indices, Decision 6).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RunResult {
+    pub point: usize,
+    pub series: usize,
+    pub x: usize,
+    pub seed: u64,
+    #[serde(flatten)]
+    pub outcome: Outcome,
+    /// Exploratory source-clock/availability receipt; absent in legacy and other-model results.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub democratic_peace: Option<DemocraticPeaceAvailability>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct DemocraticPeaceAvailability {
+    pub status: String,
+    pub completed_periods: u64,
+    pub attempted_period: u64,
+    pub last_tick_periods: u32,
+    pub invalid_reason: Option<String>,
+    pub invalid_phase: Option<String>,
+    pub clustering_reason: Option<String>,
+}
+
+/// The mean of the finite values (summed in order from 0.0), or NaN when
+/// there are none.
+fn finite_mean(values: &[f64]) -> f64 {
+    let (sum, n) = values
+        .iter()
+        .filter(|v| v.is_finite())
+        .fold((0.0, 0usize), |(sum, n), v| (sum + v, n + 1));
+    if n == 0 {
+        f64::NAN
+    } else {
+        sum / n as f64
+    }
+}
+
+/// Blocks of `every` ticks as `(first, last)`: block k covers ticks
+/// `k·every + 1 ..= min((k + 1)·every, ticks)`. `every` must be ≥ 1.
+pub fn blocks(ticks: u32, every: u32) -> Vec<(u32, u32)> {
+    (0..ticks.div_ceil(every))
+        .map(|k| (k * every + 1, ((k + 1) * every).min(ticks)))
+        .collect()
+}
+
+/// `metric` over one run whose statistics history is `history`
+/// (`history[t]` is tick t's value for t = 0..=ticks). A population of 0
+/// needs no special case: its statistics simply continue.
+/// Ticks past the end of `history` (a world that stopped early) are NaN, so
+/// they never abort a run: a window reaching past the end averages what
+/// there is, and one wholly past it is NaN.
+pub fn measure(metric: &Metric, ticks: u32, history: &[f64]) -> Outcome {
+    let window = |from: u32, to: u32| {
+        let to = (to as usize).min(history.len().saturating_sub(1));
+        history
+            .get(from as usize..=to)
+            .map_or(f64::NAN, finite_mean)
+    };
+    match metric {
+        Metric::Final { .. } => Outcome::Scalar {
+            value: history.get(ticks as usize).copied().unwrap_or(f64::NAN),
+        },
+        Metric::WindowMean { from, to, .. } => Outcome::Scalar {
+            value: window(*from, to.unwrap_or(ticks)),
+        },
+        Metric::Timeseries { every, .. } => Outcome::Series {
+            values: blocks(ticks, *every)
+                .into_iter()
+                .map(|(first, last)| window(first, last))
+                .collect(),
+        },
+    }
+}
+
+/// Runs `point` and measures it. The point's config must be valid (take
+/// points from `Sweep::points`, or check `Sweep::config_for` first).
+pub fn run_point(sweep: &Sweep, point: &Point) -> RunResult {
+    let config = sweep
+        .config_for(point)
+        .unwrap_or_else(|e| panic!("point {} has an invalid config: {e:?}", point.index));
+    run_config(sweep, point, config)
+}
+
+/// Runs `point` with an already-built `config` and measures it. The config must be
+/// the point's valid config (e.g. from `Sweep::config_for`); an invalid config panics.
+pub fn run_config(sweep: &Sweep, point: &Point, config: ModelConfig) -> RunResult {
+    let mut world = ModelWorld::new(config, point.seed).expect("sweep configs are validated");
+    world.model_mut().run(sweep.ticks);
+    let mut history = world
+        .model()
+        .series(sweep.metric.series())
+        .expect("the metric's series is checked against every config");
+    let democratic_peace = match &world {
+        ModelWorld::DemocraticPeace(w) => {
+            let latest = w.snapshot();
+            let outcome = w.outcome();
+            Some(DemocraticPeaceAvailability {
+                status: outcome
+                    .map_or(
+                        "incomplete",
+                        |o| if o.valid { "complete" } else { "invalid" },
+                    )
+                    .into(),
+                completed_periods: latest.completed_periods,
+                attempted_period: latest.attempted_period,
+                last_tick_periods: latest.last_tick_periods,
+                invalid_reason: outcome.and_then(|o| o.invalid_reason.clone()),
+                invalid_phase: outcome.and_then(|o| o.invalid_phase.clone()),
+                clustering_reason: latest.clustering_reason,
+            })
+        }
+        _ => None,
+    };
+    // Raw GeoSim statistics remain inspectable after an invalid attempted period,
+    // but no portion of that run may enter experiment metric aggregates.
+    if matches!(&world, ModelWorld::Geosim(w) if w.outcome().is_some_and(|outcome| !outcome.valid))
+        || democratic_peace
+            .as_ref()
+            .is_some_and(|receipt| receipt.status == "invalid")
+    {
+        history.fill(f64::NAN);
+    }
+    // A world that stopped on its own for good (Axelrod's culture once stable,
+    // a Sugarscape whose cultures settled) holds its last state: the ticks it
+    // did not run repeat its last values. Any other stopped world reads NaN.
+    if world.model().finished() && world.model().holds_when_finished() {
+        if let Some(&last) = history.last() {
+            history.resize((sweep.ticks as usize + 1).max(history.len()), last);
+        }
+    }
+    RunResult {
+        democratic_peace,
+        point: point.index,
+        series: point.series,
+        x: point.x,
+        seed: point.seed,
+        outcome: measure(&sweep.metric, sweep.ticks, &history),
+    }
+}
+
+/// One (series, x) cell of a scalar metric, over seeds (Decision 7).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScalarRow {
+    pub series: usize,
+    pub series_name: String,
+    pub x: usize,
+    pub at: f64,
+    /// Runs with a finite value.
+    pub n: usize,
+    /// Runs whose value is NaN (excluded from the statistics).
+    pub nan: usize,
+    #[serde(with = "nan_as_null")]
+    pub mean: f64,
+    /// Sample standard deviation (n − 1); 0 when n = 1.
+    #[serde(with = "nan_as_null")]
+    pub sd: f64,
+    #[serde(with = "nan_as_null")]
+    pub min: f64,
+    #[serde(with = "nan_as_null")]
+    pub max: f64,
+}
+
+/// One block of one line of a `timeseries` metric, over seeds.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BlockRow {
+    pub series: usize,
+    pub series_name: String,
+    /// The block's last tick.
+    pub t: u32,
+    pub n: usize,
+    #[serde(with = "nan_as_null")]
+    pub mean: f64,
+    #[serde(with = "nan_as_null")]
+    pub sd: f64,
+}
+
+/// Rows in series order, then x (or block) order; one per cell even when
+/// it has no runs yet.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "rows", rename_all = "snake_case")]
+pub enum Summary {
+    Scalar(Vec<ScalarRow>),
+    Timeseries(Vec<BlockRow>),
+}
+
+struct Moments {
+    n: usize,
+    mean: f64,
+    sd: f64,
+    min: f64,
+    max: f64,
+}
+
+/// Statistics of the finite values, summed in the given order.
+fn moments(values: &[f64]) -> Moments {
+    let finite: Vec<f64> = values.iter().copied().filter(|v| v.is_finite()).collect();
+    let n = finite.len();
+    if n == 0 {
+        return Moments {
+            n,
+            mean: f64::NAN,
+            sd: f64::NAN,
+            min: f64::NAN,
+            max: f64::NAN,
+        };
+    }
+    let mean = finite.iter().fold(0.0, |a, b| a + b) / n as f64;
+    let sd = if n == 1 {
+        0.0
+    } else {
+        (finite.iter().fold(0.0, |a, v| a + (v - mean).powi(2)) / (n - 1) as f64).sqrt()
+    };
+    Moments {
+        n,
+        mean,
+        sd,
+        min: finite.iter().copied().fold(f64::INFINITY, f64::min),
+        max: finite.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+    }
+}
+
+/// Summarizes `runs` (any order, possibly partial) per cell. Runs are
+/// sorted by point first, so the result does not depend on completion order.
+pub fn aggregate(sweep: &Sweep, runs: &[RunResult]) -> Summary {
+    let mut sorted: Vec<&RunResult> = runs.iter().collect();
+    sorted.sort_by_key(|r| r.point);
+    let cell = |series: usize, x: usize| {
+        sorted
+            .iter()
+            .filter(move |r| r.series == series && r.x == x)
+    };
+    match &sweep.metric {
+        Metric::Timeseries { every, .. } => {
+            let mut rows = Vec::new();
+            for series in 0..sweep.series_count() {
+                let series_name = sweep.series_name(series);
+                for (k, &(_, t)) in blocks(sweep.ticks, *every).iter().enumerate() {
+                    let values: Vec<f64> = cell(series, 0)
+                        .filter_map(|r| match &r.outcome {
+                            Outcome::Series { values } => values.get(k).copied(),
+                            Outcome::Scalar { .. } => None,
+                        })
+                        .collect();
+                    let m = moments(&values);
+                    rows.push(BlockRow {
+                        series,
+                        series_name: series_name.clone(),
+                        t,
+                        n: m.n,
+                        mean: m.mean,
+                        sd: m.sd,
+                    });
+                }
+            }
+            Summary::Timeseries(rows)
+        }
+        Metric::Final { .. } | Metric::WindowMean { .. } => {
+            let mut rows = Vec::new();
+            for series in 0..sweep.series_count() {
+                let series_name = sweep.series_name(series);
+                for (x, value) in sweep.x.values.iter().enumerate() {
+                    let values: Vec<f64> = cell(series, x)
+                        .filter_map(|r| match &r.outcome {
+                            Outcome::Scalar { value } => Some(*value),
+                            Outcome::Series { .. } => None,
+                        })
+                        .collect();
+                    let m = moments(&values);
+                    rows.push(ScalarRow {
+                        series,
+                        series_name: series_name.clone(),
+                        x,
+                        at: value.at,
+                        n: m.n,
+                        nan: values.len() - m.n,
+                        mean: m.mean,
+                        sd: m.sd,
+                        min: m.min,
+                        max: m.max,
+                    });
+                }
+            }
+            Summary::Scalar(rows)
+        }
+    }
+}
+
+/// Errors (field `runs[i]`) for runs that are not this sweep's: a point out
+/// of range, a series/x/seed that is not the point's, or the wrong kind or
+/// number of values for the metric, or a second run of a point.
+pub fn check_runs(sweep: &Sweep, runs: &[RunResult]) -> Result<(), Vec<FieldError>> {
+    sweep.check_shape()?;
+    let count = sweep.point_count();
+    let block_count = match &sweep.metric {
+        Metric::Timeseries { every, .. } => Some(blocks(sweep.ticks, *every).len()),
+        Metric::Final { .. } | Metric::WindowMean { .. } => None,
+    };
+    let mut seen = vec![false; count];
+    let mut errors: Vec<FieldError> = runs
+        .iter()
+        .enumerate()
+        .filter(|(_, r)| {
+            let belongs = r.point < count && {
+                let p = sweep.point_at(r.point);
+                (p.series, p.x, p.seed) == (r.series, r.x, r.seed)
+            };
+            let shaped = match (&r.outcome, block_count) {
+                (Outcome::Scalar { .. }, None) => true,
+                (Outcome::Series { values }, Some(n)) => values.len() == n,
+                _ => false,
+            };
+            !(belongs && shaped)
+        })
+        .map(|(i, _)| {
+            FieldError::new(
+                format!("runs[{i}]"),
+                "does not match the sweep's points or metric",
+            )
+        })
+        .collect();
+    for (i, r) in runs.iter().enumerate() {
+        if r.point < count && std::mem::replace(&mut seen[r.point], true) {
+            errors.push(FieldError::new(
+                format!("runs[{i}]"),
+                format!("a second run of point {}", r.point),
+            ));
+        }
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
+}
+
+pub const RESULT_VERSION: u32 = 1;
+
+/// The result file: `{ version, sweep, runs, summary, incomplete? }`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SweepResult {
+    pub version: u32,
+    pub sweep: Sweep,
+    pub runs: Vec<RunResult>,
+    pub summary: Summary,
+    /// Written only when some points have no run (Decision 10).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub incomplete: bool,
+}
+
+impl SweepResult {
+    /// Sorts `runs` by point and summarizes them.
+    pub fn new(sweep: Sweep, mut runs: Vec<RunResult>) -> Self {
+        runs.sort_by_key(|r| r.point);
+        let summary = aggregate(&sweep, &runs);
+        let incomplete = runs.len() < sweep.point_count();
+        Self {
+            version: RESULT_VERSION,
+            sweep,
+            runs,
+            summary,
+            incomplete,
+        }
+    }
+
+    /// Pretty JSON with a trailing newline (the CLI's output and the
+    /// browser's download).
+    pub fn to_json(&self) -> String {
+        serde_json::to_string_pretty(self).expect("results serialize") + "\n"
+    }
+}
+
+/// A CSV number: shortest round-trip form; NaN is an empty field.
+fn csv_number(v: f64) -> String {
+    if v.is_finite() {
+        v.to_string()
+    } else {
+        String::new()
+    }
+}
+
+/// Quotes a field containing a comma, quote or newline.
+fn csv_text(s: &str) -> String {
+    if s.contains([',', '"', '\n']) {
+        format!("\"{}\"", s.replace('"', "\"\""))
+    } else {
+        s.to_string()
+    }
+}
+
+/// `series,x,seed,value` (x = the x value's `at`), or
+/// `series,x,seed,t,value` with one row per block.
+pub fn runs_csv(result: &SweepResult) -> String {
+    let sweep = &result.sweep;
+    let at = |x: usize| sweep.x.values[x].at;
+    let mut out = String::new();
+    match &sweep.metric {
+        Metric::Timeseries { every, .. } => {
+            out.push_str("series,x,seed,t,value\n");
+            let blocks = blocks(sweep.ticks, *every);
+            for r in &result.runs {
+                if let Outcome::Series { values } = &r.outcome {
+                    for (&(_, t), v) in blocks.iter().zip(values) {
+                        writeln!(
+                            out,
+                            "{},{},{},{},{}",
+                            r.series,
+                            at(r.x),
+                            r.seed,
+                            t,
+                            csv_number(*v)
+                        )
+                        .unwrap();
+                    }
+                }
+            }
+        }
+        Metric::Final { .. } | Metric::WindowMean { .. } => {
+            out.push_str("series,x,seed,value\n");
+            for r in &result.runs {
+                if let Outcome::Scalar { value } = &r.outcome {
+                    writeln!(
+                        out,
+                        "{},{},{},{}",
+                        r.series,
+                        at(r.x),
+                        r.seed,
+                        csv_number(*value)
+                    )
+                    .unwrap();
+                }
+            }
+        }
+    }
+    if result.runs.iter().any(|run| run.democratic_peace.is_some()) {
+        let mut lines = out.lines();
+        let header = lines.next().unwrap_or_default();
+        let mut enriched = format!("{header},status,completed_periods,attempted_period,last_tick_periods,invalid_reason,invalid_phase,clustering_reason\n");
+        let mut rows = lines;
+        for run in &result.runs {
+            let row_count = match &run.outcome {
+                Outcome::Scalar { .. } => 1,
+                Outcome::Series { values } => values.len(),
+            };
+            let suffix = run
+                .democratic_peace
+                .as_ref()
+                .map(|receipt| {
+                    format!(
+                        "{},{},{},{},{},{},{}",
+                        csv_text(&receipt.status),
+                        receipt.completed_periods,
+                        receipt.attempted_period,
+                        receipt.last_tick_periods,
+                        csv_text(receipt.invalid_reason.as_deref().unwrap_or("")),
+                        csv_text(receipt.invalid_phase.as_deref().unwrap_or("")),
+                        csv_text(receipt.clustering_reason.as_deref().unwrap_or(""))
+                    )
+                })
+                .unwrap_or_else(|| ",,,,,,".into());
+            for row in rows.by_ref().take(row_count) {
+                writeln!(enriched, "{row},{suffix}").unwrap();
+            }
+        }
+        return enriched;
+    }
+    out
+}
+
+/// `series,series_name,x,n,mean,sd,min,max` or `series,series_name,t,n,mean,sd`.
+pub fn summary_csv(result: &SweepResult) -> String {
+    let mut out = String::new();
+    match &result.summary {
+        Summary::Scalar(rows) => {
+            out.push_str("series,series_name,x,n,mean,sd,min,max\n");
+            for r in rows {
+                writeln!(
+                    out,
+                    "{},{},{},{},{},{},{},{}",
+                    r.series,
+                    csv_text(&r.series_name),
+                    r.at,
+                    r.n,
+                    csv_number(r.mean),
+                    csv_number(r.sd),
+                    csv_number(r.min),
+                    csv_number(r.max)
+                )
+                .unwrap();
+            }
+        }
+        Summary::Timeseries(rows) => {
+            out.push_str("series,series_name,t,n,mean,sd\n");
+            for r in rows {
+                writeln!(
+                    out,
+                    "{},{},{},{},{},{}",
+                    r.series,
+                    csv_text(&r.series_name),
+                    r.t,
+                    r.n,
+                    csv_number(r.mean),
+                    csv_number(r.sd)
+                )
+                .unwrap();
+            }
+        }
+    }
+    out
+}
+
+/// Runs every point on `jobs` threads and collects the runs in point order,
+/// so the result is the same for any `jobs` (Decision 8). `jobs = 1` runs on
+/// this thread. `progress(done, point)` is called on this thread after each
+/// run, in completion order.
+pub fn run_all(
+    sweep: &Sweep,
+    jobs: usize,
+    mut progress: impl FnMut(usize, &Point),
+) -> Result<SweepResult, Vec<FieldError>> {
+    let (points, configs) = sweep.prepare()?;
+    let xs = sweep.x.values.len();
+    let config_of = |p: &Point| configs[p.series * xs + p.x].clone();
+    let mut slots: Vec<Option<RunResult>> = (0..points.len()).map(|_| None).collect();
+    let jobs = jobs.clamp(1, points.len());
+    if jobs == 1 {
+        for (done, point) in points.iter().enumerate() {
+            slots[point.index] = Some(run_config(sweep, point, config_of(point)));
+            progress(done + 1, point);
+        }
+    } else {
+        let next = AtomicUsize::new(0);
+        let (tx, rx) = mpsc::channel();
+        std::thread::scope(|scope| {
+            for _ in 0..jobs {
+                let tx = tx.clone();
+                let (next, points, config_of) = (&next, &points, &config_of);
+                scope.spawn(move || {
+                    while let Some(point) = points.get(next.fetch_add(1, Ordering::Relaxed)) {
+                        if tx.send(run_config(sweep, point, config_of(point))).is_err() {
+                            break;
+                        }
+                    }
+                });
+            }
+            drop(tx);
+            for (done, run) in rx.iter().enumerate() {
+                let index = run.point;
+                slots[index] = Some(run);
+                progress(done + 1, &points[index]);
+            }
+        });
+    }
+    let runs = slots
+        .into_iter()
+        .map(|r| r.expect("every point ran"))
+        .collect();
+    Ok(SweepResult::new(sweep.clone(), runs))
+}
+
+/// A built-in sweep: `sweeps/<id>.json` at the repository root (Decision 11).
+pub struct Builtin {
+    pub id: &'static str,
+    pub json: &'static str,
+}
+
+const BUILTINS: [Builtin; 215] = [
+    Builtin {
+        id: "fig-ii-5",
+        json: include_str!("../../../sweeps/fig-ii-5.json"),
+    },
+    Builtin {
+        id: "fig-iv-6",
+        json: include_str!("../../../sweeps/fig-iv-6.json"),
+    },
+    Builtin {
+        id: "fig-iv-10-11",
+        json: include_str!("../../../sweeps/fig-iv-10-11.json"),
+    },
+    Builtin {
+        id: "n-goods-carrying-capacity",
+        json: include_str!("../../../sweeps/n-goods-carrying-capacity.json"),
+    },
+    Builtin {
+        id: "bargaining-rules",
+        json: include_str!("../../../sweeps/bargaining-rules.json"),
+    },
+    Builtin {
+        id: "schelling-tipping",
+        json: include_str!("../../../sweeps/schelling-tipping.json"),
+    },
+    Builtin {
+        id: "s71-demand",
+        json: include_str!("../../../sweeps/s71-demand.json"),
+    },
+    Builtin {
+        id: "s71-vacancy",
+        json: include_str!("../../../sweeps/s71-vacancy.json"),
+    },
+    Builtin {
+        id: "s71-radius",
+        json: include_str!("../../../sweeps/s71-radius.json"),
+    },
+    Builtin {
+        id: "s71-order",
+        json: include_str!("../../../sweeps/s71-order.json"),
+    },
+    Builtin {
+        id: "line-radius",
+        json: include_str!("../../../sweeps/line-radius.json"),
+    },
+    Builtin {
+        id: "line-reach",
+        json: include_str!("../../../sweeps/line-reach.json"),
+    },
+    Builtin {
+        id: "tipping-start",
+        json: include_str!("../../../sweeps/tipping-start.json"),
+    },
+    Builtin {
+        id: "tipping-entry",
+        json: include_str!("../../../sweeps/tipping-entry.json"),
+    },
+    Builtin {
+        id: "tipping-intercept",
+        json: include_str!("../../../sweeps/tipping-intercept.json"),
+    },
+    Builtin {
+        id: "tipping-speeds",
+        json: include_str!("../../../sweeps/tipping-speeds.json"),
+    },
+    Builtin {
+        id: "tipping-limit",
+        json: include_str!("../../../sweeps/tipping-limit.json"),
+    },
+    Builtin {
+        id: "gvn-phase",
+        json: include_str!("../../../sweeps/gvn-phase.json"),
+    },
+    Builtin {
+        id: "svw-city",
+        json: include_str!("../../../sweeps/svw-city.json"),
+    },
+    Builtin {
+        id: "zhang-beta",
+        json: include_str!("../../../sweeps/zhang-beta.json"),
+    },
+    Builtin {
+        id: "zhang-neighborhood",
+        json: include_str!("../../../sweeps/zhang-neighborhood.json"),
+    },
+    Builtin {
+        id: "lhv-calibration",
+        json: include_str!("../../../sweeps/lhv-calibration.json"),
+    },
+    Builtin {
+        id: "lhv-quirks",
+        json: include_str!("../../../sweeps/lhv-quirks.json"),
+    },
+    Builtin {
+        id: "cv-ratio-rules",
+        json: include_str!("../../../sweeps/cv-ratio-rules.json"),
+    },
+    Builtin {
+        id: "cv-peacekeeping",
+        json: include_str!("../../../sweeps/cv-peacekeeping.json"),
+    },
+    Builtin {
+        id: "cv-jail-waits",
+        json: include_str!("../../../sweeps/cv-jail-waits.json"),
+    },
+    Builtin {
+        id: "nm-universal",
+        json: include_str!("../../../sweeps/nm-universal.json"),
+    },
+    Builtin {
+        id: "hg-async",
+        json: include_str!("../../../sweeps/hg-async.json"),
+    },
+    Builtin {
+        id: "nbm-grid-discrete",
+        json: include_str!("../../../sweeps/nbm-grid-discrete.json"),
+    },
+    Builtin {
+        id: "nbm-grid-continuous",
+        json: include_str!("../../../sweeps/nbm-grid-continuous.json"),
+    },
+    Builtin {
+        id: "nbm-radius",
+        json: include_str!("../../../sweeps/nbm-radius.json"),
+    },
+    Builtin {
+        id: "rca-pairings",
+        json: include_str!("../../../sweeps/rca-pairings.json"),
+    },
+    Builtin {
+        id: "rca-cost",
+        json: include_str!("../../../sweeps/rca-cost.json"),
+    },
+    Builtin {
+        id: "rca-clones",
+        json: include_str!("../../../sweeps/rca-clones.json"),
+    },
+    Builtin {
+        id: "rca-population",
+        json: include_str!("../../../sweeps/rca-population.json"),
+    },
+    Builtin {
+        id: "ac-table-2",
+        json: include_str!("../../../sweeps/ac-table-2.json"),
+    },
+    Builtin {
+        id: "ac-neighborhoods",
+        json: include_str!("../../../sweeps/ac-neighborhoods.json"),
+    },
+    Builtin {
+        id: "ac-territory",
+        json: include_str!("../../../sweeps/ac-territory.json"),
+    },
+    Builtin {
+        id: "ac-activation",
+        json: include_str!("../../../sweeps/ac-activation.json"),
+    },
+    Builtin {
+        id: "ac-traits-transition",
+        json: include_str!("../../../sweeps/ac-traits-transition.json"),
+    },
+    Builtin {
+        id: "ac-drift",
+        json: include_str!("../../../sweeps/ac-drift.json"),
+    },
+    Builtin {
+        id: "dock-mobility",
+        json: include_str!("../../../sweeps/dock-mobility.json"),
+    },
+    Builtin {
+        id: "dock-mountain",
+        json: include_str!("../../../sweeps/dock-mountain.json"),
+    },
+    Builtin {
+        id: "aey-memory",
+        json: include_str!("../../../sweeps/aey-memory.json"),
+    },
+    Builtin {
+        id: "aey-population",
+        json: include_str!("../../../sweeps/aey-population.json"),
+    },
+    Builtin {
+        id: "aey-first-attractor",
+        json: include_str!("../../../sweeps/aey-first-attractor.json"),
+    },
+    Builtin {
+        id: "aey-tag-regimes",
+        json: include_str!("../../../sweeps/aey-tag-regimes.json"),
+    },
+    Builtin {
+        id: "pvplh-payoffs",
+        json: include_str!("../../../sweeps/pvplh-payoffs.json"),
+    },
+    Builtin {
+        id: "ha-cost",
+        json: include_str!("../../../sweeps/ha-cost.json"),
+    },
+    Builtin {
+        id: "ha-colors",
+        json: include_str!("../../../sweeps/ha-colors.json"),
+    },
+    Builtin {
+        id: "ha-mutation",
+        json: include_str!("../../../sweeps/ha-mutation.json"),
+    },
+    Builtin {
+        id: "ha-immigration",
+        json: include_str!("../../../sweeps/ha-immigration.json"),
+    },
+    Builtin {
+        id: "ha-lattice",
+        json: include_str!("../../../sweeps/ha-lattice.json"),
+    },
+    Builtin {
+        id: "jansson-tag-mutation",
+        json: include_str!("../../../sweeps/jansson-tag-mutation.json"),
+    },
+    Builtin {
+        id: "jansson-markers",
+        json: include_str!("../../../sweeps/jansson-markers.json"),
+    },
+    Builtin {
+        id: "hk-diagonal",
+        json: include_str!("../../../sweeps/hk-diagonal.json"),
+    },
+    Builtin {
+        id: "hk-asymmetry",
+        json: include_str!("../../../sweeps/hk-asymmetry.json"),
+    },
+    Builtin {
+        id: "hk-bias",
+        json: include_str!("../../../sweeps/hk-bias.json"),
+    },
+    Builtin {
+        id: "hk-updating",
+        json: include_str!("../../../sweeps/hk-updating.json"),
+    },
+    Builtin {
+        id: "hk-lattice",
+        json: include_str!("../../../sweeps/hk-lattice.json"),
+    },
+    Builtin {
+        id: "hk-population",
+        json: include_str!("../../../sweeps/hk-population.json"),
+    },
+    Builtin {
+        id: "cra-table-2",
+        json: include_str!("../../../sweeps/cra-table-2.json"),
+    },
+    Builtin {
+        id: "cra-dial",
+        json: include_str!("../../../sweeps/cra-dial.json"),
+    },
+    Builtin {
+        id: "cra-threshold",
+        json: include_str!("../../../sweeps/cra-threshold.json"),
+    },
+    Builtin {
+        id: "cra-noise",
+        json: include_str!("../../../sweeps/cra-noise.json"),
+    },
+    Builtin {
+        id: "cra-population",
+        json: include_str!("../../../sweeps/cra-population.json"),
+    },
+    Builtin {
+        id: "dpd-payoffs",
+        json: include_str!("../../../sweeps/dpd-payoffs.json"),
+    },
+    Builtin {
+        id: "dpd-mutation",
+        json: include_str!("../../../sweeps/dpd-mutation.json"),
+    },
+    Builtin {
+        id: "dpd-metabolism",
+        json: include_str!("../../../sweeps/dpd-metabolism.json"),
+    },
+    Builtin {
+        id: "dpd-max-age",
+        json: include_str!("../../../sweeps/dpd-max-age.json"),
+    },
+    Builtin {
+        id: "norms-horizon",
+        json: include_str!("../../../sweeps/norms-horizon.json"),
+    },
+    Builtin {
+        id: "norms-mutation",
+        json: include_str!("../../../sweeps/norms-mutation.json"),
+    },
+    Builtin {
+        id: "norms-meta-payoffs",
+        json: include_str!("../../../sweeps/norms-meta-payoffs.json"),
+    },
+    Builtin {
+        id: "norms-temptation",
+        json: include_str!("../../../sweeps/norms-temptation.json"),
+    },
+    Builtin {
+        id: "norms-selection",
+        json: include_str!("../../../sweeps/norms-selection.json"),
+    },
+    Builtin {
+        id: "norms-readings",
+        json: include_str!("../../../sweeps/norms-readings.json"),
+    },
+    Builtin {
+        id: "norms-dominance",
+        json: include_str!("../../../sweeps/norms-dominance.json"),
+    },
+    Builtin {
+        id: "ra-clusters",
+        json: include_str!("../../../sweeps/ra-clusters.json"),
+    },
+    Builtin {
+        id: "ra-map",
+        json: include_str!("../../../sweeps/ra-map.json"),
+    },
+    Builtin {
+        id: "ra-readings",
+        json: include_str!("../../../sweeps/ra-readings.json"),
+    },
+    Builtin {
+        id: "ra-population",
+        json: include_str!("../../../sweeps/ra-population.json"),
+    },
+    Builtin {
+        id: "ra-rules",
+        json: include_str!("../../../sweeps/ra-rules.json"),
+    },
+    Builtin {
+        id: "ra-delta",
+        json: include_str!("../../../sweeps/ra-delta.json"),
+    },
+    Builtin {
+        id: "ad-connectivity",
+        json: include_str!("../../../sweeps/ad-connectivity.json"),
+    },
+    Builtin {
+        id: "w-dispersion",
+        json: include_str!("../../../sweeps/w-dispersion.json"),
+    },
+    Builtin {
+        id: "ns-rounds",
+        json: include_str!("../../../sweeps/ns-rounds.json"),
+    },
+    Builtin {
+        id: "ns-group-size",
+        json: include_str!("../../../sweeps/ns-group-size.json"),
+    },
+    Builtin {
+        id: "lh-cost",
+        json: include_str!("../../../sweeps/lh-cost.json"),
+    },
+    Builtin {
+        id: "lh-gene-flow",
+        json: include_str!("../../../sweeps/lh-gene-flow.json"),
+    },
+    Builtin {
+        id: "ef-predictors",
+        json: include_str!("../../../sweeps/ef-predictors.json"),
+    },
+    Builtin {
+        id: "ef-capacity",
+        json: include_str!("../../../sweeps/ef-capacity.json"),
+    },
+    Builtin {
+        id: "mg-memory",
+        json: include_str!("../../../sweeps/mg-memory.json"),
+    },
+    Builtin {
+        id: "mg-fig-1",
+        json: include_str!("../../../sweeps/mg-fig-1.json"),
+    },
+    Builtin {
+        id: "mg-strategies",
+        json: include_str!("../../../sweeps/mg-strategies.json"),
+    },
+    Builtin {
+        id: "mg-information",
+        json: include_str!("../../../sweeps/mg-information.json"),
+    },
+    Builtin {
+        id: "cmo-bias",
+        json: include_str!("../../../sweeps/cmo-bias.json"),
+    },
+    Builtin {
+        id: "ants-alpha",
+        json: include_str!("../../../sweeps/ants-alpha.json"),
+    },
+    Builtin {
+        id: "ants-n",
+        json: include_str!("../../../sweeps/ants-n.json"),
+    },
+    Builtin {
+        id: "ants-flips",
+        json: include_str!("../../../sweeps/ants-flips.json"),
+    },
+    Builtin {
+        id: "ants-pull",
+        json: include_str!("../../../sweeps/ants-pull.json"),
+    },
+    Builtin {
+        id: "ants-sources",
+        json: include_str!("../../../sweeps/ants-sources.json"),
+    },
+    Builtin {
+        id: "am-independent",
+        json: include_str!("../../../sweeps/am-independent.json"),
+    },
+    Builtin {
+        id: "ifd-matching",
+        json: include_str!("../../../sweeps/ifd-matching.json"),
+    },
+    Builtin {
+        id: "ifd-idle",
+        json: include_str!("../../../sweeps/ifd-idle.json"),
+    },
+    Builtin {
+        id: "ifd-crowding",
+        json: include_str!("../../../sweeps/ifd-crowding.json"),
+    },
+    Builtin {
+        id: "ifd-travel",
+        json: include_str!("../../../sweeps/ifd-travel.json"),
+    },
+    Builtin {
+        id: "gr-sd",
+        json: include_str!("../../../sweeps/gr-sd.json"),
+    },
+    Builtin {
+        id: "gr-friends",
+        json: include_str!("../../../sweeps/gr-friends.json"),
+    },
+    Builtin {
+        id: "gr-movement",
+        json: include_str!("../../../sweeps/gr-movement.json"),
+    },
+    Builtin {
+        id: "gr-ceilings",
+        json: include_str!("../../../sweeps/gr-ceilings.json"),
+    },
+    Builtin {
+        id: "watts-window",
+        json: include_str!("../../../sweeps/watts-window.json"),
+    },
+    Builtin {
+        id: "watts-hetero",
+        json: include_str!("../../../sweeps/watts-hetero.json"),
+    },
+    Builtin {
+        id: "watts-targeting",
+        json: include_str!("../../../sweeps/watts-targeting.json"),
+    },
+    Builtin {
+        id: "walk-speed",
+        json: include_str!("../../../sweeps/walk-speed.json"),
+    },
+    Builtin {
+        id: "walk-vision",
+        json: include_str!("../../../sweeps/walk-vision.json"),
+    },
+    Builtin {
+        id: "ifd-detour",
+        json: include_str!("../../../sweeps/ifd-detour.json"),
+    },
+    Builtin {
+        id: "ae-rational",
+        json: include_str!("../../../sweeps/ae-rational.json"),
+    },
+    Builtin {
+        id: "ae-rational-replace",
+        json: include_str!("../../../sweeps/ae-rational-replace.json"),
+    },
+    Builtin {
+        id: "ae-threshold",
+        json: include_str!("../../../sweeps/ae-threshold.json"),
+    },
+    Builtin {
+        id: "ae-size",
+        json: include_str!("../../../sweeps/ae-size.json"),
+    },
+    Builtin {
+        id: "ae-extent",
+        json: include_str!("../../../sweeps/ae-extent.json"),
+    },
+    Builtin {
+        id: "ae-policy",
+        json: include_str!("../../../sweeps/ae-policy.json"),
+    },
+    Builtin {
+        id: "ae-coupling",
+        json: include_str!("../../../sweeps/ae-coupling.json"),
+    },
+    Builtin {
+        id: "ae-coupling-rational",
+        json: include_str!("../../../sweeps/ae-coupling-rational.json"),
+    },
+    Builtin {
+        id: "bg-fig1a",
+        json: include_str!("../../../sweeps/bg-fig1a.json"),
+    },
+    Builtin {
+        id: "bg-fig1b",
+        json: include_str!("../../../sweeps/bg-fig1b.json"),
+    },
+    Builtin {
+        id: "bg-fig1-caption",
+        json: include_str!("../../../sweeps/bg-fig1-caption.json"),
+    },
+    Builtin {
+        id: "bg-fig1-either",
+        json: include_str!("../../../sweeps/bg-fig1-either.json"),
+    },
+    Builtin {
+        id: "bg-fig2a",
+        json: include_str!("../../../sweeps/bg-fig2a.json"),
+    },
+    Builtin {
+        id: "bg-fig2b",
+        json: include_str!("../../../sweeps/bg-fig2b.json"),
+    },
+    Builtin {
+        id: "bg-fig3",
+        json: include_str!("../../../sweeps/bg-fig3.json"),
+    },
+    Builtin {
+        id: "bg-fig4",
+        json: include_str!("../../../sweeps/bg-fig4.json"),
+    },
+    Builtin {
+        id: "bg-baseline",
+        json: include_str!("../../../sweeps/bg-baseline.json"),
+    },
+    Builtin {
+        id: "bg-readings",
+        json: include_str!("../../../sweeps/bg-readings.json"),
+    },
+    Builtin {
+        id: "bg-mutation",
+        json: include_str!("../../../sweeps/bg-mutation.json"),
+    },
+    Builtin {
+        id: "bg-error",
+        json: include_str!("../../../sweeps/bg-error.json"),
+    },
+    Builtin {
+        id: "bg-groups",
+        json: include_str!("../../../sweeps/bg-groups.json"),
+    },
+    Builtin {
+        id: "bg-benefit",
+        json: include_str!("../../../sweeps/bg-benefit.json"),
+    },
+    Builtin {
+        id: "bg-continuous",
+        json: include_str!("../../../sweeps/bg-continuous.json"),
+    },
+    Builtin {
+        id: "bg-ring",
+        json: include_str!("../../../sweeps/bg-ring.json"),
+    },
+    Builtin {
+        id: "bg-cooney-fine",
+        json: include_str!("../../../sweeps/bg-cooney-fine.json"),
+    },
+    Builtin {
+        id: "bg-cooney-cost",
+        json: include_str!("../../../sweeps/bg-cooney-cost.json"),
+    },
+    Builtin {
+        id: "mem-span-recall",
+        json: include_str!("../../../sweeps/mem-span-recall.json"),
+    },
+    Builtin {
+        id: "mem-span-project",
+        json: include_str!("../../../sweeps/mem-span-project.json"),
+    },
+    Builtin {
+        id: "mem-share",
+        json: include_str!("../../../sweeps/mem-share.json"),
+    },
+    Builtin {
+        id: "gs-efficiency",
+        json: include_str!("../../../sweeps/gs-efficiency.json"),
+    },
+    Builtin {
+        id: "gs-dispersion",
+        json: include_str!("../../../sweeps/gs-dispersion.json"),
+    },
+    Builtin {
+        id: "gs-shouts",
+        json: include_str!("../../../sweeps/gs-shouts.json"),
+    },
+    Builtin {
+        id: "gs-mechanism",
+        json: include_str!("../../../sweeps/gs-mechanism.json"),
+    },
+    Builtin {
+        id: "cliff-prices",
+        json: include_str!("../../../sweeps/cliff-prices.json"),
+    },
+    Builtin {
+        id: "zip-days",
+        json: include_str!("../../../sweeps/zip-days.json"),
+    },
+    Builtin {
+        id: "zip-momentum",
+        json: include_str!("../../../sweeps/zip-momentum.json"),
+    },
+    Builtin {
+        id: "zip-shift",
+        json: include_str!("../../../sweeps/zip-shift.json"),
+    },
+    Builtin {
+        id: "goap-horizon",
+        json: include_str!("../../../sweeps/goap-horizon.json"),
+    },
+    Builtin {
+        id: "goap-k",
+        json: include_str!("../../../sweeps/goap-k.json"),
+    },
+    Builtin {
+        id: "goap-memory",
+        json: include_str!("../../../sweeps/goap-memory.json"),
+    },
+    Builtin {
+        id: "bali-levels",
+        json: include_str!("../../../sweeps/bali-levels.json"),
+    },
+    Builtin {
+        id: "bali-growth",
+        json: include_str!("../../../sweeps/bali-growth.json"),
+    },
+    Builtin {
+        id: "bali-dispersal",
+        json: include_str!("../../../sweeps/bali-dispersal.json"),
+    },
+    Builtin {
+        id: "bali-rain",
+        json: include_str!("../../../sweeps/bali-rain.json"),
+    },
+    Builtin {
+        id: "bali-imitation-growth",
+        json: include_str!("../../../sweeps/bali-imitation-growth.json"),
+    },
+    Builtin {
+        id: "bali-two-node",
+        json: include_str!("../../../sweeps/bali-two-node.json"),
+    },
+    Builtin {
+        id: "bali-gamma",
+        json: include_str!("../../../sweeps/bali-gamma.json"),
+    },
+    Builtin {
+        id: "bali-adaptive",
+        json: include_str!("../../../sweeps/bali-adaptive.json"),
+    },
+    Builtin {
+        id: "bali-links",
+        json: include_str!("../../../sweeps/bali-links.json"),
+    },
+    Builtin {
+        id: "cache-capacity",
+        json: include_str!("../../../sweeps/cache-capacity.json"),
+    },
+    Builtin {
+        id: "cache-winter",
+        json: include_str!("../../../sweeps/cache-winter.json"),
+    },
+    Builtin {
+        id: "central-distance",
+        json: include_str!("../../../sweeps/central-distance.json"),
+    },
+    Builtin {
+        id: "theft-find",
+        json: include_str!("../../../sweeps/theft-find.json"),
+    },
+    Builtin {
+        id: "theft-cheaters",
+        json: include_str!("../../../sweeps/theft-cheaters.json"),
+    },
+    Builtin {
+        id: "theft-winter",
+        json: include_str!("../../../sweeps/theft-winter.json"),
+    },
+    Builtin {
+        id: "watch-span",
+        json: include_str!("../../../sweeps/watch-span.json"),
+    },
+    Builtin {
+        id: "watch-scroungers",
+        json: include_str!("../../../sweeps/watch-scroungers.json"),
+    },
+    Builtin {
+        id: "hoard-ratio",
+        json: include_str!("../../../sweeps/hoard-ratio.json"),
+    },
+    Builtin {
+        id: "hoard-recovery",
+        json: include_str!("../../../sweeps/hoard-recovery.json"),
+    },
+    Builtin {
+        id: "hoard-cheaters",
+        json: include_str!("../../../sweeps/hoard-cheaters.json"),
+    },
+    Builtin {
+        id: "firms-beta",
+        json: include_str!("../../../sweeps/firms-beta.json"),
+    },
+    Builtin {
+        id: "firms-b",
+        json: include_str!("../../../sweeps/firms-b.json"),
+    },
+    Builtin {
+        id: "firms-preferences",
+        json: include_str!("../../../sweeps/firms-preferences.json"),
+    },
+    Builtin {
+        id: "firms-friends",
+        json: include_str!("../../../sweeps/firms-friends.json"),
+    },
+    Builtin {
+        id: "firms-random-firms",
+        json: include_str!("../../../sweeps/firms-random-firms.json"),
+    },
+    Builtin {
+        id: "firms-loyalty",
+        json: include_str!("../../../sweeps/firms-loyalty.json"),
+    },
+    Builtin {
+        id: "firms-sticky",
+        json: include_str!("../../../sweeps/firms-sticky.json"),
+    },
+    Builtin {
+        id: "firms-groping",
+        json: include_str!("../../../sweeps/firms-groping.json"),
+    },
+    Builtin {
+        id: "firms-seniority",
+        json: include_str!("../../../sweeps/firms-seniority.json"),
+    },
+    Builtin {
+        id: "firms-base-pay",
+        json: include_str!("../../../sweeps/firms-base-pay.json"),
+    },
+    Builtin {
+        id: "firms-hiring",
+        json: include_str!("../../../sweeps/firms-hiring.json"),
+    },
+    Builtin {
+        id: "firms-readings",
+        json: include_str!("../../../sweeps/firms-readings.json"),
+    },
+    Builtin {
+        id: "firms-population",
+        json: include_str!("../../../sweeps/firms-population.json"),
+    },
+    Builtin {
+        id: "collusion-table-i",
+        json: include_str!("../../../sweeps/collusion-table-i.json"),
+    },
+    Builtin {
+        id: "collusion-alpha-beta",
+        json: include_str!("../../../sweeps/collusion-alpha-beta.json"),
+    },
+    Builtin {
+        id: "collusion-delta",
+        json: include_str!("../../../sweeps/collusion-delta.json"),
+    },
+    Builtin {
+        id: "collusion-memory",
+        json: include_str!("../../../sweeps/collusion-memory.json"),
+    },
+    Builtin {
+        id: "collusion-myopic",
+        json: include_str!("../../../sweeps/collusion-myopic.json"),
+    },
+    Builtin {
+        id: "collusion-two-phase",
+        json: include_str!("../../../sweeps/collusion-two-phase.json"),
+    },
+    Builtin {
+        id: "collusion-every-price",
+        json: include_str!("../../../sweeps/collusion-every-price.json"),
+    },
+    Builtin {
+        id: "collusion-below-nash",
+        json: include_str!("../../../sweeps/collusion-below-nash.json"),
+    },
+    Builtin {
+        id: "collusion-invitation",
+        json: include_str!("../../../sweeps/collusion-invitation.json"),
+    },
+    Builtin {
+        id: "collusion-synchronous",
+        json: include_str!("../../../sweeps/collusion-synchronous.json"),
+    },
+    Builtin {
+        id: "collusion-exploration",
+        json: include_str!("../../../sweeps/collusion-exploration.json"),
+    },
+    Builtin {
+        id: "collusion-timescale",
+        json: include_str!("../../../sweeps/collusion-timescale.json"),
+    },
+    Builtin {
+        id: "collusion-rp-complete",
+        json: include_str!("../../../sweeps/collusion-rp-complete.json"),
+    },
+    Builtin {
+        id: "auctions-formats",
+        json: include_str!("../../../sweeps/auctions-formats.json"),
+    },
+    Builtin {
+        id: "auctions-feedback",
+        json: include_str!("../../../sweeps/auctions-feedback.json"),
+    },
+    Builtin {
+        id: "auctions-initialization",
+        json: include_str!("../../../sweeps/auctions-initialization.json"),
+    },
+    Builtin {
+        id: "auctions-ties",
+        json: include_str!("../../../sweeps/auctions-ties.json"),
+    },
+    Builtin {
+        id: "auctions-hindsight",
+        json: include_str!("../../../sweeps/auctions-hindsight.json"),
+    },
+    Builtin {
+        id: "auctions-local",
+        json: include_str!("../../../sweeps/auctions-local.json"),
+    },
+    Builtin {
+        id: "auctions-biased",
+        json: include_str!("../../../sweeps/auctions-biased.json"),
+    },
+    Builtin {
+        id: "auctions-downward",
+        json: include_str!("../../../sweeps/auctions-downward.json"),
+    },
+    Builtin {
+        id: "auctions-market",
+        json: include_str!("../../../sweeps/auctions-market.json"),
+    },
+    Builtin {
+        id: "auctions-bidders",
+        json: include_str!("../../../sweeps/auctions-bidders.json"),
+    },
+    Builtin {
+        id: "auctions-persistent",
+        json: include_str!("../../../sweeps/auctions-persistent.json"),
+    },
+    Builtin {
+        id: "auctions-duration",
+        json: include_str!("../../../sweeps/auctions-duration.json"),
+    },
+    Builtin {
+        id: "polarity-predators",
+        json: include_str!("../../../sweeps/polarity-predators.json"),
+    },
+];
+
+/// The built-in sweeps, in display order.
+pub fn builtins() -> &'static [Builtin] {
+    &BUILTINS
+}
+
+/// Built-in sweep `id`, parsed.
+pub fn builtin(id: &str) -> Option<Sweep> {
+    BUILTINS
+        .iter()
+        .find(|b| b.id == id)
+        .map(|b| Sweep::from_json(b.json).expect("built-in sweeps parse"))
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn polarity_playground_sweep_couples_defense_and_victory_ratios() {
+        let sweep =
+            super::builtin("polarity-predators").expect("the polarity experiment is discoverable");
+        let points = sweep.points().unwrap();
+        let config = sweep.config_for(&points[24]).unwrap();
+        let crate::model::ModelConfig::Polarity(c) = config else {
+            panic!("polarity preset required")
+        };
+        assert_eq!((c.superiority, c.victory), (3.0, 3.0));
+        assert_eq!(c.source_profile, crate::polarity::SourceProfile::Chapter4);
+        assert_eq!(sweep.metric.series(), "sovereign_count");
+    }
+
+    use super::*;
+    use crate::config::Config;
+    use crate::world::World;
+    use serde_json::json;
+
+    /// 2 series × 3 x values × 2 seeds on ii-2-unit with 50 agents. The CLI
+    /// and WASM tests keep their own copies.
+    pub(crate) fn tiny() -> Value {
+        json!({
+            "name": "tiny",
+            "base": { "preset": "ii-2-unit" },
+            "set": { "population": 50 },
+            "x": { "path": "vision.max", "values": [2, 4, 6] },
+            "series": { "label": "Metabolism", "values": [
+                { "at": 1, "set": { "goods.0.metabolism": { "min": 1, "max": 1 } } },
+                { "at": 3, "name": "wide", "set": { "goods.0.metabolism": { "min": 1, "max": 5 } } }
+            ] },
+            "seeds": { "from": 5, "count": 2 },
+            "ticks": 20,
+            "metric": { "kind": "window_mean", "series": "population", "from": 10 }
+        })
+    }
+
+    pub(crate) fn sweep(value: Value) -> Sweep {
+        serde_json::from_value(value).unwrap()
+    }
+
+    /// Point `point`'s config, which must be a sugarscape config.
+    fn sugarscape(s: &Sweep, point: &Point) -> Config {
+        s.config_for(point)
+            .unwrap()
+            .sugarscape()
+            .cloned()
+            .expect("a sugarscape config")
+    }
+
+    fn with(mut value: Value, key: &str, v: Value) -> Value {
+        value[key] = v;
+        value
+    }
+
+    fn without(mut value: Value, key: &str) -> Value {
+        value.as_object_mut().unwrap().remove(key);
+        value
+    }
+
+    #[test]
+    fn points_run_series_major_then_x_then_seed() {
+        let s = sweep(tiny());
+        let points = s.points().unwrap();
+        assert_eq!(points.len(), 12);
+        let p = |index, series, x, seed| Point {
+            index,
+            series,
+            x,
+            seed,
+        };
+        assert_eq!(points[0], p(0, 0, 0, 5));
+        assert_eq!(points[1], p(1, 0, 0, 6));
+        assert_eq!(points[2], p(2, 0, 1, 5));
+        assert_eq!(points[7], p(7, 1, 0, 6));
+        assert_eq!(points[11], p(11, 1, 2, 6));
+        for (i, point) in points.iter().enumerate() {
+            assert_eq!(point.index, i);
+            assert_eq!(s.point(i).unwrap(), *point);
+        }
+        assert_eq!(s.point(12).unwrap_err()[0].field, "point");
+    }
+
+    #[test]
+    fn tag_length_sweeps_rebuild_the_default_groups() {
+        let s = sweep(json!({
+            "name": "tags",
+            "base": { "preset": "iii-6-culture" },
+            "x": { "path": "tag_length", "values": [5, 11] },
+            "seeds": { "from": 1, "count": 1 },
+            "ticks": 10,
+            "metric": { "kind": "final", "series": "population" }
+        }));
+        let points = s.points().unwrap();
+        for point in &points {
+            let config = sugarscape(&s, point);
+            assert_eq!(
+                config.culture.groups,
+                crate::config::default_groups(config.tag_length)
+            );
+        }
+    }
+
+    #[test]
+    fn without_series_there_is_one_line_named_after_the_statistic() {
+        let s = sweep(without(tiny(), "series"));
+        assert_eq!(s.series_count(), 1);
+        assert_eq!(s.points().unwrap().len(), 6);
+        assert_eq!(s.series_name(0), "population");
+    }
+
+    #[test]
+    fn series_lines_are_named() {
+        let s = sweep(tiny());
+        assert_eq!(s.series_name(0), "Metabolism = 1");
+        assert_eq!(s.series_name(1), "wide");
+    }
+
+    #[test]
+    fn shorthand_axes_expand() {
+        let s = sweep(tiny());
+        assert_eq!(s.x.label, "vision.max");
+        assert_eq!(
+            s.x.values[1],
+            AxisValue {
+                at: 4.0,
+                name: None,
+                set: BTreeMap::from([("vision.max".to_string(), json!(4))]),
+            }
+        );
+        let b = sweep(with(
+            tiny(),
+            "x",
+            json!({ "label": "Trade", "path": "trade.enabled", "values": [false, true] }),
+        ));
+        assert_eq!(b.x.label, "Trade");
+        assert_eq!((b.x.values[0].at, b.x.values[1].at), (0.0, 1.0));
+        assert_eq!(b.x.values[1].set["trade.enabled"], json!(true));
+    }
+
+    #[test]
+    fn full_axes_need_a_label_and_axes_are_written_in_full() {
+        let unlabeled = with(tiny(), "x", json!({ "values": [{ "at": 1, "set": {} }] }));
+        let err = Sweep::from_json(&unlabeled.to_string()).unwrap_err();
+        assert_eq!(err[0].field, "sweep");
+        assert!(err[0].message.contains("needs a label"), "{err:?}");
+        let s = sweep(tiny());
+        let written = serde_json::to_value(&s).unwrap();
+        assert!(written["x"].get("path").is_none());
+        assert_eq!(
+            written["x"]["values"][0],
+            json!({ "at": 2.0, "set": { "vision.max": 2 } })
+        );
+        assert_eq!(sweep(written), s);
+    }
+
+    #[test]
+    fn unknown_fields_are_parse_errors() {
+        let err = Sweep::from_json(&with(tiny(), "seed", json!(1)).to_string()).unwrap_err();
+        assert_eq!(err[0].field, "sweep");
+        assert!(err[0].message.contains("unknown field `seed`"), "{err:?}");
+        assert_eq!(Sweep::from_json("{").unwrap_err()[0].field, "sweep");
+    }
+
+    #[test]
+    fn unknown_metric_and_base_fields_are_parse_errors() {
+        let metric = json!({ "kind": "window_mean", "series": "population", "from": 5, "too": 6 });
+        let err = Sweep::from_json(&with(tiny(), "metric", metric).to_string()).unwrap_err();
+        assert!(err[0].message.contains("unknown field `too`"), "{err:?}");
+        let base = json!({ "preset": "ii-2-unit", "extra": 1 });
+        assert!(Sweep::from_json(&with(tiny(), "base", base).to_string()).is_err());
+    }
+
+    #[test]
+    fn configs_apply_set_then_series_then_x() {
+        let mut v = tiny();
+        v["set"] = json!({ "population": 50, "vision.max": 3, "growback.rate": 2.0 });
+        v["series"]["values"][1]["set"]["population"] = json!(60);
+        v["series"]["values"][1]["set"]["growback.rate"] = json!(3.0);
+        let s = sweep(v);
+        let first = sugarscape(&s, &s.point(0).unwrap());
+        assert_eq!(
+            (first.population, first.vision.min, first.vision.max),
+            (50, 1, 2)
+        );
+        assert_eq!(
+            (first.goods[0].metabolism.max, first.growback.rate),
+            (1, 2.0)
+        );
+        let last = sugarscape(&s, &s.point(11).unwrap());
+        assert_eq!((last.population, last.vision.max), (60, 6));
+        assert_eq!((last.goods[0].metabolism.max, last.growback.rate), (5, 3.0));
+    }
+
+    #[test]
+    fn a_base_config_may_use_either_shape() {
+        let legacy = with(
+            without(tiny(), "set"),
+            "base",
+            json!({ "config": { "population": 100 } }),
+        );
+        let s = sweep(legacy);
+        let config = sugarscape(&s, &s.point(0).unwrap());
+        assert_eq!((config.population, config.goods.len()), (100, 1));
+        let bad = sweep(with(tiny(), "base", json!({ "config": { "goods": 7 } })));
+        assert_eq!(bad.points().unwrap_err()[0].field, "base");
+    }
+
+    #[test]
+    fn path_errors_name_the_set_they_came_from() {
+        let mut v = tiny();
+        v["set"] = json!({ "population": "many" });
+        let e = sweep(v).points().unwrap_err();
+        assert_eq!(e.len(), 1, "one error, not one per cell: {e:?}");
+        assert_eq!(e[0].field, "set.population");
+        assert!(e[0].message.starts_with("population:"), "{e:?}");
+
+        let mut v = tiny();
+        v["series"]["values"][1]["set"] = json!({ "goods.0.metabolism.maxx": 2 });
+        assert_eq!(
+            sweep(v).points().unwrap_err(),
+            vec![FieldError::new(
+                "series[1].set.goods.0.metabolism.maxx",
+                "unknown field goods.0.metabolism.maxx"
+            )]
+        );
+
+        let v = with(
+            tiny(),
+            "x",
+            json!({ "label": "v", "values": [
+                { "at": 1, "set": { "vision.max": 2 } },
+                { "at": 2, "set": { "visionn": 3 } }
+            ] }),
+        );
+        assert_eq!(
+            sweep(v).points().unwrap_err(),
+            vec![FieldError::new("x[1].set.visionn", "unknown field visionn")]
+        );
+
+        let v = with(tiny(), "base", json!({ "preset": "no-such" }));
+        assert_eq!(
+            sweep(v).points().unwrap_err(),
+            vec![FieldError::new("base", "unknown preset \"no-such\"")]
+        );
+    }
+
+    #[test]
+    fn invalid_configs_name_the_first_point_of_their_cell() {
+        let v = with(
+            without(tiny(), "series"),
+            "x",
+            json!({ "path": "population", "values": [50, 3000] }),
+        );
+        assert_eq!(
+            sweep(v).points().unwrap_err(),
+            vec![FieldError::new(
+                "points",
+                "point 2 (x=1, series=0): population: cannot exceed the number of sites"
+            )]
+        );
+    }
+
+    #[test]
+    fn the_metric_series_must_exist_in_every_config() {
+        let mut v = tiny();
+        v["metric"]["series"] = json!("mean_holding_1");
+        let e = sweep(v).points().unwrap_err();
+        assert_eq!(e.len(), 6, "one per cell: {e:?}");
+        assert_eq!(e[0].field, "metric.series");
+        assert_eq!(
+            e[0].message,
+            "point 0 (x=0, series=0): no statistics series \"mean_holding_1\" in this config"
+        );
+    }
+
+    #[test]
+    fn limits_are_checked() {
+        let fields = |v: Value| -> Vec<String> {
+            match sweep(v).points() {
+                Ok(_) => Vec::new(),
+                Err(e) => e.into_iter().map(|e| e.field).collect(),
+            }
+        };
+        let has = |v: Value, field: &str| {
+            let f = fields(v);
+            assert!(f.iter().any(|x| x == field), "{field} not in {f:?}");
+        };
+        has(with(tiny(), "ticks", json!(0)), "ticks");
+        has(with(tiny(), "ticks", json!(100_001)), "ticks");
+        has(with(tiny(), "name", json!("  ")), "name");
+        has(
+            with(tiny(), "seeds", json!({ "from": 1, "count": 0 })),
+            "seeds.count",
+        );
+        has(
+            with(tiny(), "seeds", json!({ "from": 1, "count": 101 })),
+            "seeds.count",
+        );
+        has(
+            with(
+                tiny(),
+                "seeds",
+                json!({ "from": 4_294_967_295u64, "count": 2 }),
+            ),
+            "seeds.from",
+        );
+        assert!(sweep(with(
+            tiny(),
+            "seeds",
+            json!({ "from": 4_294_967_294u64, "count": 2 })
+        ))
+        .check_shape()
+        .is_ok());
+        has(
+            with(
+                tiny(),
+                "x",
+                json!({ "path": "vision.max", "values": vec![2; 65] }),
+            ),
+            "x.values",
+        );
+        has(
+            with(tiny(), "x", json!({ "path": "vision.max", "values": [] })),
+            "x.values",
+        );
+        has(
+            with(
+                tiny(),
+                "series",
+                json!({ "path": "growback.rate", "values": vec![1.0; 17] }),
+            ),
+            "series.values",
+        );
+        let mut big = with(
+            tiny(),
+            "x",
+            json!({ "path": "vision.max", "values": vec![2; 64] }),
+        );
+        big["series"] = json!({ "path": "growback.rate", "values": vec![1.0; 16] });
+        big["seeds"]["count"] = json!(10);
+        has(big, "points");
+        let mut v = tiny();
+        v["metric"]["to"] = json!(21);
+        has(v, "metric.to");
+        let mut v = tiny();
+        v["metric"]["from"] = json!(15);
+        v["metric"]["to"] = json!(12);
+        has(v, "metric.from");
+        let ts =
+            |every: u32| json!({ "kind": "timeseries", "series": "population", "every": every });
+        has(with(tiny(), "metric", ts(0)), "metric.every");
+        has(with(tiny(), "metric", ts(21)), "metric.every");
+        has(with(tiny(), "metric", ts(5)), "metric.kind");
+        let single = with(
+            with(tiny(), "metric", ts(5)),
+            "x",
+            json!({ "label": "all", "values": [{ "at": 0 }] }),
+        );
+        assert_eq!(fields(single.clone()), Vec::<String>::new());
+        // At most 2000 blocks: ceil(ticks / every).
+        let mut blocks_ok = with(single.clone(), "ticks", json!(4000));
+        blocks_ok["metric"]["every"] = json!(2);
+        assert_eq!(fields(blocks_ok), Vec::<String>::new());
+        let mut too_many = with(single, "ticks", json!(4001));
+        too_many["metric"]["every"] = json!(2);
+        has(too_many, "metric.every");
+    }
+
+    #[test]
+    fn metrics_read_the_history_by_tick() {
+        let history: Vec<f64> = (0..=10).map(f64::from).collect();
+        let scalar = |m: Metric| match measure(&m, 10, &history) {
+            Outcome::Scalar { value } => value,
+            other => panic!("{other:?}"),
+        };
+        let p = || "p".to_string();
+        assert_eq!(scalar(Metric::Final { series: p() }), 10.0);
+        assert_eq!(
+            scalar(Metric::WindowMean {
+                series: p(),
+                from: 4,
+                to: None
+            }),
+            7.0
+        );
+        assert_eq!(
+            scalar(Metric::WindowMean {
+                series: p(),
+                from: 4,
+                to: Some(6)
+            }),
+            5.0
+        );
+        assert_eq!(
+            scalar(Metric::WindowMean {
+                series: p(),
+                from: 0,
+                to: Some(0)
+            }),
+            0.0
+        );
+        assert_eq!(
+            measure(
+                &Metric::Timeseries {
+                    series: p(),
+                    every: 4
+                },
+                10,
+                &history
+            ),
+            Outcome::Series {
+                values: vec![2.5, 6.5, 9.5]
+            }
+        );
+        assert_eq!(blocks(10, 4), vec![(1, 4), (5, 8), (9, 10)]);
+        assert_eq!(blocks(10, 10), vec![(1, 10)]);
+        assert_eq!(blocks(3, 1), vec![(1, 1), (2, 2), (3, 3)]);
+    }
+
+    #[test]
+    fn nan_values_are_skipped_and_an_all_nan_block_is_nan() {
+        let mut history: Vec<f64> = (0..=10).map(f64::from).collect();
+        history[5] = f64::NAN;
+        let window = Metric::WindowMean {
+            series: "p".into(),
+            from: 4,
+            to: Some(6),
+        };
+        assert_eq!(
+            measure(&window, 10, &history),
+            Outcome::Scalar { value: 5.0 }
+        );
+        history[9] = f64::NAN;
+        history[10] = f64::NAN;
+        let Outcome::Series { values } = measure(
+            &Metric::Timeseries {
+                series: "p".into(),
+                every: 4,
+            },
+            10,
+            &history,
+        ) else {
+            panic!("series expected");
+        };
+        assert_eq!(&values[..2], &[2.5, 7.0]);
+        assert!(values[2].is_nan());
+    }
+
+    #[test]
+    fn run_results_write_nan_as_null() {
+        let run = RunResult {
+            democratic_peace: None,
+            point: 3,
+            series: 1,
+            x: 0,
+            seed: 7,
+            outcome: Outcome::Scalar { value: f64::NAN },
+        };
+        let json = serde_json::to_string(&run).unwrap();
+        assert_eq!(
+            json,
+            r#"{"point":3,"series":1,"x":0,"seed":7,"value":null}"#
+        );
+        let back: RunResult = serde_json::from_str(&json).unwrap();
+        assert!(matches!(back.outcome, Outcome::Scalar { value } if value.is_nan()));
+        let series = RunResult {
+            outcome: Outcome::Series {
+                values: vec![1.5, f64::NAN],
+            },
+            ..run
+        };
+        let json = serde_json::to_string(&series).unwrap();
+        assert_eq!(
+            json,
+            r#"{"point":3,"series":1,"x":0,"seed":7,"values":[1.5,null]}"#
+        );
+        let back: RunResult = serde_json::from_str(&json).unwrap();
+        let Outcome::Series { values } = back.outcome else {
+            panic!("series expected")
+        };
+        assert_eq!(values[0], 1.5);
+        assert!(values[1].is_nan());
+        let int: RunResult =
+            serde_json::from_str(r#"{"point":0,"series":0,"x":0,"seed":1,"value":224}"#).unwrap();
+        assert_eq!(int.outcome, Outcome::Scalar { value: 224.0 });
+    }
+
+    #[test]
+    fn run_point_measures_one_world() {
+        let s = sweep(tiny());
+        let point = s.point(7).unwrap();
+        let run = run_point(&s, &point);
+        assert_eq!((run.point, run.series, run.x, run.seed), (7, 1, 0, 6));
+        let mut w = World::new(sugarscape(&s, &point), 6).unwrap();
+        w.run(20);
+        let pops = w.stats.series("population").unwrap();
+        let expected = pops[10..=20].iter().fold(0.0, |a, b| a + b) / 11.0;
+        assert_eq!(run.outcome, Outcome::Scalar { value: expected });
+    }
+
+    #[test]
+    fn only_worlds_whose_stop_is_permanent_are_read_past_it() {
+        let run = |base: &str, ticks: u32, metric: serde_json::Value| {
+            let s = Sweep::from_json(
+                &json!({
+                    "name": "stop",
+                    "base": { "preset": base },
+                    "x": { "path": "stop_at_extinction", "values": [true] },
+                    "seeds": { "from": 1, "count": 1 },
+                    "ticks": ticks,
+                    "metric": metric
+                })
+                .to_string()
+                .replace(
+                    "stop_at_extinction",
+                    if base.starts_with("cv") {
+                        "stop_at_extinction"
+                    } else {
+                        "stop_when_stable"
+                    },
+                ),
+            )
+            .unwrap();
+            run_point(&s, &s.point(0).unwrap()).outcome
+        };
+        // Civil violence stopping at extinction: a run that stopped is not read past its end.
+        let civil = run(
+            "cv-run-7-cleansing",
+            3000,
+            json!({ "kind": "final", "series": "blue" }),
+        );
+        assert!(
+            matches!(civil, Outcome::Scalar { value } if value.is_nan()),
+            "{civil:?}"
+        );
+        // Axelrod's culture, once stable, holds its state: its final value is read.
+        let culture = run(
+            "ac-sample-run",
+            20_000,
+            json!({ "kind": "final", "series": "regions" }),
+        );
+        assert!(
+            matches!(culture, Outcome::Scalar { value } if value >= 1.0),
+            "{culture:?}"
+        );
+    }
+
+    #[test]
+    fn an_empty_world_still_yields_a_value() {
+        let mut v = tiny();
+        v["set"] = json!({ "population": 0 });
+        v["metric"] = json!({ "kind": "final", "series": "population" });
+        let s = sweep(v);
+        assert_eq!(
+            run_point(&s, &s.point(0).unwrap()).outcome,
+            Outcome::Scalar { value: 0.0 }
+        );
+    }
+
+    fn scalar_run(point: usize, s: &Sweep, value: f64) -> RunResult {
+        let p = s.point(point).unwrap();
+        RunResult {
+            democratic_peace: None,
+            point,
+            series: p.series,
+            x: p.x,
+            seed: p.seed,
+            outcome: Outcome::Scalar { value },
+        }
+    }
+
+    fn series_run(point: usize, s: &Sweep, values: Vec<f64>) -> RunResult {
+        RunResult {
+            democratic_peace: None,
+            outcome: Outcome::Series { values },
+            ..scalar_run(point, s, 0.0)
+        }
+    }
+
+    /// `tiny()` with one x value and 8-tick block means (blocks end 8, 16, 20).
+    fn tiny_timeseries() -> Sweep {
+        let mut v = tiny();
+        v["x"] = json!({ "label": "all", "values": [{ "at": 0, "set": {} }] });
+        v["metric"] = json!({ "kind": "timeseries", "series": "population", "every": 8 });
+        sweep(v)
+    }
+
+    #[test]
+    fn aggregation_summarizes_each_cell_over_seeds() {
+        let mut v = tiny();
+        v["seeds"]["count"] = json!(4);
+        let s = sweep(v);
+        // Cell (0, 0): 1, 2, 3, 4. Cell (0, 1): 5 and NaN. Cell (1, 2): 9.
+        let runs = vec![
+            scalar_run(3, &s, 4.0),
+            scalar_run(0, &s, 1.0),
+            scalar_run(2, &s, 3.0),
+            scalar_run(1, &s, 2.0),
+            scalar_run(4, &s, 5.0),
+            scalar_run(5, &s, f64::NAN),
+            scalar_run(20, &s, 9.0),
+        ];
+        let Summary::Scalar(rows) = aggregate(&s, &runs) else {
+            panic!("scalar expected");
+        };
+        assert_eq!(rows.len(), 6);
+        let r = &rows[0];
+        assert_eq!((r.series, r.x, r.at, r.n, r.nan), (0, 0, 2.0, 4, 0));
+        assert_eq!((r.mean, r.min, r.max), (2.5, 1.0, 4.0));
+        assert_eq!(r.sd, (5.0f64 / 3.0).sqrt());
+        let r = &rows[1];
+        assert_eq!(
+            (r.n, r.nan, r.mean, r.sd, r.min, r.max),
+            (1, 1, 5.0, 0.0, 5.0, 5.0)
+        );
+        assert!(rows[2].mean.is_nan() && rows[2].n == 0 && rows[2].nan == 0);
+        assert_eq!(
+            (rows[5].series_name.as_str(), rows[5].n, rows[5].mean),
+            ("wide", 1, 9.0)
+        );
+        let reversed: Vec<RunResult> = runs.iter().rev().cloned().collect();
+        assert_eq!(
+            serde_json::to_string(&aggregate(&s, &reversed)).unwrap(),
+            serde_json::to_string(&aggregate(&s, &runs)).unwrap()
+        );
+    }
+
+    #[test]
+    fn timeseries_aggregate_per_block() {
+        let s = tiny_timeseries();
+        let runs = vec![
+            series_run(0, &s, vec![1.0, 2.0, 3.0]),
+            series_run(1, &s, vec![3.0, 4.0, f64::NAN]),
+        ];
+        let Summary::Timeseries(rows) = aggregate(&s, &runs) else {
+            panic!("timeseries expected");
+        };
+        assert_eq!(rows.len(), 6);
+        assert_eq!(
+            (rows[0].t, rows[0].n, rows[0].mean, rows[0].sd),
+            (8, 2, 2.0, 2.0f64.sqrt())
+        );
+        assert_eq!(
+            (rows[2].t, rows[2].n, rows[2].mean, rows[2].sd),
+            (20, 1, 3.0, 0.0)
+        );
+        assert!(rows[3].mean.is_nan() && rows[3].n == 0 && rows[3].series_name == "wide");
+    }
+
+    #[test]
+    fn results_serialize_as_documented() {
+        let s = sweep(tiny());
+        let result = SweepResult::new(
+            s.clone(),
+            vec![scalar_run(1, &s, 2.0), scalar_run(0, &s, 1.0)],
+        );
+        assert!(result.incomplete);
+        assert_eq!(result.runs[0].point, 0);
+        let value: Value = serde_json::from_str(&result.to_json()).unwrap();
+        assert_eq!(value["version"], 1);
+        assert_eq!(value["incomplete"], true);
+        assert_eq!(value["summary"]["kind"], "scalar");
+        assert_eq!(
+            value["summary"]["rows"][0],
+            json!({ "series": 0, "series_name": "Metabolism = 1", "x": 0, "at": 2.0, "n": 2,
+                    "nan": 0, "mean": 1.5, "sd": 0.5f64.sqrt(), "min": 1.0, "max": 2.0 })
+        );
+        assert_eq!(value["summary"]["rows"][1]["mean"], Value::Null);
+        assert!(result.to_json().ends_with("}\n"));
+        let back: SweepResult = serde_json::from_str(&result.to_json()).unwrap();
+        assert_eq!(back.to_json(), result.to_json());
+        let complete = SweepResult::new(
+            s.clone(),
+            (0..12).map(|i| scalar_run(i, &s, i as f64)).collect(),
+        );
+        assert!(!complete.incomplete);
+        assert!(!complete.to_json().contains("incomplete"));
+    }
+
+    #[test]
+    fn scalar_csvs() {
+        let mut v = tiny();
+        v["seeds"]["count"] = json!(1);
+        v["series"]["values"][1]["name"] = json!("wide, \"5\"");
+        let s = sweep(v);
+        let runs = (0..6)
+            .map(|i| scalar_run(i, &s, if i == 1 { f64::NAN } else { i as f64 * 0.5 }))
+            .collect();
+        let result = SweepResult::new(s, runs);
+        assert_eq!(
+            runs_csv(&result),
+            "series,x,seed,value\n0,2,5,0\n0,4,5,\n0,6,5,1\n1,2,5,1.5\n1,4,5,2\n1,6,5,2.5\n"
+        );
+        assert_eq!(
+            summary_csv(&result),
+            "series,series_name,x,n,mean,sd,min,max\n\
+             0,Metabolism = 1,2,1,0,0,0,0\n\
+             0,Metabolism = 1,4,0,,,,\n\
+             0,Metabolism = 1,6,1,1,0,1,1\n\
+             1,\"wide, \"\"5\"\"\",2,1,1.5,0,1.5,1.5\n\
+             1,\"wide, \"\"5\"\"\",4,1,2,0,2,2\n\
+             1,\"wide, \"\"5\"\"\",6,1,2.5,0,2.5,2.5\n"
+        );
+    }
+
+    #[test]
+    fn timeseries_csvs() {
+        let mut s = tiny_timeseries();
+        s.seeds.count = 1;
+        let runs = vec![
+            series_run(0, &s, vec![1.0, 2.0, 3.0]),
+            series_run(1, &s, vec![4.0, f64::NAN, 6.0]),
+        ];
+        let result = SweepResult::new(s, runs);
+        assert_eq!(
+            runs_csv(&result),
+            "series,x,seed,t,value\n0,0,5,8,1\n0,0,5,16,2\n0,0,5,20,3\n1,0,5,8,4\n1,0,5,16,\n1,0,5,20,6\n"
+        );
+        assert_eq!(
+            summary_csv(&result),
+            "series,series_name,t,n,mean,sd\n0,Metabolism = 1,8,1,1,0\n0,Metabolism = 1,16,1,2,0\n\
+             0,Metabolism = 1,20,1,3,0\n1,wide,8,1,4,0\n1,wide,16,0,,\n1,wide,20,1,6,0\n"
+        );
+    }
+
+    #[test]
+    fn check_runs_rejects_runs_from_another_sweep() {
+        let s = sweep(tiny());
+        assert!(check_runs(&s, &[scalar_run(3, &s, 1.0)]).is_ok());
+        let mut wrong_seed = scalar_run(3, &s, 1.0);
+        wrong_seed.seed = 99;
+        let beyond = RunResult {
+            point: 12,
+            ..scalar_run(0, &s, 1.0)
+        };
+        let wrong_kind = series_run(1, &s, vec![1.0]);
+        let e = check_runs(
+            &s,
+            &[scalar_run(0, &s, 1.0), wrong_seed, beyond, wrong_kind],
+        )
+        .unwrap_err();
+        assert_eq!(
+            e.iter().map(|e| e.field.as_str()).collect::<Vec<_>>(),
+            ["runs[1]", "runs[2]", "runs[3]"]
+        );
+        let t = tiny_timeseries();
+        assert!(check_runs(&t, &[series_run(0, &t, vec![1.0, 2.0, 3.0])]).is_ok());
+        assert!(check_runs(&t, &[series_run(0, &t, vec![1.0, 2.0])]).is_err());
+    }
+
+    #[test]
+    fn check_runs_rejects_duplicate_points() {
+        let s = sweep(tiny());
+        let e = check_runs(
+            &s,
+            &[
+                scalar_run(3, &s, 1.0),
+                scalar_run(0, &s, 1.0),
+                scalar_run(3, &s, 2.0),
+            ],
+        )
+        .unwrap_err();
+        assert_eq!(e.len(), 1, "{e:?}");
+        assert_eq!(e[0].field, "runs[2]");
+        assert!(e[0].message.contains("point 3"), "{e:?}");
+    }
+
+    #[test]
+    fn run_all_is_the_same_for_any_number_of_threads() {
+        let s = sweep(tiny());
+        let mut seen = Vec::new();
+        let one = run_all(&s, 1, |done, p| seen.push((done, p.index))).unwrap();
+        assert_eq!(seen, (1..=12).zip(0..12).collect::<Vec<_>>());
+        let mut count = 0;
+        let four = run_all(&s, 4, |done, _| {
+            count += 1;
+            assert_eq!(done, count);
+        })
+        .unwrap();
+        assert_eq!(count, 12);
+        assert_eq!(four.to_json(), one.to_json());
+        assert!(!one.incomplete);
+        for (i, run) in one.runs.iter().enumerate() {
+            assert_eq!(run.point, i);
+            assert_eq!(*run, run_point(&s, &s.point(i).unwrap()));
+        }
+        assert_eq!(run_all(&s, 64, |_, _| {}).unwrap().to_json(), one.to_json());
+    }
+
+    #[test]
+    fn run_all_reports_invalid_sweeps() {
+        let e = run_all(&sweep(with(tiny(), "ticks", json!(0))), 2, |_, _| {}).unwrap_err();
+        assert!(e.iter().any(|e| e.field == "ticks"), "{e:?}");
+    }
+
+    #[test]
+    fn a_tags_sweep_past_the_last_generation_names_the_tags_model() {
+        let mut s = builtin("rca-pairings").unwrap();
+        s.ticks = 30_001;
+        let e = s.points().unwrap_err();
+        assert_eq!(e[0].field, "ticks");
+        assert!(e[0].message.starts_with("must be ≤ 30000"), "{e:?}");
+        assert!(e[0].message.contains("last generation"), "{e:?}");
+        assert!(!e[0].message.contains("Long House Valley"), "{e:?}");
+    }
+
+    #[test]
+    fn an_ethno_sweep_past_the_last_period_names_the_model() {
+        let mut s = builtin("ha-cost").unwrap();
+        s.ticks = 2001;
+        let e = s.points().unwrap_err();
+        assert_eq!(e[0].field, "ticks");
+        assert!(e[0].message.starts_with("must be ≤ 2000"), "{e:?}");
+        assert!(e[0].message.contains("ethnocentrism"), "{e:?}");
+    }
+
+    #[test]
+    fn builtin_sweeps_parse_and_validate() {
+        let ids: Vec<&str> = builtins().iter().map(|b| b.id).collect();
+        assert_eq!(
+            ids,
+            [
+                "fig-ii-5",
+                "fig-iv-6",
+                "fig-iv-10-11",
+                "n-goods-carrying-capacity",
+                "bargaining-rules",
+                "schelling-tipping",
+                "s71-demand",
+                "s71-vacancy",
+                "s71-radius",
+                "s71-order",
+                "line-radius",
+                "line-reach",
+                "tipping-start",
+                "tipping-entry",
+                "tipping-intercept",
+                "tipping-speeds",
+                "tipping-limit",
+                "gvn-phase",
+                "svw-city",
+                "zhang-beta",
+                "zhang-neighborhood",
+                "lhv-calibration",
+                "lhv-quirks",
+                "cv-ratio-rules",
+                "cv-peacekeeping",
+                "cv-jail-waits",
+                "nm-universal",
+                "hg-async",
+                "nbm-grid-discrete",
+                "nbm-grid-continuous",
+                "nbm-radius",
+                "rca-pairings",
+                "rca-cost",
+                "rca-clones",
+                "rca-population",
+                "ac-table-2",
+                "ac-neighborhoods",
+                "ac-territory",
+                "ac-activation",
+                "ac-traits-transition",
+                "ac-drift",
+                "dock-mobility",
+                "dock-mountain",
+                "aey-memory",
+                "aey-population",
+                "aey-first-attractor",
+                "aey-tag-regimes",
+                "pvplh-payoffs",
+                "ha-cost",
+                "ha-colors",
+                "ha-mutation",
+                "ha-immigration",
+                "ha-lattice",
+                "jansson-tag-mutation",
+                "jansson-markers",
+                "hk-diagonal",
+                "hk-asymmetry",
+                "hk-bias",
+                "hk-updating",
+                "hk-lattice",
+                "hk-population",
+                "cra-table-2",
+                "cra-dial",
+                "cra-threshold",
+                "cra-noise",
+                "cra-population",
+                "dpd-payoffs",
+                "dpd-mutation",
+                "dpd-metabolism",
+                "dpd-max-age",
+                "norms-horizon",
+                "norms-mutation",
+                "norms-meta-payoffs",
+                "norms-temptation",
+                "norms-selection",
+                "norms-readings",
+                "norms-dominance",
+                "ra-clusters",
+                "ra-map",
+                "ra-readings",
+                "ra-population",
+                "ra-rules",
+                "ra-delta",
+                "ad-connectivity",
+                "w-dispersion",
+                "ns-rounds",
+                "ns-group-size",
+                "lh-cost",
+                "lh-gene-flow",
+                "ef-predictors",
+                "ef-capacity",
+                "mg-memory",
+                "mg-fig-1",
+                "mg-strategies",
+                "mg-information",
+                "cmo-bias",
+                "ants-alpha",
+                "ants-n",
+                "ants-flips",
+                "ants-pull",
+                "ants-sources",
+                "am-independent",
+                "ifd-matching",
+                "ifd-idle",
+                "ifd-crowding",
+                "ifd-travel",
+                "gr-sd",
+                "gr-friends",
+                "gr-movement",
+                "gr-ceilings",
+                "watts-window",
+                "watts-hetero",
+                "watts-targeting",
+                "walk-speed",
+                "walk-vision",
+                "ifd-detour",
+                "ae-rational",
+                "ae-rational-replace",
+                "ae-threshold",
+                "ae-size",
+                "ae-extent",
+                "ae-policy",
+                "ae-coupling",
+                "ae-coupling-rational",
+                "bg-fig1a",
+                "bg-fig1b",
+                "bg-fig1-caption",
+                "bg-fig1-either",
+                "bg-fig2a",
+                "bg-fig2b",
+                "bg-fig3",
+                "bg-fig4",
+                "bg-baseline",
+                "bg-readings",
+                "bg-mutation",
+                "bg-error",
+                "bg-groups",
+                "bg-benefit",
+                "bg-continuous",
+                "bg-ring",
+                "bg-cooney-fine",
+                "bg-cooney-cost",
+                "mem-span-recall",
+                "mem-span-project",
+                "mem-share",
+                "gs-efficiency",
+                "gs-dispersion",
+                "gs-shouts",
+                "gs-mechanism",
+                "cliff-prices",
+                "zip-days",
+                "zip-momentum",
+                "zip-shift",
+                "goap-horizon",
+                "goap-k",
+                "goap-memory",
+                "bali-levels",
+                "bali-growth",
+                "bali-dispersal",
+                "bali-rain",
+                "bali-imitation-growth",
+                "bali-two-node",
+                "bali-gamma",
+                "bali-adaptive",
+                "bali-links",
+                "cache-capacity",
+                "cache-winter",
+                "central-distance",
+                "theft-find",
+                "theft-cheaters",
+                "theft-winter",
+                "watch-span",
+                "watch-scroungers",
+                "hoard-ratio",
+                "hoard-recovery",
+                "hoard-cheaters",
+                "firms-beta",
+                "firms-b",
+                "firms-preferences",
+                "firms-friends",
+                "firms-random-firms",
+                "firms-loyalty",
+                "firms-sticky",
+                "firms-groping",
+                "firms-seniority",
+                "firms-base-pay",
+                "firms-hiring",
+                "firms-readings",
+                "firms-population",
+                "collusion-table-i",
+                "collusion-alpha-beta",
+                "collusion-delta",
+                "collusion-memory",
+                "collusion-myopic",
+                "collusion-two-phase",
+                "collusion-every-price",
+                "collusion-below-nash",
+                "collusion-invitation",
+                "collusion-synchronous",
+                "collusion-exploration",
+                "collusion-timescale",
+                "collusion-rp-complete",
+                "auctions-formats",
+                "auctions-feedback",
+                "auctions-initialization",
+                "auctions-ties",
+                "auctions-hindsight",
+                "auctions-local",
+                "auctions-biased",
+                "auctions-downward",
+                "auctions-market",
+                "auctions-bidders",
+                "auctions-persistent",
+                "auctions-duration",
+                "polarity-predators"
+            ]
+        );
+        for b in builtins() {
+            let s = builtin(b.id).unwrap();
+            let points = s.points().unwrap_or_else(|e| panic!("{}: {e:?}", b.id));
+            assert!(!points.is_empty());
+            assert!(
+                s.description.as_deref().is_some_and(|d| !d.is_empty()),
+                "{} needs a description",
+                b.id
+            );
+        }
+        assert!(builtin("nope").is_none());
+    }
+
+    #[test]
+    fn anasazi_sweeps_stop_at_the_valleys_last_year() {
+        let mut s = builtin("lhv-calibration").unwrap();
+        s.ticks = 550;
+        assert!(s.points().is_ok());
+        s.ticks = 551;
+        let e = s.points().unwrap_err();
+        assert_eq!(e.len(), 1, "one error across the x values: {e:?}");
+        assert_eq!(e[0].field, "ticks");
+        assert!(e[0].message.contains("≤ 550"), "{}", e[0].message);
+        assert!(run_all(&s, 1, |_, _| {}).is_err());
+        let point = Point {
+            index: 0,
+            series: 0,
+            x: 0,
+            seed: 1,
+        };
+        assert_eq!(s.config_for(&point).unwrap_err()[0].field, "ticks");
+        // A later start year leaves fewer years to run.
+        let mut late = builtin("lhv-calibration").unwrap();
+        late.set.insert("start_year".into(), json!(900));
+        let e = late.points().unwrap_err();
+        assert!(e[0].message.contains("≤ 450"), "{e:?}");
+        late.ticks = 450;
+        assert!(late.points().is_ok());
+    }
+
+    #[test]
+    fn measure_is_nan_past_the_end_of_a_short_history() {
+        let history = [1.0, 2.0, 3.0];
+        let fin = |ticks| measure(&Metric::Final { series: "x".into() }, ticks, &history);
+        assert_eq!(fin(2), Outcome::Scalar { value: 3.0 });
+        assert!(matches!(fin(5), Outcome::Scalar { value } if value.is_nan()));
+        let window = |from, ticks| {
+            measure(
+                &Metric::WindowMean {
+                    series: "x".into(),
+                    from,
+                    to: None,
+                },
+                ticks,
+                &history,
+            )
+        };
+        assert_eq!(window(1, 9), Outcome::Scalar { value: 2.5 });
+        assert!(matches!(window(4, 9), Outcome::Scalar { value } if value.is_nan()));
+        let series = measure(
+            &Metric::Timeseries {
+                series: "x".into(),
+                every: 2,
+            },
+            6,
+            &history,
+        );
+        let Outcome::Series { values } = series else {
+            panic!("a timeseries")
+        };
+        assert_eq!(values[0], 2.5);
+        assert!(values[1..].iter().all(|v| v.is_nan()));
+    }
+
+    #[test]
+    fn four_goods_with_trade_is_the_n_4_peaks_preset() {
+        let s = builtin("n-goods-carrying-capacity").unwrap();
+        let x = s.x.values.iter().position(|v| v.at == 4.0).unwrap();
+        let point = s
+            .points()
+            .unwrap()
+            .into_iter()
+            .find(|p| p.series == 1 && p.x == x)
+            .unwrap();
+        assert_eq!(
+            sugarscape(&s, &point),
+            presets::by_id("n-4-peaks").unwrap().config
+        );
+    }
+}

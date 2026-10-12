@@ -63,3 +63,92 @@ fn nullable_binding_and_observation_fields_require_explicit_keys() {
         );
     }
 }
+
+#[test]
+fn numeric_guard_preserves_escaped_quote_and_backslash_parity() {
+    // Odd runs escape the quote; even runs leave it as the string terminator.
+    for (text, rejects) in [
+        (r#""\"1e-999""#, false),
+        (r#""\\" 1e-999"#, true),
+        (r#""\\\"1e-999""#, false),
+        (r#""\\\\" 1e-999"#, true),
+        (r#""\\1e-999""#, false),
+        (r#""\\\\1e-999""#, false),
+        (r#"["\"1e-999",1e-999]"#, true),
+        (r#"["\\\"1e-999",1e-999]"#, true),
+    ] {
+        assert_eq!(
+            wire::reject_numeric_underflow(text.as_bytes()).is_err(),
+            rejects,
+            "{text:?}"
+        );
+    }
+}
+
+#[test]
+fn numeric_guard_ignores_unicode_quoted_numbers_but_rejects_following_underflow() {
+    for (text, rejects) in [
+        (r#"["雪🦀 café 1e-999 -2e-999",0e-999,1e-3]"#, false),
+        (r#"["雪🦀 café 1e-999",1e-999]"#, true),
+        (r#"["雪\\🦀\" café 1e-999",-2e-999]"#, true),
+        (r#"["1e-999","2e-999"]"#, false),
+    ] {
+        assert_eq!(
+            wire::reject_numeric_underflow(text.as_bytes()).is_err(),
+            rejects,
+            "{text:?}"
+        );
+    }
+}
+
+#[test]
+fn unterminated_quoted_text_is_left_to_typed_payload_readers() {
+    use super::observer;
+    for text in [
+        "\"",
+        "\"雪1e-999",
+        "\"1e-999\\",
+        "\"雪\\\"1e-999",
+        "\"1e-999\\\\",
+    ] {
+        assert!(
+            wire::reject_numeric_underflow(text.as_bytes()).is_ok(),
+            "{text:?}"
+        );
+        assert!(observer::read_frame(text).is_err(), "{text:?}");
+        assert!(observer::read_checkpoint(text).is_err(), "{text:?}");
+    }
+}
+
+#[test]
+fn numeric_guard_rejects_invalid_utf8_even_inside_unterminated_quotes() {
+    for bytes in [
+        b"\"\xff1e-999".as_slice(),
+        b"\"ok\" \xff".as_slice(),
+        b"\"\xc3".as_slice(),
+        b"\"\\\xff".as_slice(),
+    ] {
+        let error = wire::reject_numeric_underflow(bytes).unwrap_err();
+        assert!(error.contains("utf-8"), "{error}");
+    }
+}
+
+#[test]
+fn saved_frame_rejects_underflow_after_quoted_field_name() {
+    use super::observer;
+    use sugarscape_core::war::Engagement;
+    let manifest = wire::decode_manifest(wire::FIXTURE).unwrap();
+    let mut engine = Engagement::new(manifest.arms[0].config.clone(), 7).unwrap();
+    let frame = engine.step().unwrap().unwrap();
+    let text = serde_json::to_string(&frame).unwrap();
+    assert!(observer::read_frame(&text).is_ok());
+    let literal = serde_json::to_string(&frame.calendar_time).unwrap();
+    let bad = text.replacen(
+        &format!("\"calendar_time\":{literal}"),
+        "\"calendar_time\":1e-999",
+        1,
+    );
+    assert!(observer::read_frame(&bad)
+        .unwrap_err()
+        .contains("underflows binary64"));
+}

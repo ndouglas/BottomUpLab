@@ -1,0 +1,68 @@
+{
+  "name": "Assistance Games: which equilibrium the dynamics reach",
+  "description": "Our extension of the paperclip game (Hadfield-Menell et al. 2016, §3.3): iterated best response and fictitious play from four starts, 20 seeds, 200 ticks of 1,000 games. The statistic is the distance from the paper's equilibrium (bins and map entries that differ; 0 at the teaching pair with thresholds 41/92 and 51/92). Reported without a target.",
+  "base": {
+    "preset": "assistance-paperclips-iterated"
+  },
+  "x": {
+    "label": "Start",
+    "values": [
+      {
+        "at": 1,
+        "name": "Expert",
+        "set": {
+          "human_rule": "expert"
+        }
+      },
+      {
+        "at": 2,
+        "name": "Teaching",
+        "set": {
+          "human_rule": "equilibrium"
+        }
+      },
+      {
+        "at": 3,
+        "name": "Pooling",
+        "set": {
+          "human_rule": "pooling"
+        }
+      },
+      {
+        "at": 4,
+        "name": "Uniform random",
+        "set": {
+          "human_rule": "uniform_random"
+        }
+      }
+    ]
+  },
+  "series": {
+    "label": "Dynamic",
+    "values": [
+      {
+        "at": 1,
+        "name": "Iterated best response",
+        "set": {
+          "mode": "iterated"
+        }
+      },
+      {
+        "at": 2,
+        "name": "Fictitious play",
+        "set": {
+          "mode": "learning"
+        }
+      }
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 20
+  },
+  "ticks": 200,
+  "metric": {
+    "kind": "final",
+    "series": "distance"
+  }
+}
