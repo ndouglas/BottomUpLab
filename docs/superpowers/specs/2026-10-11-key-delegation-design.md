@@ -1,7 +1,7 @@
 # Transferable keys and private incentives
 
 **Date:** 2026-10-11
-**Status:** proposed written design awaiting user review. The user approved the keys-first direction with “LGTM,” following the recommendation of carrier-only access. This document makes the proposed physical, information, and experimental assumptions reviewable. No implementation plan, production change, independent numerical reference, or measurement exists for this increment.
+**Status:** written design approved by the user's “LGTM!” on 2026-10-12, following review of commit `1d42e54485d9918ef937398c44ecfbccba95e8e5`. The carrier-only direction, physical rules, information boundaries, census, controls, and web delivery scope are approved. The implementation plan is being prepared for separate review; no production change, independent numerical reference, or measurement exists for this increment.
 
 **Builds on:** [Gate Assistance](../../gate-assistance.md), [the approved gate design](2026-10-11-gate-assistance-design.md), and C2 of the [collective-agency program](2026-10-02-minds-collective-agency-program-design.md). The separate Assistance Games paper reproduction remains owned by its own worktree.
 
