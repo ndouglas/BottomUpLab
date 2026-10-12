@@ -10,7 +10,7 @@
 
 **Spec:** [Key delegation design](../specs/2026-10-11-key-delegation-design.md), commit `1d42e54485d9918ef937398c44ecfbccba95e8e5`, approved by the user's “LGTM!” on 2026-10-12. This plan does not alter its physical rules.
 
-**Status:** Written plan awaiting user review. No implementation or measurement has begun. Approval selects the existing subagent-driven method; it does not skip independent registration, feasibility, or precollection gates.
+**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are in progress; Tasks 2–7 have not started. No production key implementation or scientific measurement has begun. Independent registration, feasibility, and precollection gates remain binding.
 
 ## Global Constraints
 
