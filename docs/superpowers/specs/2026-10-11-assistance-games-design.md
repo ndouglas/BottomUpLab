@@ -2,6 +2,8 @@
 
 **Amended 2026-10-11 (planning):** quadrature, protocol switch, Figure 4's β, pooling, polar Box–Muller, grids, fixed-map fields, uniform-random draws; see the plan's *Spec addenda*.
 
+**Amended 2026-10-12 (final review):** symmetric rational tails (β = 0 computes Δ = σφ(z) − |μ|Φ(−|z|) and Pr(C) = Φ(−|z|) directly, so neither tail cancels against 1); numeric fingerprints (the assistance fingerprint folds in Δ, its terms and the latest snapshot's series by their bits); the exact-zero cell of Figure 3 at σ = 1, β = 2, μ = ±1/4; the Figure 4 power caveat (Holds means no contradiction beyond two standard errors). See the findings.
+
 **Date:** 2026-10-11. **Milestone number:** 39 (queue item 39 in `docs/papers.md`), assigned at merge.
 **Kind:** `assistance`, displayed as **Assistance Games**.
 **Design basis:** architecture, scope and the sections below approved in chat on 2026-10-11.
@@ -158,7 +160,7 @@ live; a live change of `mu`, `sigma` or `beta` recomputes the exact values and t
 **Episodes.** Each tick samples `episodes_per_tick` games with the shared RNG. Paperclips: draw θ
 uniform; H acts by its current rule (the bin containing θ); R deploys by its current map; record
 both rounds' reward, H's action, and whether R's deployment was θ-optimal. Off-switch: draw U_a
-from N(μ, σ²) by Box–Muller on two `f64` draws; R picks the option with the highest expected value
+from N(μ, σ²) by the polar Box–Muller transform (two uniform draws per attempt, rejection outside the unit disc); R picks the option with the highest expected value
 under its belief (exact values, not sampled); if it waits, H presses with probability
 1 − π^H(U_a; β), the rational H pressing iff U_a < 0; record the outcome and the realized utility.
 Empirical Δ is the mean over episodes of U_a·[H allows] minus the better of the mean U_a and 0,
@@ -194,9 +196,9 @@ computed, the current pair and its history of changes, the full equilibrium set,
 the Figure 3 grid at the current μ.
 
 **Built-in sweeps:** `assistance-figure3-neg`, `assistance-figure3-zero`, `assistance-figure3-pos`
-(σ × β grids, statistic `delta_exact`); `assistance-figure4` (σ, statistics value and Δ, series by
-`actions` ∈ {1, 4, 8}); `assistance-equilibria` (the four starts × two modes, 20 seeds, statistic
-`distance` at the horizon). The Figure 3 grid is σ 0.05–1.00 step 0.05 (20 values) and β 0–4 step 0.2 (21 values); the sweeps' β series are {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 4}. `assistance-figure4` runs with `protocol: report` and sweeps σ ∈ {0.1, 0.2, …, 1.0, 1.2, 1.5} with β = 0.5, `observation_noise` = 1, series `actions` ∈ {1, 4, 8}, one seed, 100 ticks of 1,000 episodes, and metrics the window means of `value` and `delta_exact`.
+(σ × β grids, statistic `delta_exact`); `assistance-figure4` (σ, statistic `value`, series by
+`actions` ∈ {1, 4, 8}) and `assistance-figure4-incentive` (the same points, statistic `delta_exact`); `assistance-equilibria` (the four starts × two modes, 20 seeds, statistic
+`distance` at the horizon). The Figure 3 grid is σ 0.05–1.00 step 0.05 (20 values) and β 0–4 step 0.2 (21 values); the sweeps' β series are {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 4}. `assistance-figure4` runs with `protocol: report` and sweeps σ ∈ {0.1, 0.2, …, 1.0, 1.2, 1.5} with β = 0.5, `observation_noise` = 1, series `actions` ∈ {1, 4, 8}, one seed, 100 ticks of 1,000 episodes, with the window mean of `value` as its metric; `assistance-figure4-incentive` runs the same points with the window mean of `delta_exact`.
 
 **Survey claims,** each with its rule: `expert-threshold`, `robot-best-reply`, `posterior-quarter`,
 `posterior-sixth`, `teaching-thresholds`, `theorem-3`, `optimal-joint`; `theorem-1`, `corollary-1`,

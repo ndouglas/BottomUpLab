@@ -3871,7 +3871,7 @@ teaches by making one of each for θ in [41/92, 51/92]. `assistance-paperclips-i
 are ours. `assistance-offswitch-rational` and `assistance-offswitch-toddler` place a belief on
 either side of Figure 3's switch.
 
-Every closed form holds exactly: the 1/2 threshold, R's best reply, the posteriors 1/4 and
+The paperclip closed forms hold exactly, the off-switch theorems within 1e-9: the 1/2 threshold, R's best reply, the posteriors 1/4 and
 1/6, Theorem 3 at θ = 0.49, the optimal joint policy at 6373/92 ≈ 69.27 against 69, and the
 off-switch Theorems 1–2 and Corollary 1. Figure 3's directions hold over our grid. Figure 4's
 three directions hold only under our named reconstruction (`protocol: report`, a noisy human at
