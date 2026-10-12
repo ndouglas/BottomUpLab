@@ -1,5 +1,6 @@
 mod agreement;
 mod ants;
+mod assistance;
 mod auctions;
 mod bali;
 pub(crate) mod behavior_trees;
@@ -56,6 +57,7 @@ pub fn all() -> Vec<Claim> {
     [
         agreement::claims(),
         auctions::claims(),
+        assistance::claims(),
         ants::claims(),
         bali::claims(),
         ch2::claims(),
