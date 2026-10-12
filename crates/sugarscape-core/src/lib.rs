@@ -79,3 +79,6 @@ pub mod war;
 
 /// Six-round paid gate assistance with local histories.
 pub mod gate_assistance;
+
+/// Assistance games: the paperclip game and the off-switch game (milestone 39).
+pub mod assistance;

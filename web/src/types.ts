@@ -264,7 +264,7 @@ export interface Config {
 }
 
 /** The models the playground runs (milestones 9–13). */
-export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'polarity' | 'geosim' | 'democratic_peace';
+export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace';
 
 /** A fraction range (Schelling's preferences). */
 export interface FRange { min: number; max: number }
@@ -683,7 +683,7 @@ export interface AgreementConfig {
   stop_at: number;
 }
 
-export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig;
+export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig;
 
 /**
  * Arthur's El Farol bar and Challet and Zhang's minority game (milestone 23), with Challet, Marsili
@@ -1481,7 +1481,7 @@ export interface AgreementStats {
   stable_at: number;
 }
 
-export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | PolarityStats | GeosimStats | DemocraticPeaceStats;
+export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats;
 
 export interface SiteView {
   x: number;
@@ -2222,7 +2222,7 @@ export interface AgreementInspection {
   agent: null;
 }
 
-export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection;
+export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection;
 
 /**
  * A sugarscape color mode, or (Schelling) `color`, `satisfaction`, `preference`, or (the anasazi)
@@ -2232,6 +2232,8 @@ export type AnyInspection = Inspection | SchellingInspection | RingInspection | 
  * `payoff`.
  */
 export type ColorMode =
+  | 'bands'
+  | 'surface'
   | 'governing_regime'
   | 'latent_regime'
   | 'alliances'
@@ -2369,6 +2371,40 @@ export interface AuctionsInspection {
   occupancy: number[]; late_occupancy: number[]; whole_count: number; late_count: number; learners: AuctionLearnerView[];
   equilibria: number[][]; outcome: AuctionsOutcome | null; agent: null;
 }
+
+/** Assistance games (Hadfield-Menell et al. 2016, 2017); game, mode and θ bins apply at reset. */
+export interface AssistanceConfig {
+  model: 'assistance'; game: 'paperclips' | 'off_switch'; mode: 'static' | 'iterated' | 'learning';
+  human_rule: 'expert' | 'equilibrium' | 'pooling' | 'uniform_random'; robot_map: 'best_response' | 'fixed';
+  fixed_0: number; fixed_1: number; fixed_2: number; theta_bins: number; episodes_per_tick: number; respond_every: number;
+  fictitious_weight: number; protocol: 'prior' | 'report'; mu: number; sigma: number; beta: number; actions: number;
+  observation_noise: number; quadrature_density: number;
+}
+export interface AssistanceStats {
+  tick: number; reward: number | null; regret: number | null; threshold_low: number | null; threshold_high: number | null;
+  map_0: number | null; map_1: number | null; map_2: number | null; stable_rounds: number | null; distance: number | null;
+  delta_exact: number | null; delta_empirical: number | null; prob_correct: number | null; rationality: number | null;
+  value_act: number | null; value_wait: number | null; value_off: number | null; value: number | null;
+  share_wait: number | null; share_act: number | null; share_off: number | null;
+}
+export interface AssistanceIncentive { delta: number; decomposition: number; rationality: number; prob_correct: number; value_act: number; value_wait: number; value_off: number }
+export interface AssistanceOutcome {
+  tick: number; rule: number[]; map: number[]; thresholds: [number, number]; rounds: number; stable_rounds: number; distance: number;
+  history: { tick: number; round: number; rule: number[]; map: number[] }[]; equilibria: [number[], number[]][];
+  optimal_map: number[]; optimal_rule: [number, number, number][]; optimal_value: number; teaching_thresholds: [number, number];
+  expert_posterior_mean: number; incentive: AssistanceIncentive; surface: number[];
+}
+export interface AssistancePaperclipsInspection {
+  game: 'paperclips'; panel: 'human' | 'robot' | 'posterior'; x: number; y: number; bin: number; theta: number; human_action: number;
+  human_rewards: number[]; map_cell: number | null; deployment: number; deployment_reward: number; optimal_deployment: number; regret: number;
+  posterior: number; rule: number[]; map: number[]; tick: number; outcome: AssistanceOutcome; agent: null;
+}
+export interface AssistanceOffSwitchInspection {
+  game: 'off_switch'; panel: 'surface'; x: number; y: number; sigma: number; beta: number; mu: number; delta: number; rationality_term: number;
+  correction_term: number; prob_correct: number; rationality: number; choice: 'act' | 'wait' | 'off'; configured: AssistanceIncentive;
+  configured_choice: 'act' | 'wait' | 'off'; tick: number; outcome: AssistanceOutcome; agent: null;
+}
+export type AssistanceInspection = AssistancePaperclipsInspection | AssistanceOffSwitchInspection;
 
 /** Cederman 1994/1997 reconstruction; every control requires reset. */
 export interface PolarityConfig {

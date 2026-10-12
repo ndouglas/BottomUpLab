@@ -1,0 +1,51 @@
+{
+  "name": "Assistance Games: Figure 4, the incentive against the robot's uncertainty",
+  "description": "Our reconstruction of Figure 4 (Hadfield-Menell et al. 2017, §5): a N(0, 1) population of utilities, a report with N(0, 1) noise, the robot's belief centered on the Bayesian posterior mean with the standard deviation σ on the axis, and a Boltzmann human at β = 0.5 (ours; a rational human makes the robot wait at every σ, so the value is then flat). One line per number of candidate actions. The true posterior standard deviation is 1/√2 ≈ 0.707. 100,000 episodes per point, seed 1; the exact incentive Δ at each episode's belief, averaged.",
+  "base": {
+    "config": {
+      "model": "assistance",
+      "game": "off_switch",
+      "protocol": "report",
+      "beta": 0.5,
+      "observation_noise": 1.0,
+      "episodes_per_tick": 1000
+    }
+  },
+  "x": {
+    "label": "σ",
+    "path": "sigma",
+    "values": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.2,
+      1.5
+    ]
+  },
+  "series": {
+    "label": "Candidate actions",
+    "path": "actions",
+    "values": [
+      1,
+      4,
+      8
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 1
+  },
+  "ticks": 100,
+  "metric": {
+    "kind": "window_mean",
+    "series": "delta_exact",
+    "from": 1
+  }
+}

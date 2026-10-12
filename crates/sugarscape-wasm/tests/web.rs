@@ -469,6 +469,12 @@ fn builtins_and_series_names_are_listed() {
             "auctions-bidders",
             "auctions-persistent",
             "auctions-duration",
+            "assistance-figure3-neg",
+            "assistance-figure3-zero",
+            "assistance-figure3-pos",
+            "assistance-figure4",
+            "assistance-figure4-incentive",
+            "assistance-equilibria",
             "polarity-predators"
         ]
     );
@@ -828,6 +834,10 @@ fn presets_list_every_model_with_sugarscape_configs_untagged() {
             .map(String::from)
     };
     assert_eq!(model("ii-2-unit"), None);
+    assert_eq!(
+        model("assistance-paperclips-expert").as_deref(),
+        Some("assistance")
+    );
     let geosim_ids = list
         .iter()
         .filter(|p| p["config"]["model"] == "geosim")
@@ -1973,4 +1983,33 @@ fn auction_short_sessions_match_native_protocol_fingerprints() {
         sim.step(4);
         assert_eq!(sim.fingerprint(), expected);
     }
+}
+
+#[wasm_bindgen_test]
+fn assistance_presets_match_the_native_golden_entries() {
+    // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: the quadrature and the polar
+    // Gaussian draw use portable arithmetic only, so WASM repeats the native fingerprints. The
+    // fingerprint covers Δ, its terms and the latest snapshot's series by their bits, so the
+    // agreement is on the numerics, not only on the state and the draws.
+    for (id, expected) in [
+        ("assistance-paperclips-expert", "0x7ebc2504bcecaaa4"),
+        ("assistance-paperclips-teaching", "0xe4b1271358831016"),
+        ("assistance-paperclips-iterated", "0x7b977f21a17e3a3d"),
+        ("assistance-paperclips-learning", "0x42413ef6c7528348"),
+        ("assistance-offswitch-rational", "0xdbc31fa0498ce350"),
+        ("assistance-offswitch-toddler", "0xfdc3533dcfda9fa3"),
+    ] {
+        let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
+        sim.step(200);
+        assert_eq!(sim.fingerprint(), expected, "{id}");
+        assert_ne!(sim.render("", "sugar").unwrap(), 0);
+    }
+    let sim = Sim::new(
+        &preset_json("assistance-offswitch-toddler"),
+        1,
+        JsValue::NULL,
+    )
+    .unwrap();
+    let view: serde_json::Value = serde_json::from_str(&sim.inspect(18, 0).unwrap()).unwrap();
+    assert_eq!(view["choice"], "act");
 }

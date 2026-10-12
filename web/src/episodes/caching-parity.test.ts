@@ -156,7 +156,7 @@ describe('caching source identity integrity', () => {
     const live = new TextEncoder().encode('unlisted source bytes');
     expect(await cachingIdentityBytes('unlisted-source.rs', live)).toBe(live);
   });
-  it('authenticates the exact combined war, discovery and Gate additions against the frozen historical lib', async () => {
+  it('authenticates the exact combined war, discovery, Gate and assistance additions against the frozen historical lib', async () => {
     const historical = bytes(`${root}/web/src/episodes/test-fixtures/pre-war-core-lib.rs.txt`);
     const authenticated = await cachingIdentityBytes('crates/sugarscape-core/src/lib.rs', bytes(`${root}/crates/sugarscape-core/src/lib.rs`));
     expect(authenticated).toEqual(historical);
@@ -168,6 +168,8 @@ describe('caching source identity integrity', () => {
       `${live}\n// unrelated delta\n`,
       live.replace('pub mod gate_assistance;', 'pub mod other_gate;'),
       live.replace('\npub mod gate_assistance;\n', '\n'),
+      live.replace('pub mod assistance;', 'pub mod other_assistance;'),
+      live.replace('\npub mod assistance;\n', '\n'),
       live.replace('not(target_arch = "wasm32")', 'target_arch = "wasm32"'),
       live.replace('pub mod world;', '// removed world'),
       live.replace('feature = "war-benchmarks"', 'feature = "other-feature"'),

@@ -2,10 +2,11 @@ import { democraticPeaceLegend } from '../democratic-peace';
 import { geosimLegend } from '../geosim';
 import { polarityLegend } from '../polarity';
 import { auctionLegend } from '../auctions';
+import { assistanceLegend } from '../assistance';
 import type { Engine } from '../engine';
 import { isSugarView } from '../models';
 import { NETWORKS, type NetworkOverlay } from '../protocol';
-import type { AgentView, DemocraticPeaceConfig, DemocraticPeaceStats, GeosimConfig, GeosimStats, AuctionsConfig, AuctionsStats, PolarityConfig, PolarityStats, HoardConfig } from '../types';
+import type { AgentView, DemocraticPeaceConfig, DemocraticPeaceStats, GeosimConfig, GeosimStats, AssistanceConfig, AuctionsConfig, AuctionsStats, PolarityConfig, PolarityStats, HoardConfig } from '../types';
 import { linkSegments, SETTLEMENT_COLOR, settlementRadius, settlements, WATER_COLOR } from '../valley';
 import { cacheSize, cacheSummary, compartmentName, isCheaterOnly, isLarder, labStatus } from '../minds';
 import { h } from './dom';
@@ -272,12 +273,13 @@ export class GridView {
     const sugar = this.engine.model === 'sugarscape';
     // Minds 7: the frame is a population panel, one column per agent.
     const hoard = this.engine.model === 'hoard';
+    const assistance = this.engine.model === 'assistance' ? assistanceLegend(this.engine.config as AssistanceConfig, this.engine.colorMode) : null;
     const auction = this.engine.model === 'auctions' ? auctionLegend(this.engine.config as AuctionsConfig, this.engine.colorMode, (this.engine.latest as AuctionsStats | null)?.periods ?? 0) : null;
     const polarity = this.engine.model === 'polarity' ? polarityLegend(this.engine.config as PolarityConfig, this.engine.colorMode, (this.engine.latest as PolarityStats | null)?.periods ?? 0) : null;
     const geosim = this.engine.model === 'geosim' ? geosimLegend(this.engine.config as GeosimConfig, this.engine.colorMode, (this.engine.latest as GeosimStats | null)?.periods ?? 0) : null;
     const democraticPeace = this.engine.model === 'democratic_peace' ? democraticPeaceLegend(this.engine.config as DemocraticPeaceConfig, this.engine.colorMode, (this.engine.latest as DemocraticPeaceStats | null)?.periods ?? 0) : null;
-    const status = democraticPeace ?? geosim ?? polarity ?? (auction ? auction.status : sugar && marks.lab ? labStatus(marks.lab) : hoard ? HOARD_STATUS : '');
-    const items = auction ? auction.items : sugar
+    const status = democraticPeace ?? geosim ?? polarity ?? (assistance ? assistance.status : auction ? auction.status : sugar && marks.lab ? labStatus(marks.lab) : hoard ? HOARD_STATUS : '');
+    const items = assistance ? assistance.items : auction ? auction.items : sugar
       ? [...colorLegend(this.engine.colorMode, this.engine.sugar), ...overlayLegend(marks, this.engine.sugar)]
       : hoard
         ? hoardLegend(((this.engine.config as HoardConfig).cheaters ?? 0) > 0)

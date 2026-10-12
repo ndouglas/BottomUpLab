@@ -8,6 +8,7 @@ use serde::{Serialize, Serializer};
 use crate::agreement::{AgreementConfig, AgreementWorld};
 use crate::anasazi::{AnasaziConfig, AnasaziWorld};
 use crate::ants::{AntsConfig, AntsWorld};
+use crate::assistance::{AssistanceConfig, AssistanceWorld};
 use crate::auctions::{AuctionsConfig, AuctionsWorld};
 use crate::bali::{BaliConfig, BaliWorld};
 use crate::civil::{CivilConfig, CivilWorld};
@@ -79,13 +80,14 @@ pub enum ModelKind {
     Firms,
     Collusion,
     Auctions,
+    Assistance,
     Polarity,
     Geosim,
     DemocraticPeace,
 }
 
 impl ModelKind {
-    pub const ALL: [ModelKind; 32] = [
+    pub const ALL: [ModelKind; 33] = [
         ModelKind::Sugarscape,
         ModelKind::Schelling,
         ModelKind::Ring,
@@ -115,6 +117,7 @@ impl ModelKind {
         ModelKind::Firms,
         ModelKind::Collusion,
         ModelKind::Auctions,
+        ModelKind::Assistance,
         ModelKind::Polarity,
         ModelKind::Geosim,
         ModelKind::DemocraticPeace,
@@ -151,6 +154,7 @@ impl ModelKind {
             ModelKind::Firms => "firms",
             ModelKind::Collusion => "collusion",
             ModelKind::Auctions => "auctions",
+            ModelKind::Assistance => "assistance",
             ModelKind::Polarity => "polarity",
             ModelKind::Geosim => "geosim",
             ModelKind::DemocraticPeace => "democratic_peace",
@@ -190,6 +194,7 @@ impl ModelKind {
             ModelKind::Firms => crate::firms::schema(),
             ModelKind::Collusion => crate::collusion::schema(),
             ModelKind::Auctions => crate::auctions::schema(),
+            ModelKind::Assistance => crate::assistance::schema(),
             ModelKind::Polarity => crate::polarity::schema(),
             ModelKind::Geosim => crate::geosim::schema(),
             ModelKind::DemocraticPeace => crate::democratic_peace::schema(),
@@ -235,6 +240,7 @@ pub enum ModelConfig {
     Firms(FirmsConfig),
     Collusion(CollusionConfig),
     Auctions(AuctionsConfig),
+    Assistance(AssistanceConfig),
     Polarity(PolarityConfig),
     Geosim(GeosimConfig),
     DemocraticPeace(DemocraticPeaceConfig),
@@ -272,6 +278,7 @@ enum Tagged<'a> {
     Firms(&'a FirmsConfig),
     Collusion(&'a CollusionConfig),
     Auctions(&'a AuctionsConfig),
+    Assistance(&'a AssistanceConfig),
     Polarity(&'a PolarityConfig),
     Geosim(&'a GeosimConfig),
     DemocraticPeace(&'a DemocraticPeaceConfig),
@@ -316,6 +323,7 @@ impl Serialize for ModelConfig {
             ModelConfig::Firms(c) => Tagged::Firms(c).serialize(s),
             ModelConfig::Collusion(c) => Tagged::Collusion(c).serialize(s),
             ModelConfig::Auctions(c) => Tagged::Auctions(c).serialize(s),
+            ModelConfig::Assistance(c) => Tagged::Assistance(c).serialize(s),
             ModelConfig::Polarity(c) => Tagged::Polarity(c).serialize(s),
             ModelConfig::Geosim(c) => Tagged::Geosim(c).serialize(s),
             ModelConfig::DemocraticPeace(c) => Tagged::DemocraticPeace(c).serialize(s),
@@ -355,6 +363,7 @@ impl ModelConfig {
             ModelConfig::Firms(_) => ModelKind::Firms,
             ModelConfig::Collusion(_) => ModelKind::Collusion,
             ModelConfig::Auctions(_) => ModelKind::Auctions,
+            ModelConfig::Assistance(_) => ModelKind::Assistance,
             ModelConfig::Polarity(_) => ModelKind::Polarity,
             ModelConfig::Geosim(_) => ModelKind::Geosim,
             ModelConfig::DemocraticPeace(_) => ModelKind::DemocraticPeace,
@@ -475,6 +484,9 @@ impl ModelConfig {
             "auctions" => serde_json::from_value(value)
                 .map(ModelConfig::Auctions)
                 .map_err(|e| FieldError::new("config", e.to_string())),
+            "assistance" => serde_json::from_value(value)
+                .map(ModelConfig::Assistance)
+                .map_err(|e| FieldError::new("config", e.to_string())),
             "collusion" => serde_json::from_value(value)
                 .map(ModelConfig::Collusion)
                 .map_err(|e| FieldError::new("config", e.to_string())),
@@ -487,7 +499,7 @@ impl ModelConfig {
             _ => Err(FieldError::new(
                 "model",
                 format!(
-                    "unknown model {tag:?} (expected sugarscape, schelling, ring, anasazi, civil, spatial, tags, culture, classes, ethno, opinions, structure, dpd, norms, agreement, image, farol, ants, thresholds, retirement, punishment, zi, bali, line, tipping, hoard, firms, collusion, auctions or polarity)"
+                    "unknown model {tag:?} (expected sugarscape, schelling, ring, anasazi, civil, spatial, tags, culture, classes, ethno, opinions, structure, dpd, norms, agreement, image, farol, ants, thresholds, retirement, punishment, zi, bali, line, tipping, hoard, firms, collusion, auctions, assistance or polarity)"
                 ),
             )),
         }
@@ -524,6 +536,7 @@ impl ModelConfig {
             ModelConfig::Firms(c) => c.validate(),
             ModelConfig::Collusion(c) => c.validate(),
             ModelConfig::Auctions(c) => c.validate(),
+            ModelConfig::Assistance(c) => c.validate(),
             ModelConfig::Polarity(c) => c.validate(),
             ModelConfig::Geosim(c) => c.validate(),
             ModelConfig::DemocraticPeace(c) => c.validate(),
@@ -563,6 +576,7 @@ impl ModelConfig {
             ModelConfig::Firms(c) => set_path(c, path, value).map(ModelConfig::Firms),
             ModelConfig::Collusion(c) => set_path(c, path, value).map(ModelConfig::Collusion),
             ModelConfig::Auctions(c) => set_path(c, path, value).map(ModelConfig::Auctions),
+            ModelConfig::Assistance(c) => set_path(c, path, value).map(ModelConfig::Assistance),
             ModelConfig::Polarity(c) => set_path(c, path, value).map(ModelConfig::Polarity),
             ModelConfig::Geosim(c) => set_path(c, path, value).map(ModelConfig::Geosim),
             ModelConfig::DemocraticPeace(c) => {
@@ -612,7 +626,8 @@ impl ModelConfig {
             | ModelConfig::Hoard(_)
             | ModelConfig::Firms(_)
             | ModelConfig::Collusion(_)
-            | ModelConfig::Auctions(_) => None,
+            | ModelConfig::Auctions(_)
+            | ModelConfig::Assistance(_) => None,
         }
     }
 
@@ -656,6 +671,7 @@ impl ModelConfig {
                 .collect(),
             ModelConfig::Firms(_) => crate::firms::SERIES.iter().map(|s| s.to_string()).collect(),
             ModelConfig::Auctions(c) => crate::auctions::series_names(c.bidders),
+            ModelConfig::Assistance(_) => crate::assistance::series_names(),
             ModelConfig::Polarity(_) => crate::polarity::series_names(),
             ModelConfig::Geosim(_) => crate::geosim::series_names(),
             ModelConfig::DemocraticPeace(_) => crate::democratic_peace::series_names(),
@@ -861,6 +877,7 @@ pub enum ModelWorld {
     Firms(Box<FirmsWorld>),
     Collusion(Box<CollusionWorld>),
     Auctions(Box<AuctionsWorld>),
+    Assistance(Box<AssistanceWorld>),
     Polarity(Box<PolarityWorld>),
     Geosim(Box<GeosimWorld>),
     DemocraticPeace(Box<DemocraticPeaceWorld>),
@@ -932,6 +949,9 @@ impl ModelWorld {
             ModelConfig::Auctions(c) => {
                 ModelWorld::Auctions(Box::new(AuctionsWorld::new(c, seed)?))
             }
+            ModelConfig::Assistance(c) => {
+                ModelWorld::Assistance(Box::new(AssistanceWorld::new(c, seed)?))
+            }
             ModelConfig::Collusion(c) => {
                 ModelWorld::Collusion(Box::new(CollusionWorld::new(c, seed)?))
             }
@@ -969,6 +989,7 @@ impl ModelWorld {
             ModelWorld::Firms(_) => ModelKind::Firms,
             ModelWorld::Collusion(_) => ModelKind::Collusion,
             ModelWorld::Auctions(_) => ModelKind::Auctions,
+            ModelWorld::Assistance(_) => ModelKind::Assistance,
             ModelWorld::Polarity(_) => ModelKind::Polarity,
             ModelWorld::Geosim(_) => ModelKind::Geosim,
             ModelWorld::DemocraticPeace(_) => ModelKind::DemocraticPeace,
@@ -1006,6 +1027,7 @@ impl ModelWorld {
             ModelWorld::Firms(w) => w.as_ref(),
             ModelWorld::Collusion(w) => w.as_ref(),
             ModelWorld::Auctions(w) => w.as_ref(),
+            ModelWorld::Assistance(w) => w.as_ref(),
             ModelWorld::Polarity(w) => w.as_ref(),
             ModelWorld::Geosim(w) => w.as_ref(),
             ModelWorld::DemocraticPeace(w) => w.as_ref(),
@@ -1043,6 +1065,7 @@ impl ModelWorld {
             ModelWorld::Firms(w) => w.as_mut(),
             ModelWorld::Collusion(w) => w.as_mut(),
             ModelWorld::Auctions(w) => w.as_mut(),
+            ModelWorld::Assistance(w) => w.as_mut(),
             ModelWorld::Polarity(w) => w.as_mut(),
             ModelWorld::Geosim(w) => w.as_mut(),
             ModelWorld::DemocraticPeace(w) => w.as_mut(),
@@ -1167,6 +1190,7 @@ impl ModelWorld {
                 w.stats = stats;
                 ModelWorld::Auctions(Box::new(copy))
             }
+            ModelWorld::Assistance(w) => copy_without_history!(Assistance, w),
             _ => return None,
         };
         Some(Checkpoint { world, tick })
@@ -1239,6 +1263,9 @@ impl ModelWorld {
                 let mut next = (**kept).clone();
                 next.stats = stats;
                 **live = next;
+            }
+            (ModelWorld::Assistance(live), ModelWorld::Assistance(kept)) => {
+                restore_into!(live, kept)
             }
             _ => return Err("the keyframe is of another model".into()),
         }
@@ -1909,6 +1936,7 @@ mod tests {
                 "firms",
                 "collusion",
                 "auctions",
+                "assistance",
                 "polarity",
                 "geosim",
                 "democratic_peace"

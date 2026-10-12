@@ -1,5 +1,9 @@
 # SugarScape milestone — Assistance games: the paperclip game and the off-switch game — Design
 
+**Amended 2026-10-11 (planning):** quadrature, protocol switch, Figure 4's β, pooling, polar Box–Muller, grids, fixed-map fields, uniform-random draws; see the plan's *Spec addenda*.
+
+**Amended 2026-10-12 (final review):** symmetric rational tails (β = 0 computes Δ = σφ(z) − |μ|Φ(−|z|) and Pr(C) = Φ(−|z|) directly, so neither tail cancels against 1); numeric fingerprints (the assistance fingerprint folds in Δ, its terms and the latest snapshot's series by their bits); the exact-zero cell of Figure 3 at σ = 1, β = 2, μ = ±1/4; the Figure 4 power caveat (Holds means no contradiction beyond two standard errors). See the findings.
+
 **Date:** 2026-10-11. **Milestone number:** 39 (queue item 39 in `docs/papers.md`), assigned at merge.
 **Kind:** `assistance`, displayed as **Assistance Games**.
 **Design basis:** architecture, scope and the sections below approved in chat on 2026-10-11.
@@ -36,8 +40,7 @@ IRL, 500 sampled reward vectors, Figure 2 of the 2016 paper) is a separate futur
 - One sequential path serves native and WASM. Follow the seeded RNG and portable arithmetic
   conventions: `f64` draws, `u32` ranges, `portable::exp_neg` on nonpositive arguments and the
   identity `1/(1+e^x) = e^{-x}/(1+e^{-x})` for the positive branch of the logistic; no `f64::exp`
-  on positive arguments, no `erf`. Quadrature is fixed-node Gauss–Hermite with tabulated nodes and
-  weights, written in plain arithmetic.
+  on positive arguments, no `erf`. Quadrature is the composite trapezoid rule with step min(σ, β)/`quadrature_density` over μ ± 9σ, in plain arithmetic and `portable::exp_neg`; β = 0 uses closed forms through a portable normal c.d.f. built from the error function's power series. Gaussian draws use the polar Box–Muller transform (`sqrt` and `portable::ln`).
 - The analytic units take no RNG and are pure functions of the config, so tests check them against
   the papers' numbers without a world.
 - Literal rules are defaults. Every reconstruction choice (the Figure 4 population prior, noise and
@@ -71,9 +74,7 @@ The thresholds are rational because payoffs are linear in θ: under R's best rep
 options at θ pay 92(1−θ), 51 and 92θ, whose crossings are 41/92 and 51/92. The implementation
 computes them as fractions and compares exactly.
 
-Our extensions, labeled: the set of all pure mutual best responses, which includes at least the
-pooling pair where H always makes (1,1) and R always answers (50,50) with off-path deployments
-resolved by the prior; and which pair iterated best response and fictitious play reach from each
+Our extensions, labeled: the set of all pure mutual best responses, and whether a pooling pair (H always (1,1), R always (50,50), off-path deployments resolved by the prior) survives as a mutual best response. Planning note: H's best reply to any constant map is the expert rule, so it does not; the enumeration records the set; and which pair iterated best response and fictitious play reach from each
 named start.
 
 ### The off-switch game (IJCAI 2017)
@@ -89,10 +90,10 @@ Targets:
 |---|---|---|
 | Theorem 1 | rational H: Δ ≥ 0 for every prior; Δ = 0 iff the prior gives no weight to U_a < 0 or none to U_a > 0 | exact on a grid of Gaussian and two-point priors |
 | Corollary 1 | point-mass belief at U_a: Δ ≤ 0 for any H, with equality only for the rational H | exact |
-| Theorem 2 | Gaussian belief N(μ, σ²), Boltzmann H with π^H = 1/(1 + exp(−U_a/β)): Δ = σ²·E[π̇^H] − |μ|·Pr(C), with Pr(C) from eq. (6) | the direct quadrature of Δ and the decomposition agree within 1e-9 at 64 nodes |
+| Theorem 2 | Gaussian belief N(μ, σ²), Boltzmann H with π^H = 1/(1 + exp(−U_a/β)): Δ = σ²·E[π̇^H] − |μ|·Pr(C), with Pr(C) from eq. (6) | the direct quadrature of Δ and the decomposition agree within 1e-9 at the configured `quadrature_density` |
 | Theorem 2(2) | w(a) optimal iff |μ|·Pr(C)/σ² < E[π̇^H] | exact given the above |
 | Figure 3 | over σ and β at μ ∈ {−1/4, 0, 1/4}: Δ is lowest at low σ and high β, highest at high σ and low β; at μ = 0 the sign of Δ is nonnegative everywhere; for μ < 0 the region with Δ ≤ 0 is where R switches off, for μ > 0 where R acts | direction claims over the sweep's full grid |
-| Figure 4 | value V of the game against the standard deviation R uses, when R gets a noisy report of U_a: V peaks at the true posterior standard deviation; Δ rises with σ; with more actions, a given Δ costs more value | direction claims; the setup is reconstructed |
+| Figure 4 | value V of the game against the standard deviation R uses, when R gets a noisy report of U_a: V peaks at the true posterior standard deviation; Δ rises with σ; with more actions, a given Δ costs more value. Under a rational H, Theorem 1 makes R wait at every σ, so V is flat; the figure is reconstructed with a Boltzmann H at β = 0.5 (ours) and the rational case is reported. | direction claims; the setup is reconstructed |
 
 Figure 4's reconstruction, named as ours: the population prior is N(0, 1); H's report is U_a plus
 N(0, `observation_noise`²) noise; R's belief is Gaussian with the Bayesian posterior mean and a
@@ -121,7 +122,7 @@ and `AssistanceWorld` implementing `Model`. Code under `crates/sugarscape-core/s
 |---|---|
 | `config.rs` | `AssistanceConfig`, enums, validation, schema, `set_path`; existing schema primitives |
 | `paperclips.rs` | Payoffs; H rules as threshold triples or per-bin action tables; R maps; posterior under a rule; best replies both ways; enumeration of the optimal joint policy and of all pure mutual best responses; rational arithmetic for thresholds. Pure. |
-| `offswitch.rs` | Gauss–Hermite tables; Δ by direct quadrature and by Theorem 2; Pr(C); E[π̇]; the Figure 3 grid; the Figure 4 value curve under the named reconstruction. Pure. |
+| `offswitch.rs` | Trapezoid quadrature moments; Δ by direct quadrature and by Theorem 2; Pr(C); E[π̇]; the Figure 3 grid; the Figure 4 value curve under the named reconstruction. Pure. |
 | `dynamics.rs` | Episode sampling for both games; iterated best response; fictitious play. Consumes explicit draws from the shared RNG. |
 | `world.rs` | `AssistanceWorld`: tick loop, mode dispatch, outcome struct, series, fingerprint, `set_config` with reset-only fields refused |
 | `stats.rs`, `view.rs` | Snapshots, series names, bounded history; frame rendering and inspection JSON |
@@ -138,8 +139,9 @@ same locations as the `auctions` addition. No new dependencies.
 |---|---|---|
 | `game` | `paperclips` | `paperclips` or `off_switch`; reset-only |
 | `mode` | `iterated` | paperclips only: `static`, `iterated`, `learning`; reset-only |
-| `human_rule` | `expert` | static mode's H rule, or the start for dynamics: `expert`, `equilibrium` (41/92, 51/92), `pooling` (always (1,1)), `uniform_random` (each bin's action drawn once at reset) |
-| `robot_map` | `best_response` | static: best reply to `human_rule`, or a fixed map named by three deployment indices |
+| `human_rule` | `expert` | static mode's H rule, or the start for dynamics: `expert`, `equilibrium` (41/92, 51/92), `pooling` (always (1,1)), `uniform_random` (each bin's action drawn once at reset). `human_rule` `uniform_random` draws its table at reset in every paperclips world |
+| `robot_map` | `best_response` | static: best reply to `human_rule`, or `fixed`, the map in `fixed_0`, `fixed_1`, `fixed_2` (deployment index 0–2 for H's actions in order) |
+| `fixed_0`, `fixed_1`, `fixed_2` | 0, 1, 1 | integer 0–2: R's deployment after H's (0,2), (1,1) and (2,0); shown when `robot_map` is `fixed` |
 | `theta_bins` | 92 | θ discretization for tables and fictitious play; 92 makes the paper's thresholds bin edges; reset-only |
 | `episodes_per_tick` | 1000 | sampled games per tick |
 | `respond_every` | 1 | iterated mode: ticks between best-response rounds |
@@ -147,7 +149,8 @@ same locations as the `auctions` addition. No new dependencies.
 | `mu`, `sigma`, `beta` | 0, 1, 0 | off_switch: belief mean, belief standard deviation, H's temperature; β = 0 is the rational H |
 | `actions` | 1 | off_switch, Figure 4: candidate actions R chooses among |
 | `observation_noise` | 1 | off_switch, Figure 4: standard deviation of H's noisy report; our reconstruction |
-| `quadrature_nodes` | 64 | Gauss–Hermite nodes; allowed 16, 32, 64, 128 |
+| `protocol` | `prior` | off_switch: `prior` (the paper's game, U_a drawn from the belief) or `report` (Figure 4's reconstruction) |
+| `quadrature_density` | 8 | points per smallest scale in the trapezoid rule; 4–64 |
 
 `sigma` > 0, `beta` ≥ 0, `theta_bins` ≥ 3, `episodes_per_tick` ≥ 1. All other fields may change
 live; a live change of `mu`, `sigma` or `beta` recomputes the exact values and the frame.
@@ -157,7 +160,7 @@ live; a live change of `mu`, `sigma` or `beta` recomputes the exact values and t
 **Episodes.** Each tick samples `episodes_per_tick` games with the shared RNG. Paperclips: draw θ
 uniform; H acts by its current rule (the bin containing θ); R deploys by its current map; record
 both rounds' reward, H's action, and whether R's deployment was θ-optimal. Off-switch: draw U_a
-from N(μ, σ²) by Box–Muller on two `f64` draws; R picks the option with the highest expected value
+from N(μ, σ²) by the polar Box–Muller transform (two uniform draws per attempt, rejection outside the unit disc); R picks the option with the highest expected value
 under its belief (exact values, not sampled); if it waits, H presses with probability
 1 − π^H(U_a; β), the rational H pressing iff U_a < 0; record the outcome and the realized utility.
 Empirical Δ is the mean over episodes of U_a·[H allows] minus the better of the mean U_a and 0,
@@ -186,16 +189,16 @@ Shapley 1996); which equilibrium it reaches is the question.
 pair equals the paper's equilibrium, else the number of bins and map entries that differ).
 
 **Series, off-switch:** `delta_exact`, `delta_empirical`, `prob_correct` (Pr(C)), `rationality`
-(E[π̇]), `value_act`, `value_wait`, `value_off`, `share_wait`, `share_act`, `share_off`.
+(E[π̇]), `value_act`, `value_wait`, `value_off`, `share_wait`, `share_act`, `share_off`, `value` (mean realized utility per episode).
 
 **Outcome** (serialized at the horizon or on request): the config, seed, the exact targets as
 computed, the current pair and its history of changes, the full equilibrium set, and for off-switch
 the Figure 3 grid at the current μ.
 
 **Built-in sweeps:** `assistance-figure3-neg`, `assistance-figure3-zero`, `assistance-figure3-pos`
-(σ × β grids, statistic `delta_exact`); `assistance-figure4` (σ, statistics value and Δ, series by
-`actions` ∈ {1, 4, 8}); `assistance-equilibria` (the four starts × two modes, 20 seeds, statistic
-`distance` at the horizon).
+(σ × β grids, statistic `delta_exact`); `assistance-figure4` (σ, statistic `value`, series by
+`actions` ∈ {1, 4, 8}) and `assistance-figure4-incentive` (the same points, statistic `delta_exact`); `assistance-equilibria` (the four starts × two modes, 20 seeds, statistic
+`distance` at the horizon). The Figure 3 grid is σ 0.05–1.00 step 0.05 (20 values) and β 0–4 step 0.2 (21 values); the sweeps' β series are {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 4}. `assistance-figure4` runs with `protocol: report` and sweeps σ ∈ {0.1, 0.2, …, 1.0, 1.2, 1.5} with β = 0.5, `observation_noise` = 1, series `actions` ∈ {1, 4, 8}, one seed, 100 ticks of 1,000 episodes, with the window mean of `value` as its metric; `assistance-figure4-incentive` runs the same points with the window mean of `delta_exact`.
 
 **Survey claims,** each with its rule: `expert-threshold`, `robot-best-reply`, `posterior-quarter`,
 `posterior-sixth`, `teaching-thresholds`, `theorem-3`, `optimal-joint`; `theorem-1`, `corollary-1`,

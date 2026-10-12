@@ -1057,7 +1057,7 @@ pub struct Builtin {
     pub json: &'static str,
 }
 
-const BUILTINS: [Builtin; 215] = [
+const BUILTINS: [Builtin; 221] = [
     Builtin {
         id: "fig-ii-5",
         json: include_str!("../../../sweeps/fig-ii-5.json"),
@@ -1913,6 +1913,30 @@ const BUILTINS: [Builtin; 215] = [
     Builtin {
         id: "auctions-duration",
         json: include_str!("../../../sweeps/auctions-duration.json"),
+    },
+    Builtin {
+        id: "assistance-figure3-neg",
+        json: include_str!("../../../sweeps/assistance-figure3-neg.json"),
+    },
+    Builtin {
+        id: "assistance-figure3-zero",
+        json: include_str!("../../../sweeps/assistance-figure3-zero.json"),
+    },
+    Builtin {
+        id: "assistance-figure3-pos",
+        json: include_str!("../../../sweeps/assistance-figure3-pos.json"),
+    },
+    Builtin {
+        id: "assistance-figure4",
+        json: include_str!("../../../sweeps/assistance-figure4.json"),
+    },
+    Builtin {
+        id: "assistance-figure4-incentive",
+        json: include_str!("../../../sweeps/assistance-figure4-incentive.json"),
+    },
+    Builtin {
+        id: "assistance-equilibria",
+        json: include_str!("../../../sweeps/assistance-equilibria.json"),
     },
     Builtin {
         id: "polarity-predators",
@@ -2972,6 +2996,12 @@ mod tests {
                 "auctions-bidders",
                 "auctions-persistent",
                 "auctions-duration",
+                "assistance-figure3-neg",
+                "assistance-figure3-zero",
+                "assistance-figure3-pos",
+                "assistance-figure4",
+                "assistance-figure4-incentive",
+                "assistance-equilibria",
                 "polarity-predators"
             ]
         );
