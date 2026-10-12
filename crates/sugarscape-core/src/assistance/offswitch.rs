@@ -14,15 +14,17 @@ pub fn phi(x: f64) -> f64 {
     exp_neg(-0.5 * x * x) / (2.0 * PI).sqrt()
 }
 
-/// Φ from erf's power series erf(t) = (2/√π)·e^{−t²}·Σ 2ⁿ t^{2n+1}/(2n+1)!!, all terms positive.
+/// Φ: the erf power series erf(t) = (2/√π)·e^{−t²}·Σ 2ⁿ t^{2n+1}/(2n+1)!! for |x| < 4, and for
+/// |x| ≥ 4 the tail by the Mills-ratio continued fraction, so both tails keep their relative
+/// accuracy (0.5·(1 + erf) would cancel to noise below about Φ(−6)).
 pub fn normal_cdf(x: f64) -> f64 {
+    if x <= -4.0 {
+        return upper_tail(-x);
+    }
+    if x >= 4.0 {
+        return 1.0 - upper_tail(x);
+    }
     let t = x / SQRT_2;
-    if t <= -6.5 {
-        return 0.0;
-    }
-    if t >= 6.5 {
-        return 1.0;
-    }
     let (mut term, mut sum, mut n) = (t, t, 0.0);
     while n < 400.0 {
         n += 1.0;
@@ -32,8 +34,17 @@ pub fn normal_cdf(x: f64) -> f64 {
             break;
         }
     }
-    let erf = 2.0 / PI.sqrt() * exp_neg(-t * t) * sum;
-    0.5 * (1.0 + erf)
+    0.5 * (1.0 + 2.0 / PI.sqrt() * exp_neg(-t * t) * sum)
+}
+
+/// 1 − Φ(a) for a ≥ 4: φ(a) / (a + 1/(a + 2/(a + 3/(a + …)))), the continued fraction of the
+/// Mills ratio, evaluated backward from 120 terms (far more than it needs at a ≥ 4).
+fn upper_tail(a: f64) -> f64 {
+    let mut f = a;
+    for k in (1..=120).rev() {
+        f = a + f64::from(k) / f;
+    }
+    phi(a) / f
 }
 
 /// π^H(u; β) = 1/(1 + e^{−u/β}) (eq. 5), the rational step at β = 0.
@@ -78,6 +89,11 @@ pub fn trapezoid(b: Belief, h: f64, f: impl Fn(f64) -> f64) -> f64 {
 }
 
 pub fn moments(b: Belief, beta: f64, density: u32) -> Moments {
+    debug_assert!(
+        b.sigma > 0.0 && beta >= 0.0,
+        "sigma {} beta {beta}",
+        b.sigma
+    );
     if beta == 0.0 {
         let z = b.mu / b.sigma;
         let cdf = normal_cdf(z);
@@ -221,7 +237,30 @@ mod tests {
         assert!(close(normal_cdf(-1.96), 0.024_997_895_148_220_435, 1e-12));
         assert!(close(normal_cdf(3.0), 0.998_650_101_968_369_9, 1e-12));
         assert!(close(normal_cdf(-3.0), 1.0 - normal_cdf(3.0), 1e-15));
-        assert_eq!((normal_cdf(10.0), normal_cdf(-10.0)), (1.0, 0.0));
+        for (x, want) in [
+            (-4.0, 3.167_124_183_311_986e-5),
+            (-4.5, 3.397_673_124_730_06e-6),
+            (-6.0, 9.865_876_450_376_946e-10),
+            (-8.0, 6.220_960_574_271_785e-16),
+            (-9.0, 1.128_588_405_953_841e-19),
+        ] {
+            assert!(
+                ((normal_cdf(x) - want) / want).abs() < 1e-12,
+                "{x}: {} vs {want}",
+                normal_cdf(x)
+            );
+            assert!(close(normal_cdf(-x), 1.0 - want, 1e-15));
+        }
+        // Continuity at the switch between the series and the continued fraction: the two probe
+        // points differ by φ(4)·2e-9 ≈ 2.7e-13 on their own, so a method jump would show above 1e-12.
+        assert!(close(
+            normal_cdf(-3.999_999_999),
+            normal_cdf(-4.000_000_001),
+            1e-12
+        ));
+        assert_eq!((normal_cdf(50.0), normal_cdf(-50.0)), (1.0, 0.0));
+        assert_eq!(normal_cdf(10.0), 1.0);
+        assert!(normal_cdf(-10.0) > 0.0 && normal_cdf(-10.0) < 1e-23);
     }
 
     #[test]
@@ -275,6 +314,12 @@ mod tests {
                 }
                 assert!(close(i.delta, i.decomposition, 1e-12));
             }
+        }
+        // The lower tail where 0.5·(1 + erf) would cancel: Δ must stay nonnegative.
+        for z in [-7.5, -8.0, -9.0, -12.0] {
+            let i = incentive(Belief { mu: z, sigma: 1.0 }, 0.0, 8);
+            assert!(i.delta >= 0.0, "z = {z}: {i:?}");
+            assert_eq!(choice(&i), Choice::Wait, "z = {z}");
         }
         assert_eq!(delta_two_point(-1.0, 0.5, 1.0), 0.5);
         assert_eq!(delta_two_point(1.0, 0.5, 2.0), 0.0);
@@ -386,15 +431,31 @@ mod tests {
                 .fold(f64::NEG_INFINITY, f64::max);
             assert_eq!(at(0, BETAS.len() - 1), min, "{mu}: lowest at low σ, high β");
             assert_eq!(at(n - 1, 0), max, "{mu}: highest at high σ, low β");
+            for b in 0..BETAS.len() {
+                for s in 0..n {
+                    if s + 1 < n {
+                        assert!(
+                            at(s + 1, b) >= at(s, b),
+                            "{mu}: Δ falls with σ at β index {b}, σ index {s}"
+                        );
+                    }
+                    if b + 1 < BETAS.len() {
+                        assert!(
+                            at(s, b + 1) <= at(s, b),
+                            "{mu}: Δ rises with β at β index {b}, σ index {s}"
+                        );
+                    }
+                }
+            }
             for c in &s.cells {
                 match mu.partial_cmp(&0.0).unwrap() {
                     std::cmp::Ordering::Equal => {
                         assert!(c.delta >= 0.0 && choice(c) == Choice::Wait)
                     }
-                    std::cmp::Ordering::Less if c.delta <= 0.0 => {
+                    std::cmp::Ordering::Less if c.delta < 0.0 => {
                         assert_eq!(choice(c), Choice::Off)
                     }
-                    std::cmp::Ordering::Greater if c.delta <= 0.0 => {
+                    std::cmp::Ordering::Greater if c.delta < 0.0 => {
                         assert_eq!(choice(c), Choice::Act)
                     }
                     _ => assert_eq!(choice(c), Choice::Wait),
