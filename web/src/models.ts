@@ -14,6 +14,7 @@ import type {
   PolarityInspection,
   AuctionsConfig,
   AuctionsInspection,
+  AssistanceInspection,
   CollusionInspection,
   ZiInspection,
   BaliConfig,
@@ -63,7 +64,7 @@ import type {
   TagsInspection,
 } from './types';
 
-export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'polarity', 'geosim', 'democratic_peace'];
+export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'assistance', 'polarity', 'geosim', 'democratic_peace'];
 
 /** The presets menu's group labels. */
 export const MODEL_LABELS: Record<ModelKind, string> = {
@@ -96,6 +97,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
   firms: 'The Emergence of Firms',
   collusion: 'Algorithmic Collusion',
   auctions: 'Q-learning Auctions',
+  assistance: 'Assistance Games',
   polarity: 'Emergent Polarity',
   geosim: 'GeoSim: The Size of Wars',
   democratic_peace: 'Democratic Peace as Selection',
@@ -104,7 +106,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
 /** A config without a `model` key (or with `"sugarscape"`) is a sugarscape config. */
 export function modelOf(c: ModelConfig): ModelKind {
   const tag = (c as { model?: unknown }).model;
-  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
+  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'assistance' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
     ? tag
     : 'sugarscape';
 }
@@ -211,6 +213,11 @@ export function isHoardView(v: AnyInspection): v is HoardInspection {
 /** A cell of the firms frame (a panel, a `firm` and a `member`); check it before the others with a panel. */
 export function isFirmsView(v: AnyInspection): v is FirmsInspection {
   return 'panel' in v && 'firm' in v && 'member' in v;
+}
+
+/** An assistance frame: a θ-bin of the paperclip bands or a cell of the off-switch surface. */
+export function isAssistanceView(v: AnyInspection): v is AssistanceInspection {
+  return 'game' in v && 'panel' in v && (v.game === 'paperclips' || v.game === 'off_switch');
 }
 
 /** An auction cell carries action values and played-pair occupancy. */
@@ -685,6 +692,7 @@ export const COLOR_MODES: Record<ModelKind, [ColorMode, string][]> = {
   democratic_peace: [['territory', 'Ownership'], ['governing_regime', 'Governing regime'], ['latent_regime', 'Latent regime'], ['resources', 'Resources'], ['alliances', 'Alliance threat and membership'], ['pariahs', 'Pariah status']],
   geosim: [['territory', 'Ownership'], ['capacity', 'Resource capacity'], ['technology', 'Technology'], ['alert', 'Alert and campaign'], ['wars', 'War membership']],
   polarity: [['territory', 'Territory'], ['resources', 'Resources'], ['strategy', 'Latent strategy'], ['coalitions', 'Coalitions']],
+  assistance: [['bands', 'Rule, map and posterior'], ['surface', 'Δ over σ and β']],
   auctions: [['bids', 'Bids · whole run'], ['late', 'Bids · final 20%'], ['values', 'Values']],
   // Each firm's strategy map: price or how often each state was visited.
   collusion: [
@@ -728,6 +736,7 @@ export const MODEL_OVERLAYS: Record<ModelKind, Overlay[]> = {
   democratic_peace: [],
   polarity: [],
   auctions: [],
+  assistance: [],
 };
 
 export function isPolarityView(v: AnyInspection): v is PolarityInspection {

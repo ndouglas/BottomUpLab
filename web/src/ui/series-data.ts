@@ -1,5 +1,5 @@
 import type { ChartGroup, HoardCharts, HoardGenerationSeries, Wants } from '../protocol';
-import type { Config, HoardConfig, ModelConfig, ModelKind } from '../types';
+import type { AssistanceConfig, Config, HoardConfig, ModelConfig, ModelKind } from '../types';
 
 /** uPlot data: x values, then one array per line (null is a gap). */
 export type LineData = [number[], ...(number | null)[][]];
@@ -829,6 +829,16 @@ export const MODEL_CHARTS: Record<Exclude<ModelKind, 'sugarscape'>, ModelChart[]
       { key: 'greedy_changes', label: 'Policy changes (tick count)', color: '--red' },
       { key: 'stable', label: 'Stable periods (tick end)', color: '--c4' },
     ] },
+  ],
+  assistance: [
+    { title: 'Rewards', shown: (c) => (c as AssistanceConfig).game === 'paperclips', lines: [{ key: 'reward', label: 'Both rounds (episode mean)', color: '--c1' }, { key: 'regret', label: "Robot's regret against the θ-optimal item", color: '--red' }] },
+    { title: 'Human thresholds', shown: (c) => (c as AssistanceConfig).game === 'paperclips', range: [0, 1], lines: [{ key: 'threshold_low', label: 'Low (first bin not making two staples)', color: '--c1' }, { key: 'threshold_high', label: 'High (first bin making two paperclips)', color: '--c2' }] },
+    { title: 'Robot map', shown: (c) => (c as AssistanceConfig).game === 'paperclips', range: [0, 2], lines: [{ key: 'map_0', label: 'After (0, 2): 0 = (0,90), 1 = (50,50), 2 = (90,0)', color: '--c1' }, { key: 'map_1', label: 'After (1, 1)', color: '--c2' }, { key: 'map_2', label: 'After (2, 0)', color: '--c3' }] },
+    { title: 'Convergence', shown: (c) => (c as AssistanceConfig).game === 'paperclips', lines: [{ key: 'stable_rounds', label: 'Rounds since the pair changed', color: '--c1' }, { key: 'distance', label: "Distance from the paper's equilibrium", color: '--red' }] },
+    { title: 'Incentive', shown: (c) => (c as AssistanceConfig).game === 'off_switch', lines: [{ key: 'delta_exact', label: 'Δ exact', color: '--c1' }, { key: 'delta_empirical', label: 'Δ empirical (episode mean)', color: '--c2' }] },
+    { title: 'Decomposition', shown: (c) => (c as AssistanceConfig).game === 'off_switch', lines: [{ key: 'rationality', label: 'E[π̇] (rationality)', color: '--c1' }, { key: 'prob_correct', label: 'Pr(C) (correction)', color: '--c2' }] },
+    { title: 'Values', shown: (c) => (c as AssistanceConfig).game === 'off_switch', lines: [{ key: 'value_act', label: 'Act (E[U])', color: '--c1' }, { key: 'value_wait', label: 'Wait (E[U·π])', color: '--c2' }, { key: 'value_off', label: 'Off (0)', color: '--muted' }, { key: 'value', label: 'Realized (episode mean)', color: '--c4' }] },
+    { title: 'Choices', shown: (c) => (c as AssistanceConfig).game === 'off_switch', range: [0, 1], lines: [{ key: 'share_wait', label: 'Waits for the human', color: '--c1' }, { key: 'share_act', label: 'Acts without asking', color: '--c2' }, { key: 'share_off', label: 'Switches itself off', color: '--red' }] },
   ],
   collusion: [
     {
