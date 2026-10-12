@@ -5,31 +5,44 @@ before any measurement. Sources: Hadfield-Menell, Dragan, Abbeel & Russell 2016,
 reinforcement learning* (NeurIPS; the paperclip game, §3.3 and appendix §6), and the same authors'
 2017 *The off-switch game* (IJCAI; §§3–5, Figures 3–4), both under `papers/alignment/`.
 
-**Summary.** All 21 registered claims were run. All 12 exact claims hold: every paperclip-game
+**Summary.** All 22 registered claims were run (21 from the plan, plus
+`assistance.preset-incentives`, added in review to give the presets' numbers a tracked source). All 12 exact claims hold: every paperclip-game
 closed form (the expert threshold, R's best reply, the posteriors 1/4 and 1/6, the 41/92 and 51/92
 teaching thresholds, Theorem 3 at θ = 0.49, the optimal joint policy at 6373/92) and every off-switch
 theorem (Theorem 1, Corollary 1, Theorem 2's decomposition and condition), with our enumeration
 of the pure mutual best responses. Figure 3's three direction claims also hold. All three Figure 4 direction claims hold under the preregistered
 two-standard-error rule, **but only under our reconstruction of Figure 4's setup** (a Boltzmann human
 at β = 0.5, a noisy report, Bayesian posterior mean). With the paper's rational human the value is flat
-in σ. Three of our own claims are reported without a target: that flat rational case and the two
-dynamics. The pooling
-pair is not a pure mutual best response, but fictitious play started from it never leaves it.
+in σ. Four of our own claims are reported without a target: that flat rational case, the presets'
+incentives and the two dynamics. The pooling pair is not a pure mutual best response, but fictitious
+play started from it never leaves it. The six pure equilibria are relabelings of the paper's pair
+with distinct values, and from random starts our dynamics sometimes select a Pareto-inferior one.
 
 ## Provenance
 
 The survey ran from `survey/` as `survey --only assistance` (release build), single process, on an
-arm64 MacBookPro18,4 (ten logical CPUs), Rust 1.98.1, at core commit `e64cac3` with the claims as
-committed in `25fa869`. Wall time was 2 min 36 s, nearly all of it Figure 4's 39 one-seed worlds
-(100 ticks × 1,000 episodes each). The printed table is tracked at
+arm64 MacBookPro18,4 (ten logical CPUs), Rust 1.98.1, at core commit `e64cac3`. Wall time was
+2 min 36 s, nearly all of it Figure 4's 39 one-seed worlds (100 ticks × 1,000 episodes each).
+
+The first run used the claims as committed in `25fa869`. In review, three claims were changed so
+that the tracked output carries everything the write-up states:
+- `assistance.pooling-not-equilibrium` now prints each equilibrium's exact value.
+- The two equilibria claims print each seed's final map, thresholds and rule.
+- `assistance.preset-incentives` was added.
+
+No decision rule changed, and the survey was run again. Every line common to both runs is
+byte-identical, including every Figure 4 curve and every dynamics count, median and distance. This
+doubles as a determinism check.
+
+The printed table (stdout) is tracked at
 [`survey/out/assistance/results.md`](../../../survey/out/assistance/results.md) (SHA-256
-`0cecd217…0e4b`); the per-claim JSON `survey/out/results-assistance.json` is ignored, like every
-`results-*.json`. No run was repeated or discarded, and no rule, grid, β or tolerance changed after
-the measurement.
+`b9c2ad25…1802`). The per-claim JSON `survey/out/results-assistance.json` is ignored, like every
+`results-*.json`. No run was discarded, and no rule, grid, β or tolerance changed after the
+measurement.
 
 ## Claim table
 
-Verdicts follow the survey's vocabulary; `Untestable` marks the three claims reported without a
+Verdicts follow the survey's vocabulary; `Untestable` marks the four claims reported without a
 target. "Ours" marks our extensions (survey source `App`); the rest cite the papers (`Book`).
 
 | id | rule | verdict | measured |
@@ -41,7 +54,7 @@ target. "Ours" marks our extensions (survey source `App`); the rest cite the pap
 | `assistance.teaching-thresholds` | H's best reply to br(δ^E) makes (1,1) on [41/92, 51/92] (proof of Theorem 3), exactly in rationals | Holds | pieces 0–41/92 → (0,2), 41/92–51/92 → (1,1), 51/92–1 → (2,0) |
 | `assistance.theorem-3` | br(br(δ^E)) ≠ δ^E and H makes (1,1) at θ = 0.49 (Theorem 3) | Holds | action at 0.49 is (1,1); thresholds 0.4457, 0.5543 |
 | `assistance.optimal-joint` | the exhaustive optimum is the 41/92, 51/92 rule with eq. 3's map | Holds | map [0, 1, 2], value 6373/92 ≈ 69.2717 against 69 for the expert pair |
-| `assistance.pooling-not-equilibrium` (ours) | the pure mutual best responses, enumerated; the teaching pair is one and the pooling pair is not | Holds | six pairs, R's maps the six permutations of [0, 1, 2] |
+| `assistance.pooling-not-equilibrium` (ours) | the pure mutual best responses, enumerated; the teaching pair is one and the pooling pair is not | Holds | six pairs, R's maps the six permutations of [0, 1, 2], with exact expected totals [0,1,2] 6373/92 ≈ 69.2717; [0,2,1] and [1,0,2] 570975/8272 ≈ 69.0250; [1,2,0] and [2,0,1] 542219/7912 ≈ 68.5312; [2,1,0] 6009/88 ≈ 68.2841 |
 | `assistance.theorem-1` | rational H: Δ ≥ 0 on 42 Gaussian priors, strictly where \|μ\|/σ ≤ 4; agreement with eq. 3 within 1e-9; two-point priors | Holds | smallest Δ 0 (below double precision at large \|μ\|/σ), smallest with \|μ\|/σ ≤ 4 3.573e-6; largest gap to eq. 3 2.6e-16; two-point priors as stated |
 | `assistance.corollary-1` | point-mass belief: Δ ≤ 0, zero only at β = 0 (Corollary 1), at u ∈ {±0.1, ±1}, β ∈ {0, 0.5, 2} | Holds | all 12 points as stated |
 | `assistance.theorem-2-agree` | eq. 7's decomposition equals the direct Δ within 1e-9 | Holds | largest gap 4.9e-15 over 80 points |
@@ -53,6 +66,7 @@ target. "Ours" marks our extensions (survey source `App`); the rest cite the pap
 | `assistance.figure-4-delta` | Δ rises with σ: no adjacent fall beyond 2 SE, for each \|A\| | Holds | no falls; Δ from −0.0977 to 0.3020 (\|A\| = 1), −0.1044 to 0.2454 (4), −0.1064 to 0.1728 (8) |
 | `assistance.figure-4-actions` | the drop in V from the peak to σ = 1.5 does not shrink beyond 2 SE as \|A\| grows | Holds | 0.0222 ± 0.0028, 0.0339 ± 0.0032, 0.0494 ± 0.0032 |
 | `assistance.figure-4-rational-flat` (ours) | reported: V at σ ∈ {0.1, 0.7, 1.5} with a rational human | Untestable (reported) | 0.3992, 0.3993, 0.3993; spread below 1e-4 against SE ≈ 0.0018 |
+| `assistance.preset-incentives` (ours) | reported: Δ, eq. 7's terms, Pr(C) and the choice for the two off-switch presets | Untestable (reported) | rational (μ 1/4, σ 1, β 0): Δ 0.286345 = 0.386668 − 0.100323, Pr(C) 0.401294, waits; toddler (μ 1/4, σ 0.1, β 4): Δ −0.120471 = 0.000624 − 0.121096, Pr(C) 0.484383, acts |
 | `assistance.equilibria-iterated` (ours) | reported: the pair reached from four starts, 20 seeds, 200 ticks | Untestable (reported) | see below |
 | `assistance.equilibria-learning` (ours) | reported: the same under fictitious play | Untestable (reported) | see below |
 
@@ -62,6 +76,12 @@ more actions the zero crossing moves right (between 0.7 and 0.8 for |A| = 4, bet
 for |A| = 8), so a robot choosing among more actions is overconfident enough to bypass the human
 over a wider range of σ.
 
+All Figure 4 points share seed 1, so they use common random numbers. Positively correlated
+estimates make the two-standard-errors-of-the-difference rule, computed as if the points were
+independent, conservative. The rational case's flatness is analytic: with β = 0, R waits at every σ
+(Theorem 1), so V = E[max(U, 0)] = φ(0) ≈ 0.3989 whatever σ is. The measured 0.3992–0.3993 is
+within one SE of it.
+
 ## Results that began as planning findings
 
 **Pooling is not an equilibrium, but it is where fictitious play stays.** H's best reply to any
@@ -69,10 +89,17 @@ constant map is the expert rule, since R's deployment then does not depend on wh
 pooling pair (always (1,1), always (50,50)) is not a mutual best response. The enumeration finds
 exactly six pure mutual best responses, R's maps being the six permutations of [0, 1, 2]. They are the
 paper's teaching equilibrium and five relabelings of which of H's three actions signals which band
-of θ. All six have the same expected reward. Iterated best response from pooling reaches the
-paper's pair in all 20 seeds (median tick 2). Fictitious play from pooling stays there in all 20
-seeds (final distance 84 throughout, reward 51 per game; confirmed by a retrospective diagnostic
-reading R's map, [1, 1, 1], at the horizon). The reason lies in the tables: an action H never makes
+of θ. Their values differ, because the relabeling also changes the two items H makes itself in each
+band. Exact expected totals:
+- [0, 1, 2], the paper's pair: 6373/92 ≈ 69.2717
+- [0, 2, 1] and [1, 0, 2]: ≈ 69.0250
+- [1, 2, 0] and [2, 0, 1]: ≈ 68.5312
+- [2, 1, 0]: 6009/88 ≈ 68.2841
+
+So the paper's pair is the best of six strict equilibria of a common-payoff game, and the other five
+are Pareto-inferior. Iterated best response from pooling reaches the paper's pair in all 20 seeds
+(upper median tick 2). Fictitious play from pooling stays there in all 20 seeds: every seed ends
+with rule `1×92` and map [1, 1, 1], at distance 84 throughout. The reason lies in the tables: an action H never makes
 keeps its uniform starting table, so H expects R's average deployment after it (worth 46.67) and
 never tries it. R never sees those actions and never revises its (50,50). So pooling is a rest
 point of our fictitious play (a self-confirming outcome, sustained by off-path beliefs), not an
@@ -92,22 +119,31 @@ method, not a modeling choice, and no verdict depends on it beyond the agreement
 ## The dynamics
 
 Twenty seeds, 200 ticks of 1,000 games, default settings; "settled" is the last tick at which the
-distance to the paper's pair changed (median over seeds).
+distance to the paper's pair changed (upper median over seeds, the 11th of 20 sorted values). The
+survey prints each seed's final map, thresholds and rule.
 
 | Start | Iterated best response | Fictitious play |
 |---|---|---|
 | expert | 20/20 at the paper's pair, settled by tick 1 | 20/20, settled by tick 6 |
-| teaching (the paper's rule) | 20/20, never moves | 20/20, settled by tick 2 |
+| teaching (the paper's rule) | 20/20, settled by tick 0 | 20/20, settled by tick 2 |
 | pooling | 20/20, settled by tick 2 | 0/20: stays at pooling (distance 84) |
-| uniform random | 12/20; the other 8 reach relabeled equilibria (distances 95 ×6, 84, 53), settled by tick 2 | 19/20, settled by tick 3; one (seed 17) reaches a relabeled equilibrium (distance 53) |
+| uniform random | 12/20, settled by tick 2; the other 8 end at relabeled equilibria: [1, 2, 0] (seeds 5, 12, 15, 17) and [2, 0, 1] (14, 20), both ≈ 68.5312; [2, 1, 0] (16) ≈ 68.2841; [0, 2, 1] (19) ≈ 69.0250 | 19/20, settled by tick 3; seed 17 ends at [0, 2, 1] ≈ 69.0250 |
 
-A retrospective diagnostic read the final maps of the off-paper runs: [1, 2, 0] and [2, 0, 1]
-(distance 95), [2, 1, 0] (84) and [0, 2, 1] (53). Each is one of the six enumerated equilibria, with a
-realized mean reward of 68.1–69.5 per game. This is sampling noise around the common expected
-6373/92 ≈ 69.27. So from an informed start both dynamics find the paper's teaching equilibrium. From
-a random start they find *a* teaching equilibrium, and which signal means which band depends on the
-start, as expected in a common-payoff signaling game. Distance 84 is ambiguous between the
-[2, 1, 0] relabeling and the pooling pair; the diagnostic tells them apart.
+Each off-paper rule keeps the paper's bands (41, 10 and 41 bins) with the actions permuted, as in
+`2×41 0×10 1×41` for map [1, 2, 0]. Every final pair is one of the six enumerated equilibria, or the
+pooling rest point.
+
+From an informed start (expert, teaching, pooling under iterated best response), both dynamics
+reach the paper's pair. From a uniform random start they usually reach it too: 12/20 under iterated
+best response and 19/20 under fictitious play. Otherwise they reach a Pareto-inferior relabeling.
+Seven of the eight iterated off-paper runs land on the two lowest-valued classes (≈ 68.53 or
+≈ 68.28). This is a result of our dynamics: in a common-payoff game, myopic best response from a
+random start does not select the payoff-dominant equilibrium. Fictitious play does so more often
+here.
+
+Distance alone cannot separate the [2, 1, 0] relabeling from the pooling pair (both 84); the
+printed maps can. An earlier retrospective diagnostic read the same maps from a scratch program;
+the survey now prints them, so nothing above rests on that diagnostic.
 
 ## What depends on a reconstruction choice
 
@@ -136,8 +172,9 @@ numerical tolerances stated.
 - Which human did the authors use for Figure 4? Their code is not public as far as we have checked.
   A β sweep of Figure 4 (planning saw a plateau at β = 0.25) would map where the peak appears;
   that would be a new, separately preregistered measurement.
-- Does fictitious play with a different table prior, or with exploration, escape pooling, and how
-  often does it pick each relabeling?
+- Does fictitious play with a different table prior, or with exploration, escape pooling? Does any
+  start-independent rule select the payoff-dominant pair, and how often does each dynamic pick each
+  relabeling over more seeds?
 - Milli et al. 2017 (*Should robots be obedient?*) and *Inverse reward design* are the follow-ups
   queued with this item; neither was measured here.
 - A2 of the [alignment program](../../studies/2026-10-11-alignment-program.md) (the off-switch among

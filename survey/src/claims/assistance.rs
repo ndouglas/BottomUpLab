@@ -246,6 +246,21 @@ fn figure4_rational_flat(_: &[u64]) -> Outcome {
 
 // ---- The dynamics: reported, 20 seeds, 200 ticks, four starts. ----
 
+/// A rule as runs of H's action index, e.g. `0×41 1×10 2×41`.
+fn runs(rule: &[u8]) -> String {
+    let mut out: Vec<(u8, usize)> = Vec::new();
+    for &a in rule {
+        match out.last_mut() {
+            Some((b, n)) if *b == a => *n += 1,
+            _ => out.push((a, 1)),
+        }
+    }
+    out.iter()
+        .map(|(a, n)| format!("{a}×{n}"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn equilibria(mode: Mode) -> Outcome {
     let starts = [
         (HumanRule::Expert, "expert"),
@@ -256,18 +271,34 @@ fn equilibria(mode: Mode) -> Outcome {
     let seeds: Vec<u64> = (1..=20).collect();
     let lines: Vec<String> = starts.iter().map(|&(rule, name)| {
         let config = ModelConfig::Assistance(AssistanceConfig { mode, human_rule: rule, ..Default::default() });
-        let runs = model_after(&config, &seeds, 200, |w| {
+        let results = model_after(&config, &seeds, 200, |w| {
             let distance = w.model().series("distance").unwrap();
             let last = *distance.last().unwrap();
             let settled = distance.iter().rposition(|&d| d != last).map_or(0, |i| i + 1);
-            let stable = w.model().latest_value("stable_rounds").unwrap();
-            (last, settled, stable)
+            let inspection: serde_json::Value = serde_json::from_str(&w.model().inspect_json(0, 0).unwrap()).unwrap();
+            let final_rule: Vec<u8> = serde_json::from_value(inspection["rule"].clone()).unwrap();
+            let final_map: [u8; 3] = serde_json::from_value(inspection["map"].clone()).unwrap();
+            (last, settled, final_rule, final_map)
         });
-        let at_paper = runs.iter().filter(|r| r.0 == 0.0).count();
-        let mut settled: Vec<f64> = runs.iter().map(|r| r.1 as f64).collect();
+        let at_paper = results.iter().filter(|r| r.0 == 0.0).count();
+        let mut settled: Vec<f64> = results.iter().map(|r| r.1 as f64).collect();
         settled.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let distances: Vec<String> = runs.iter().map(|r| format!("{}", r.0)).collect();
-        format!("{name}: {at_paper}/20 at the paper's pair; settled by tick median {}; final distances [{}]", settled[10], distances.join(","))
+        let per_seed: Vec<String> = results.iter().zip(&seeds).map(|(r, seed)| {
+            let (lo, hi) = paperclips::thresholds_of(&r.2);
+            format!("s{seed} d={} map {:?} thr ({lo:.4},{hi:.4}) rule [{}]", r.0, r.3, runs(&r.2))
+        }).collect();
+        format!("{name}: {at_paper}/20 at the paper's pair; settled by tick, upper median {}; per seed: {}", settled[10], per_seed.join("; "))
+    }).collect();
+    reported(lines.join(" · "))
+}
+
+fn preset_incentives(_: &[u64]) -> Outcome {
+    let lines: Vec<String> = [("rational", 0.25, 1.0, 0.0), ("toddler", 0.25, 0.1, 4.0)].iter().map(|&(name, mu, sigma, beta): &(&str, f64, f64, f64)| {
+        let i = offswitch::incentive(Belief { mu, sigma }, beta, 8);
+        format!(
+            "{name} (μ {mu}, σ {sigma}, β {beta}): Δ {:.6}; eq. 7 σ²E[π̇] {:.6} − |μ|Pr(C) {:.6} = {:.6}; E[π̇] {:.6}; Pr(C) {:.6}; E[U] act {:.6}, wait {:.6}, off {:.6}; choice {:?}",
+            i.delta, sigma * sigma * i.rationality, mu.abs() * i.prob_correct, i.decomposition, i.rationality, i.prob_correct, i.value_act, i.value_wait, i.value_off, offswitch::choice(&i)
+        )
     }).collect();
     reported(lines.join(" · "))
 }
@@ -309,7 +340,11 @@ pub fn claims() -> Vec<Claim> {
             let set = paperclips::mutual_best_responses(92);
             let teaching = set.contains(&(paperclips::equilibrium_rule(92), [0, 1, 2]));
             let pooling = set.contains(&(paperclips::pooling_rule(92), [1, 1, 1]));
-            exact(teaching && !pooling, format!("{} pure mutual best responses: maps {:?}", set.len(), set.iter().map(|(_, m)| *m).collect::<Vec<_>>()))
+            let values: Vec<String> = set.iter().map(|(_, m)| {
+                let v = paperclips::expected_total(m);
+                format!("{m:?} {}/{} ≈ {:.4}", v.num, v.den, v.to_f64())
+            }).collect();
+            exact(teaching && !pooling, format!("{} pure mutual best responses, map and exact expected total: {}", set.len(), values.join(", ")))
         }),
         claim("assistance.theorem-1", "assistance-offswitch-rational", OFF, "rational H: Δ ≥ 0 for every prior, strictly when both signs have weight (Theorem 1, eq. 3); strictness is checked where |μ|/σ ≤ 4, beyond which Δ is below double precision", |_| {
             let (mut worst, mut worst_near, mut gap) = (f64::INFINITY, f64::INFINITY, 0.0f64);
@@ -407,6 +442,7 @@ pub fn claims() -> Vec<Claim> {
         claim("assistance.figure-4-delta", "assistance-figure4-incentive", OFF, "Δ rises with σ (Figure 4, middle)", figure4_delta),
         claim("assistance.figure-4-actions", "assistance-figure4", OFF, "with more actions, a given Δ costs more value (Figure 4, right): the drop from the peak to σ = 1.5 grows with |A|", figure4_actions),
         claim("assistance.figure-4-rational-flat", "assistance-figure4", OURS, "with a rational human the value is flat in σ, so the figure's peak needs a noisy human (reported)", figure4_rational_flat),
+        claim("assistance.preset-incentives", "assistance-offswitch-toddler", OURS, "the two off-switch presets' Δ, eq. 7 terms, Pr(C) and choice (reported)", preset_incentives),
         claim("assistance.equilibria-iterated", "assistance-equilibria", OURS, "iterated best response from each start: the pair reached and when it settled (reported)", |_| equilibria(Mode::Iterated)),
         claim("assistance.equilibria-learning", "assistance-equilibria", OURS, "fictitious play from each start: the pair reached and when it settled (reported)", |_| equilibria(Mode::Learning)),
     ]

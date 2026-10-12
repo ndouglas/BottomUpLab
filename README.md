@@ -3878,7 +3878,7 @@ three directions hold only under our named reconstruction (`protocol: report`, a
 β = 0.5). With the paper's rational human, R always waits and the value is flat in σ. Our own
 results: the pooling pair is not an equilibrium, but fictitious play started there never leaves
 it; from informed starts both dynamics find the paper's teaching pair; from random starts they
-find a relabeling of it. Six `assistance-*` sweeps cover Figure 3 at μ < 0, = 0 and > 0, Figure 4
+usually find it too (12/20 iterated, 19/20 fictitious play), otherwise a lower-valued relabeling. Six `assistance-*` sweeps cover Figure 3 at μ < 0, = 0 and > 0, Figure 4
 and its incentive, and the equilibria. See [the findings](docs/superpowers/specs/2026-10-11-assistance-games-findings.md)
 and [the design](docs/superpowers/specs/2026-10-11-assistance-games-design.md).
 
