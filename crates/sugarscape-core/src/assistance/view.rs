@@ -120,7 +120,7 @@ fn surface(w: &AssistanceWorld, canvas: &mut Canvas) {
     let rows = BETAS.len();
     let cells = &w.surface().cells;
     let marker = offswitch::nearest_cell(w.config.sigma, w.config.beta);
-    let negative = |b: usize, s: usize| cells[b * n + s].delta <= 0.0;
+    let negative = |b: usize, s: usize| cells[b * n + s].delta < 0.0;
     for b in 0..rows {
         for s in 0..n {
             let color = delta_color(cells[b * n + s].delta);

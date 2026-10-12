@@ -370,7 +370,29 @@ impl Model for AssistanceWorld {
             "tables": self.tables, "rounds": self.rounds, "stable_rounds": self.stable_rounds,
             "history": self.history, "last_human": self.last_human,
         });
-        let bytes = serde_json::to_vec(&state).unwrap();
+        let mut bytes = serde_json::to_vec(&state).unwrap();
+        // The numerics by their bits (JSON writes NaN as null, so only the bits are an exact
+        // record): Δ and its terms, then the latest snapshot's 20 series.
+        let i = &self.incentive;
+        let mut numbers = vec![
+            i.delta,
+            i.decomposition,
+            i.rationality,
+            i.prob_correct,
+            i.value_act,
+            i.value_wait,
+            i.value_off,
+        ];
+        if let Some(s) = self.stats.latest() {
+            numbers.extend(
+                super::stats::SERIES
+                    .iter()
+                    .map(|name| s.value(name).unwrap()),
+            );
+        }
+        for x in numbers {
+            bytes.extend(f64::to_bits(x).to_le_bytes());
+        }
         let mut h = 0xcbf2_9ce4_8422_2325u64;
         for byte in bytes {
             h ^= u64::from(byte);
@@ -587,6 +609,11 @@ mod tests {
             w.map(),
             [1, 1, 1],
             "R has seen θ and moved off the prior map"
+        );
+        let pair = (w.rule().to_vec(), w.map());
+        assert!(
+            w.outcome().equilibria.contains(&pair) || pair == (vec![1; 92], [1, 1, 1]),
+            "after 50 ticks the pair is a pure mutual best response: {pair:?}"
         );
     }
 

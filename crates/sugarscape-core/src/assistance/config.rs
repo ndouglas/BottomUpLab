@@ -179,7 +179,7 @@ pub fn schema() -> Vec<Param> {
             .with_help("Static plays one fixed pair; the dynamics are ours."),
         Param::choice("Paperclips", "human_rule", "Human rule", &[("expert", "Expert"), ("equilibrium", "Teaching (41/92, 51/92)"), ("pooling", "Always one of each"), ("uniform_random", "Uniform random")], Live)
             .shown_if("game", "paperclips")
-            .with_help("The human's rule in static mode, or the start of a dynamic."),
+            .with_help("The human's rule in static mode, or the start of a dynamic. In learning mode it applies at reset."),
         Param::choice("Paperclips", "robot_map", "Robot map", &[("best_response", "Best response"), ("fixed", "Fixed")], Live)
             .shown_if("game", "paperclips"),
         Param::integer("Paperclips", "fixed_0", "After (0, 2)", (0, 2), Live).shown_if("game", "paperclips").and_shown_if("robot_map", "fixed")
@@ -202,7 +202,7 @@ pub fn schema() -> Vec<Param> {
         Param::integer("Off-switch", "actions", "Candidate actions", (1, 64), Live).shown_if("game", "off_switch").and_shown_if("protocol", "report"),
         Param::number("Off-switch", "observation_noise", "Report noise", (0.01, 10.0, 0.01), Live).shown_if("game", "off_switch").and_shown_if("protocol", "report"),
         Param::integer("Off-switch", "quadrature_density", "Quadrature density", (4, 64), Live).shown_if("game", "off_switch")
-            .with_help("Trapezoid points per smallest scale of σ and β."),
+            .with_help("Trapezoid points per smallest scale of σ and β. Cost per episode under the report protocol grows as σ/β."),
         Param::integer("Episodes", "episodes_per_tick", "Episodes per tick", (1, 100_000), Live),
     ]
 }

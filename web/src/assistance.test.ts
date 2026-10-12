@@ -49,6 +49,7 @@ describe('Assistance Games integration', () => {
   });
   it('legends name the bands and the surface axes', () => {
     expect(assistanceLegend(paperclips, 'bands').status).toContain('41/92');
+    expect(assistanceLegend(paperclips, 'surface').status).toContain('41/92');
     expect(assistanceLegend(offSwitch, 'surface').status).toContain('μ = 0.25');
     expect(assistanceLegend(offSwitch, 'surface').items.length).toBe(3);
   });

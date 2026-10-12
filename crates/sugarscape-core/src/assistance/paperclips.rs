@@ -83,7 +83,9 @@ pub(super) fn argmax(values: impl IntoIterator<Item = f64>) -> u8 {
     best.0
 }
 
-/// The demonstration-by-expert rule: the immediate reward's maximizer (appendix eq. 2).
+/// The demonstration-by-expert rule: the immediate reward's maximizer (appendix eq. 2). With an
+/// odd bin count the midpoint bin sits at θ = 1/2, where all three actions tie, and takes (0,2)
+/// by the smallest-index tie rule while eq. 2 assigns (1,1) there; 92 bins have no such bin.
 pub fn expert_rule(bins: usize) -> Rule {
     (0..bins)
         .map(|k| argmax(H_ACTIONS.iter().map(|&a| reward(bin_mid(k, bins), a))))
@@ -210,10 +212,16 @@ pub fn exact_best_reply(map: &Map) -> Vec<(Ratio, Ratio, u8)> {
     out
 }
 
-/// ∫₀¹ max_a payoff_a(θ) dθ, exactly: each piece is ∫ (A θ + B (1−θ)) = (A − B)(hi² − lo²)/2 + B (hi − lo).
+/// ∫₀¹ max_a payoff_a(θ) dθ, exactly: H's exact best reply integrated by [`pair_total`].
 pub fn expected_total(map: &Map) -> Ratio {
+    pair_total(&exact_best_reply(map), map)
+}
+
+/// The expected total of a pair given as H's rule in exact pieces and R's map: each piece is
+/// ∫ (A θ + B (1−θ)) dθ = (A − B)(hi² − lo²)/2 + B (hi − lo) for its action's payoff line.
+pub fn pair_total(pieces: &[(Ratio, Ratio, u8)], map: &Map) -> Ratio {
     let mut total = Ratio::new(0, 1);
-    for (lo, hi, a) in exact_best_reply(map) {
+    for &(lo, hi, a) in pieces {
         let (aa, bb) = line(a as usize, map);
         let slope = Ratio::new(aa - bb, 2).mul(hi.mul(hi).sub(lo.mul(lo)));
         let flat = Ratio::new(bb, 1).mul(hi.sub(lo));
@@ -330,6 +338,46 @@ mod tests {
         // ∫ max(92(1−θ), 51, 92θ) dθ = 6373/92 ≈ 69.27, against 69 for the expert pair.
         assert_eq!(value, Ratio::new(6373, 92));
         assert_eq!(expected_total(&[0, 1, 2]), Ratio::new(6373, 92));
+        // The expert pair: (0,2) below 1/2, (2,0) above, under the same map.
+        let half = Ratio::new(1, 2);
+        let expert = [(Ratio::new(0, 1), half, 0), (half, Ratio::new(1, 1), 2)];
+        assert_eq!(pair_total(&expert, &[0, 1, 2]), Ratio::new(69, 1));
+    }
+
+    #[test]
+    fn the_exact_best_reply_agrees_with_quadrature_and_the_binned_rule_for_all_27_maps() {
+        for code in 0..27u8 {
+            let map = [code / 9, (code / 3) % 3, code % 3];
+            // Midpoint rule over 20,000 θ of the pointwise maximum (kinks cost O(h²) each).
+            let n = 20_000;
+            let riemann: f64 = (0..n)
+                .map(|k| {
+                    let theta = (k as f64 + 0.5) / n as f64;
+                    (0..3)
+                        .map(|a| human_payoff(theta, a, &map))
+                        .fold(f64::NEG_INFINITY, f64::max)
+                })
+                .sum::<f64>()
+                / n as f64;
+            let exact = expected_total(&map).to_f64();
+            assert!(
+                (exact - riemann).abs() < 1e-6,
+                "{map:?}: {exact} vs {riemann}"
+            );
+            // At each of 92 bin midpoints the exact piece's action is the binned best reply. A
+            // midpoint landing exactly on a piece boundary would be a tie and is skipped; no
+            // crossing of the 27 maps falls on a 92-bin midpoint, so the skip is never taken.
+            let pieces = exact_best_reply(&map);
+            let binned = human_best_reply(&map, 92);
+            for (k, &want) in binned.iter().enumerate() {
+                let mid = Ratio::new(2 * k as i64 + 1, 184);
+                if pieces.iter().any(|&(lo, hi, _)| mid == lo || mid == hi) {
+                    continue;
+                }
+                let piece = pieces.iter().find(|&&(lo, hi, _)| lo < mid && mid < hi);
+                assert_eq!(piece.map(|p| p.2), Some(want), "{map:?} bin {k}");
+            }
+        }
     }
 
     #[test]

@@ -88,6 +88,25 @@ pub fn trapezoid(b: Belief, h: f64, f: impl Fn(f64) -> f64) -> f64 {
     sum * h / (b.sigma * (2.0 * PI).sqrt())
 }
 
+/// The rational H's closed forms, computed symmetrically in |μ| so neither tail cancels against
+/// 1: with t = Φ(−|z|) = Pr(C), Δ = σφ(z) − |μ|·t, and Pr(allow) = 1 − t or t by the sign of μ
+/// (only reported, so its own cancellation is harmless).
+struct Rational {
+    allow: f64,
+    tail: f64,
+    delta: f64,
+}
+
+fn rational(b: Belief) -> Rational {
+    let z = b.mu / b.sigma;
+    let tail = normal_cdf(-z.abs());
+    Rational {
+        allow: if b.mu >= 0.0 { 1.0 - tail } else { tail },
+        tail,
+        delta: b.sigma * phi(z) - b.mu.abs() * tail,
+    }
+}
+
 pub fn moments(b: Belief, beta: f64, density: u32) -> Moments {
     debug_assert!(
         b.sigma > 0.0 && beta >= 0.0,
@@ -95,12 +114,11 @@ pub fn moments(b: Belief, beta: f64, density: u32) -> Moments {
         b.sigma
     );
     if beta == 0.0 {
-        let z = b.mu / b.sigma;
-        let cdf = normal_cdf(z);
+        let r = rational(b);
         return Moments {
-            allow: cdf,
+            allow: r.allow,
             variance: 0.0,
-            u_allow: b.mu * cdf + b.sigma * phi(z),
+            u_allow: b.mu.max(0.0) + r.delta,
         };
     }
     let h = b.sigma.min(beta) / f64::from(density);
@@ -131,14 +149,18 @@ pub struct Incentive {
 
 pub fn incentive(b: Belief, beta: f64, density: u32) -> Incentive {
     let m = moments(b, beta, density);
-    let rationality = if beta == 0.0 {
-        phi(b.mu / b.sigma) / b.sigma
+    let (rationality, prob_correct, delta) = if beta == 0.0 {
+        let r = rational(b);
+        (phi(b.mu / b.sigma) / b.sigma, r.tail, r.delta)
     } else {
-        m.variance / beta
+        (
+            m.variance / beta,
+            if b.mu >= 0.0 { 1.0 - m.allow } else { m.allow },
+            m.u_allow - b.mu.max(0.0),
+        )
     };
-    let prob_correct = if b.mu >= 0.0 { 1.0 - m.allow } else { m.allow };
     Incentive {
-        delta: m.u_allow - b.mu.max(0.0),
+        delta,
         decomposition: b.sigma * b.sigma * rationality - b.mu.abs() * prob_correct,
         rationality,
         prob_correct,
@@ -320,6 +342,14 @@ mod tests {
             let i = incentive(Belief { mu: z, sigma: 1.0 }, 0.0, 8);
             assert!(i.delta >= 0.0, "z = {z}: {i:?}");
             assert_eq!(choice(&i), Choice::Wait, "z = {z}");
+        }
+        // The upper tail, where Φ(z) = 1 − tail cancels against 1: Δ by subtraction would read
+        // −2.2e-16 here and choose Act.
+        let upper = [7.5, 8.0, 9.0, 12.0].map(|z| (z, 1.0));
+        for (mu, sigma) in upper.into_iter().chain([(1.2, 0.15), (2.15, 0.26)]) {
+            let i = incentive(Belief { mu, sigma }, 0.0, 8);
+            assert!(i.delta >= 0.0, "{mu} {sigma}: {i:?}");
+            assert_eq!(choice(&i), Choice::Wait, "{mu} {sigma}");
         }
         assert_eq!(delta_two_point(-1.0, 0.5, 1.0), 0.5);
         assert_eq!(delta_two_point(1.0, 0.5, 2.0), 0.0);

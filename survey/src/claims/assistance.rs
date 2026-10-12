@@ -155,7 +155,7 @@ fn figure4_peak(_: &[u64]) -> Outcome {
                 .collect::<Vec<_>>()
                 .join(" ");
             (
-                format!("|A|={k}"),
+                format!("A = {k}"),
                 exact(
                     violators.is_empty(),
                     format!(
@@ -188,7 +188,7 @@ fn figure4_delta(_: &[u64]) -> Outcome {
                 .collect::<Vec<_>>()
                 .join(" ");
             (
-                format!("|A|={k}"),
+                format!("A = {k}"),
                 exact(
                     violations.is_empty(),
                     format!("Δ falls at [{}]; curve {curve}", violations.join(", ")),
@@ -215,7 +215,7 @@ fn figure4_actions(_: &[u64]) -> Outcome {
     let violations: Vec<String> = drops
         .windows(2)
         .filter(|w| beyond(w[0].1, w[0].2, w[1].1, w[1].2))
-        .map(|w| format!("|A| {}→{}", w[0].0, w[1].0))
+        .map(|w| format!("A = {}→{}", w[0].0, w[1].0))
         .collect();
     exact(
         violations.is_empty(),
@@ -223,7 +223,7 @@ fn figure4_actions(_: &[u64]) -> Outcome {
             "drop from the peak to σ=1.5: {}",
             drops
                 .iter()
-                .map(|(k, d, se)| format!("|A|={k}: {d:.4}±{se:.4}"))
+                .map(|(k, d, se)| format!("A = {k}: {d:.4}±{se:.4}"))
                 .collect::<Vec<_>>()
                 .join(", ")
         ),
@@ -269,6 +269,7 @@ fn equilibria(mode: Mode) -> Outcome {
         (HumanRule::UniformRandom, "uniform random"),
     ];
     let seeds: Vec<u64> = (1..=20).collect();
+    let set = paperclips::mutual_best_responses(92);
     let lines: Vec<String> = starts.iter().map(|&(rule, name)| {
         let config = ModelConfig::Assistance(AssistanceConfig { mode, human_rule: rule, ..Default::default() });
         let results = model_after(&config, &seeds, 200, |w| {
@@ -281,13 +282,14 @@ fn equilibria(mode: Mode) -> Outcome {
             (last, settled, final_rule, final_map)
         });
         let at_paper = results.iter().filter(|r| r.0 == 0.0).count();
+        let at_mutual = results.iter().filter(|r| set.contains(&(r.2.clone(), r.3))).count();
         let mut settled: Vec<f64> = results.iter().map(|r| r.1 as f64).collect();
         settled.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let per_seed: Vec<String> = results.iter().zip(&seeds).map(|(r, seed)| {
             let (lo, hi) = paperclips::thresholds_of(&r.2);
             format!("s{seed} d={} map {:?} thr ({lo:.4},{hi:.4}) rule [{}]", r.0, r.3, runs(&r.2))
         }).collect();
-        format!("{name}: {at_paper}/20 at the paper's pair; settled by tick, upper median {}; per seed: {}", settled[10], per_seed.join("; "))
+        format!("{name}: {at_paper}/20 at the paper's pair; {at_mutual}/20 at a pure mutual best response; settled by tick, upper median {}; per seed: {}", settled[10], per_seed.join("; "))
     }).collect();
     reported(lines.join(" · "))
 }
@@ -296,7 +298,7 @@ fn preset_incentives(_: &[u64]) -> Outcome {
     let lines: Vec<String> = [("rational", 0.25, 1.0, 0.0), ("toddler", 0.25, 0.1, 4.0)].iter().map(|&(name, mu, sigma, beta): &(&str, f64, f64, f64)| {
         let i = offswitch::incentive(Belief { mu, sigma }, beta, 8);
         format!(
-            "{name} (μ {mu}, σ {sigma}, β {beta}): Δ {:.6}; eq. 7 σ²E[π̇] {:.6} − |μ|Pr(C) {:.6} = {:.6}; E[π̇] {:.6}; Pr(C) {:.6}; E[U] act {:.6}, wait {:.6}, off {:.6}; choice {:?}",
+            "{name} (μ {mu}, σ {sigma}, β {beta}): Δ {:.6}; eq. 7 σ²E[π̇] {:.6} − abs(μ)Pr(C) {:.6} = {:.6}; E[π̇] {:.6}; Pr(C) {:.6}; E[U] act {:.6}, wait {:.6}, off {:.6}; choice {:?}",
             i.delta, sigma * sigma * i.rationality, mu.abs() * i.prob_correct, i.decomposition, i.rationality, i.prob_correct, i.value_act, i.value_wait, i.value_off, offswitch::choice(&i)
         )
     }).collect();
@@ -334,7 +336,9 @@ pub fn claims() -> Vec<Claim> {
         }),
         claim("assistance.optimal-joint", "assistance-paperclips-teaching", CIRL, "the optimal joint policy, computed exhaustively, is the 41/92, 51/92 rule with R's eq. 3 map", |_| {
             let (map, rule, value) = paperclips::optimal_joint();
-            exact(map == [0, 1, 2] && rule == paperclips::exact_best_reply(&[0, 1, 2]), format!("map {map:?}, value {}/{} ≈ {:.4}, expert pair 69", value.num, value.den, value.to_f64()))
+            let half = Ratio::new(1, 2);
+            let expert = paperclips::pair_total(&[(Ratio::new(0, 1), half, 0), (half, Ratio::new(1, 1), 2)], &[0, 1, 2]);
+            exact(map == [0, 1, 2] && rule == paperclips::exact_best_reply(&[0, 1, 2]) && value == Ratio::new(6373, 92), format!("map {map:?}, value {}/{} ≈ {:.4}, expert pair {}/{} ≈ {:.4}", value.num, value.den, value.to_f64(), expert.num, expert.den, expert.to_f64()))
         }),
         claim("assistance.pooling-not-equilibrium", "assistance-paperclips-teaching", OURS, "the set of pure mutual best responses (our enumeration); pooling is not one, since H's best reply to a constant map is δ^E", |_| {
             let set = paperclips::mutual_best_responses(92);
@@ -361,7 +365,7 @@ pub fn claims() -> Vec<Claim> {
                 }
             }
             let two_point = offswitch::delta_two_point(-1.0, 0.5, 1.0) > 0.0 && offswitch::delta_two_point(1.0, 0.5, 2.0) == 0.0 && offswitch::delta_two_point(-1.0, 0.5, -2.0) == 0.0;
-            exact(worst >= 0.0 && worst_near > 0.0 && gap < 1e-9 && two_point, format!("smallest Gaussian Δ {worst:.3e}, smallest with |μ|/σ ≤ 4 {worst_near:.3e}; largest gap to eq. 3 {gap:.1e}; two-point priors {two_point}"))
+            exact(worst >= 0.0 && worst_near > 0.0 && gap < 1e-9 && two_point, format!("smallest Gaussian Δ {worst:.3e}, smallest with abs(μ)/σ ≤ 4 {worst_near:.3e}; largest gap to eq. 3 {gap:.1e}; two-point priors {two_point}"))
         }),
         claim("assistance.corollary-1", "assistance-offswitch-toddler", OFF, "a point-mass belief: w(a) is optimal iff H is rational (Corollary 1)", |_| {
             let mut ok = true;

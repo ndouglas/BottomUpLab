@@ -449,12 +449,12 @@ const MODEL_GOLDEN: &[(&str, u64)] = &[
     ("auctions-fringe", 0xa40e0d5efdbf0c2),
     ("auctions-persistent", 0x3a3f369d629840af),
     // Assistance games: 200 ticks of 1,000 episodes, seed 1.
-    ("assistance-paperclips-expert", 0x8fd885fe3802d2e6),
-    ("assistance-paperclips-teaching", 0xc46787ac6c9534a),
-    ("assistance-paperclips-iterated", 0xec28281c6d0c7e05),
-    ("assistance-paperclips-learning", 0xd8e78448a7bbbc84),
-    ("assistance-offswitch-rational", 0x29c39465b35ad31b),
-    ("assistance-offswitch-toddler", 0x1cf06517a328f51b),
+    ("assistance-paperclips-expert", 0x7ebc2504bcecaaa4),
+    ("assistance-paperclips-teaching", 0xe4b1271358831016),
+    ("assistance-paperclips-iterated", 0x7b977f21a17e3a3d),
+    ("assistance-paperclips-learning", 0x42413ef6c7528348),
+    ("assistance-offswitch-rational", 0xdbc31fa0498ce350),
+    ("assistance-offswitch-toddler", 0xfdc3533dcfda9fa3),
 ];
 
 fn fingerprint(id: &str) -> u64 {

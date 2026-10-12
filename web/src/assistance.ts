@@ -28,9 +28,9 @@ export function assistanceRows(view: AssistanceInspection): [string, string][] {
   ];
 }
 
-/** The frame's status line and legend. */
-export function assistanceLegend(config: AssistanceConfig, mode: ColorMode): { status: string; items: LegendItem[] } {
-  if (config.game === 'off_switch' || mode === 'surface') return {
+/** The frame's status line and legend, keyed on the game (`_mode` is kept for the callers). */
+export function assistanceLegend(config: AssistanceConfig, _mode: ColorMode): { status: string; items: LegendItem[] } {
+  if (config.game === 'off_switch') return {
     status: `Δ over σ (left 0.05 → right 1.00) and β (bottom 0 → top 4) at μ = ${config.mu} · black edges mark Δ = 0 · gold border: the configured (σ, β)`,
     items: [
       { label: 'Δ < 0: the robot bypasses the human (acts if μ > 0, switches off if μ < 0)', mark: { kind: 'swatch', color: '#e62c3c' } },
