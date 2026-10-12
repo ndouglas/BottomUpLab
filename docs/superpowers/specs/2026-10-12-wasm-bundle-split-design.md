@@ -8,8 +8,9 @@ The page ships one WebAssembly bundle, `web/src/wasm-pkg/sugarscape_bg.wasm`, at
 23.6 MB raw and 4.16 MB gzipped. Measurement (twiggy on a named release build,
 2026-10-12) attributes most of it to the Minds provenance cluster in
 `sugarscape-core`: `browser_experiments`, `deduction`, `surface_discovery`,
-`gate_assistance`, `shared_surface`, `active_surface`, `burrow` and
-`foraging`. The cluster embeds about 14 MB of JSON fixtures with `include_str!`
+`gate_assistance`, `key_delegation` (merged 2026-10-12, after the
+measurement), `shared_surface`, `active_surface`, `burrow` and `foraging`.
+The cluster embeds about 14 MB of JSON fixtures with `include_str!`
 and `include_bytes!` and compiles to roughly a third of the code. The engine and
 all 33 reproduction kinds, including `minds`, `hoard` and `image`, account for
 the rest.
