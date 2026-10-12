@@ -76,7 +76,7 @@ lifetimes and populations. That is the gap.
 
 | Item | Papers | Size | Why first |
 |---|---|---|---|
-| 39 | The paperclip game (CIRL) and the off-switch game | small | closed forms and figures; shows how an equilibrium is established: in the paperclip game the human's best response is to teach (make 1 and 1 over a middle band of θ) rather than demonstrate, and the robot's belief update and deployment choice follow; in the off-switch game, when the robot's uncertainty makes it defer. Russell's book retells both, with the user's copy as the second source |
+| 39 | The paperclip game (CIRL) and the off-switch game, **done 2026-10-11** as milestone 39 `assistance` ([findings](../superpowers/specs/2026-10-11-assistance-games-findings.md)) | small | closed forms and figures; shows how an equilibrium is established: in the paperclip game the human's best response is to teach (make 1 and 1 over a middle band of θ) rather than demonstrate, and the robot's belief update and deployment choice follow; in the off-switch game, when the robot's uncertainty makes it defer. Russell's book retells both, with the user's copy as the second source |
 | 40 | AI Safety Gridworlds | medium | the environments and the paper's baseline agents' failures; SafeLife as the follow-up |
 | 41 | Negotiable RL and multi-principal assistance games | small | the weight-shift theorem and toy environment; the formal cousin of the caring example |
 | 42 | Hybrid human–machine populations (Booker, Guo, Fernández Domingos; Shirado's model) | medium | the second-species idea, already done on replicator dynamics; our lattice and network games are the next step |
@@ -114,7 +114,9 @@ factors, where "the nice are poorer" becomes a measurable correlation.
 **A2. The off-switch in a foraging world.** The assistant acts for a human whose preferences it
 holds a belief over; the human can switch it off. Reproduce the off-switch game's incentive result
 first (item 39), then ask whether it survives when "preferences" are the forager's utility over
-sugar, spice and travel, and the belief is learned from watching the forager.
+sugar, spice and travel, and the belief is learned from watching the forager. Item 39 is done: the incentive Δ, its Theorem 2 decomposition and the
+choice among acting, waiting and switching off are `assistance::offswitch::incentive` and `choice`,
+which A2 can reuse directly for a Gaussian belief.
 
 **A3. Proxy objectives in Sugarscape.** The assistant optimizes a proxy that omits one attribute of
 human welfare (spice, health, or leisure), per item 43. Measure the omitted attribute against the

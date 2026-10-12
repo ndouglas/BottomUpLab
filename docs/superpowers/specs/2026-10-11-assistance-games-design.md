@@ -139,6 +139,7 @@ same locations as the `auctions` addition. No new dependencies.
 | `mode` | `iterated` | paperclips only: `static`, `iterated`, `learning`; reset-only |
 | `human_rule` | `expert` | static mode's H rule, or the start for dynamics: `expert`, `equilibrium` (41/92, 51/92), `pooling` (always (1,1)), `uniform_random` (each bin's action drawn once at reset). `human_rule` `uniform_random` draws its table at reset in every paperclips world |
 | `robot_map` | `best_response` | static: best reply to `human_rule`, or `fixed`, the map in `fixed_0`, `fixed_1`, `fixed_2` (deployment index 0–2 for H's actions in order) |
+| `fixed_0`, `fixed_1`, `fixed_2` | 0, 1, 1 | integer 0–2: R's deployment after H's (0,2), (1,1) and (2,0); shown when `robot_map` is `fixed` |
 | `theta_bins` | 92 | θ discretization for tables and fictitious play; 92 makes the paper's thresholds bin edges; reset-only |
 | `episodes_per_tick` | 1000 | sampled games per tick |
 | `respond_every` | 1 | iterated mode: ticks between best-response rounds |
@@ -195,7 +196,7 @@ the Figure 3 grid at the current μ.
 **Built-in sweeps:** `assistance-figure3-neg`, `assistance-figure3-zero`, `assistance-figure3-pos`
 (σ × β grids, statistic `delta_exact`); `assistance-figure4` (σ, statistics value and Δ, series by
 `actions` ∈ {1, 4, 8}); `assistance-equilibria` (the four starts × two modes, 20 seeds, statistic
-`distance` at the horizon). The Figure 3 grid is σ 0.05–1.00 step 0.05 (20 values) and β 0–4 step 0.2 (21 values); the sweeps' β series are {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 4}. `assistance-figure4` sweeps σ ∈ {0.1, 0.2, …, 1.0, 1.2, 1.5} with β = 0.5, `observation_noise` = 1, series `actions` ∈ {1, 4, 8}, one seed, 100 ticks of 1,000 episodes, and metrics the window means of `value` and `delta_exact`.
+`distance` at the horizon). The Figure 3 grid is σ 0.05–1.00 step 0.05 (20 values) and β 0–4 step 0.2 (21 values); the sweeps' β series are {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 4}. `assistance-figure4` runs with `protocol: report` and sweeps σ ∈ {0.1, 0.2, …, 1.0, 1.2, 1.5} with β = 0.5, `observation_noise` = 1, series `actions` ∈ {1, 4, 8}, one seed, 100 ticks of 1,000 episodes, and metrics the window means of `value` and `delta_exact`.
 
 **Survey claims,** each with its rule: `expert-threshold`, `robot-best-reply`, `posterior-quarter`,
 `posterior-sixth`, `teaching-thresholds`, `theorem-3`, `optimal-joint`; `theorem-1`, `corollary-1`,

@@ -4,7 +4,8 @@ This is the persistent working list of reported discrepancies, unresolved source
 measurement gaps and corrected problems in SugarScape. Backfilled **2026-10-06** from the
 [paper catalog](papers.md), the README's scientific results and linked dated evidence.
 It covers the **31 completed catalog groups** (1–8 together, then 9–38), with additional
-Minds and foraging/construction coverage below. It is an inventory of existing documentation,
+Minds and foraging/construction coverage below; milestone 39 was added with its own findings on
+**2026-10-11**. It is an inventory of existing documentation,
 not a new execution, publication audit or claim that a paper is false or irreproducible.
 The original findings, figures, source trees, binaries and archives remain authoritative.
 
@@ -446,6 +447,19 @@ literal histories remain a separate dataset; no historical prose-original popula
 | <a id="rr-dp-05"></a>RR-DP-05 | Provenance / Blocked on source / R; [record][dp] | Historical 2001 Java/Repast/RNG/statistic/settings identity Unresolved; later GeoSim2/4/5 or Pascal ancestor are not certified 2001 source. No author contact verified; see the [author audit][dpauthor]. | Obtain version-to-publication mapping and runtime/seed/event/statistic outputs; later probability formula supports a reading only. |
 | <a id="rr-dp-06"></a>RR-DP-06 | Provenance / Superseded / R; [record][dp] | Historical 108 arms ×30 =3,240 complete, no invalid/missing. Precision not registered under fixed runtime gate, so original source/mechanism families Unresolved. Follow-up now measures all 21,600 new histories; historical dataset separate; [original findings][dporiginal] retain its unavailable precision. | Use 2026-10-05 for current precision status; retain original 2026-10-03 30-history record. No historical prose population exists. |
 
+### Milestone 39 — Hadfield-Menell et al. 2016 and 2017, `assistance`
+
+All 21 registered claims ran on 2026-10-11 under rules fixed in the design before measurement: 18 Holds and three reported without a target (Untestable). The rows below record scope, not open disagreements with the papers, except where a reconstruction carries the result.
+
+| ID | Category / status / evidence | Target and documented outcome | Next action |
+|---|---|---|---|
+| <a id="rr-asg-01"></a>RR-ASG-01 | Question / Resolved / X; [record][assistance] | Paperclip game (CIRL 2016 §3.3, appendix §6): expert threshold 1/2, R's eq. 3 map, posteriors 1/4 and 1/6, teaching thresholds 41/92 and 51/92, Theorem 3 at θ=.49, optimal joint policy 6373/92 (≈69.27 against 69): all seven Hold exactly. | None for the closed forms; retain the rational-arithmetic checks as regression tests. |
+| <a id="rr-asg-02"></a>RR-ASG-02 | Question / Resolved / X; [record][assistance] | Off-switch theorems (IJCAI 2017): Theorem 1 on 42 Gaussian and two-point priors (gap to eq. 3 2.6e-16; strictness checked where \|μ\|/σ≤4), Corollary 1, Theorem 2's decomposition (gap 4.9e-15 over 80 points) and condition (60 points): all Hold. | None; Δ is below double precision beyond \|μ\|/σ≈4, so strictness there is untested by construction. |
+| <a id="rr-asg-03"></a>RR-ASG-03 | Reading / Resolved / X; [record][assistance] | Figure 3: caption's "lowest at low σ, high β; highest at high σ, low β", formalized before measurement as corners plus adjacent-cell monotonicity over our 20×21 grid read from the axes; zero-mean and sign regions. All three Hold at μ ∈ {−1/4, 0, 1/4} with no violation. | Directions are judged on our grid only; recover the authors' grid if their code appears. |
+| <a id="rr-asg-04"></a>RR-ASG-04 | Provenance / Open / A; [record][assistance] | Figure 4's human, observation model and action construction are unstated and no code was located. Under our `protocol: report` reconstruction (N(0,1) utilities, report SD 1, posterior mean, β=.5) the peak at the true posterior SD, Δ rising with σ and the larger drop with more actions all Hold by the two-SE rule; with a rational human V is flat (.3992–.3993), so the figure's peak needs a noisy human. | Locate the authors' Figure 4 setup; any β sweep of the figure is a new, separately preregistered study. |
+| <a id="rr-asg-05"></a>RR-ASG-05 | Own hypothesis / Open / A; [record][assistance] | Our dynamics, reported without a target (20 seeds, 200 ticks): iterated best response reaches the paper's pair from expert, teaching and pooling (20/20 each), from uniform random 12/20 (the rest relabeled equilibria); fictitious play 20/20 from expert and teaching, 19/20 from uniform random, 0/20 from pooling, which is a rest point of our uniform-prior tables. | Vary the table prior or add exploration as a declared follow-up; report which relabeling each start selects. |
+| <a id="rr-asg-06"></a>RR-ASG-06 | Local correction / Resolved / X; [record][assistance] | Our design said the pure mutual best responses include "at least the pooling pair"; planning showed H's best reply to any constant map is the expert rule, so pooling is not one. Corrected before measurement; the enumeration finds six pairs, the six relabelings of the teaching equilibrium. | Retain the correction; pooling remains a named start. |
+
 ## Minds and foraging/construction coverage
 
 These records are outside the 31 catalog groups. Minds 1–6 and 8 are explicitly our own
@@ -634,6 +648,7 @@ and are not redistributed or replaced by this register.
 [polarity]: superpowers/specs/2026-10-02-emergent-polarity-findings.md
 [geosim]: superpowers/specs/2026-10-03-geosim-findings.md
 [dp]: superpowers/specs/2026-10-05-democratic-peace-precision-findings.md
+[assistance]: superpowers/specs/2026-10-11-assistance-games-findings.md
 [minds]: studies/2026-09-27-minds.md
 [m1]: ../README.md#minds-1-the-utility-mind-and-the-ideal-free-distribution
 [m2]: ../README.md#minds-2-a-and-walking

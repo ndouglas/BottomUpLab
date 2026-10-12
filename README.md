@@ -3859,6 +3859,30 @@ See [the design](docs/superpowers/specs/2026-10-02-q-learning-auctions-design.md
 and [reading notes](docs/superpowers/specs/2026-10-02-q-learning-auctions-reading-notes.md).
 
 
+### Assistance Games (Hadfield-Menell et al. 2016, 2017)
+
+Two assistance games, in which a robot R acts for a human H whose preferences it does not know.
+In CIRL's paperclip game H makes two items, R then makes 90 of one or 50 of each, and θ, H's
+weight on paperclips, is uniform on [0, 1]. In the off-switch game R can act, switch itself off or
+wait for H, who may switch it off. `assistance-paperclips-expert` and
+`assistance-paperclips-teaching` show the expert rule and the paper's equilibrium, where H
+teaches by making one of each for θ in [41/92, 51/92]. `assistance-paperclips-iterated` and
+`assistance-paperclips-learning` run iterated best response and fictitious play. Those two dynamics
+are ours. `assistance-offswitch-rational` and `assistance-offswitch-toddler` place a belief on
+either side of Figure 3's switch.
+
+Every closed form holds exactly: the 1/2 threshold, R's best reply, the posteriors 1/4 and
+1/6, Theorem 3 at θ = 0.49, the optimal joint policy at 6373/92 ≈ 69.27 against 69, and the
+off-switch Theorems 1–2 and Corollary 1. Figure 3's directions hold over our grid. Figure 4's
+three directions hold only under our named reconstruction (`protocol: report`, a noisy human at
+β = 0.5). With the paper's rational human, R always waits and the value is flat in σ. Our own
+results: the pooling pair is not an equilibrium, but fictitious play started there never leaves
+it; from informed starts both dynamics find the paper's teaching pair; from random starts they
+find a relabeling of it. Six `assistance-*` sweeps cover Figure 3 at μ < 0, = 0 and > 0, Figure 4
+and its incentive, and the equilibria. See [the findings](docs/superpowers/specs/2026-10-11-assistance-games-findings.md)
+and [the design](docs/superpowers/specs/2026-10-11-assistance-games-design.md).
+
+
 ### Emergent polarity (Cederman 1994; 1997 chapters 4–5)
 
 `polarity` reconstructs sovereign capitals and provinces on a bounded cardinal
