@@ -53,6 +53,79 @@ fn serialization_and_campaign_budget_are_enforced_before_write() {
     assert!(j.append(&vec![1, 2, 3], 128).is_err());
     assert_eq!(j.receipt().bytes, 0);
 }
+#[test]
+fn encode_accepts_exact_json_byte_limit_without_newline() {
+    assert_eq!(io::encode(&vec![1, 2, 3], 7, false).unwrap(), b"[1,2,3]");
+}
+#[test]
+fn encode_rejects_one_byte_below_json_byte_limit() {
+    assert!(io::encode(&vec![1, 2, 3], 6, false)
+        .unwrap_err()
+        .contains("encoded record limit exceeded"));
+}
+#[test]
+fn encode_accepts_exact_limit_including_newline() {
+    assert_eq!(io::encode(&vec![1, 2, 3], 8, true).unwrap(), b"[1,2,3]\n");
+}
+#[test]
+fn encode_rejects_newline_when_json_exhausts_limit() {
+    assert!(io::encode(&vec![1, 2, 3], 7, true)
+        .unwrap_err()
+        .contains("encoded record limit exceeded"));
+}
+#[test]
+fn encode_counts_escaped_multibyte_text_as_utf8_bytes() {
+    let value = "é雪\n\"\\";
+    let expected = "\"é雪\\n\\\"\\\\\"\n".as_bytes();
+    assert_eq!(io::encode(&value, expected.len(), true).unwrap(), expected);
+    assert!(io::encode(&value, expected.len() - 1, true).is_err());
+}
+struct PartialSerializationFailure;
+impl serde::Serialize for PartialSerializationFailure {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::{Error, SerializeSeq};
+        let mut sequence = serializer.serialize_seq(Some(2))?;
+        sequence.serialize_element("partial prefix")?;
+        Err(S::Error::custom("failure after partial serialization"))
+    }
+}
+#[test]
+fn encode_preserves_error_after_partial_serialization() {
+    assert_eq!(
+        io::encode(&PartialSerializationFailure, 1024, true).unwrap_err(),
+        "failure after partial serialization"
+    );
+}
+#[test]
+fn partial_serialization_never_reaches_durable_writer() {
+    struct RejectWrite;
+    impl Write for RejectWrite {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            panic!("serialization failure must precede durable writes")
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            panic!("serialization failure must precede durable flushes")
+        }
+    }
+    impl DurableWrite for RejectWrite {
+        fn sync_all(&mut self) -> std::io::Result<()> {
+            panic!("serialization failure must precede durable synchronization")
+        }
+    }
+    let mut journal = Journal::with_writer(RejectWrite, 1024);
+    assert_eq!(
+        journal
+            .append(&PartialSerializationFailure, 1024)
+            .unwrap_err(),
+        "failure after partial serialization"
+    );
+    assert_eq!(journal.receipt().bytes, 0);
+    assert_eq!(journal.receipt().records, 0);
+    assert!(journal
+        .append(&vec![1], 1024)
+        .unwrap_err()
+        .contains("poisoned"));
+}
 #[derive(Clone)]
 pub(super) enum Effect {
     Fail,
