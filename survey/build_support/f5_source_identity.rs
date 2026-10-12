@@ -10,6 +10,10 @@ pub const DIRECTORIES: &[&str] = &[
 // Literal include_str!/include_bytes! inputs plus repository-local build configuration.
 // New includes outside Rust source roots must be added here.
 pub const FILES: &[&str] = &[
+    "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
     "crates/sugarscape-core/build.rs",
     "crates/sugarscape-core/build_support/surface_discovery.rs",
     "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
@@ -335,6 +339,13 @@ pub const GATE_REQUIRED: &[&str] = &[
     "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
 ];
 
+pub const KEY_REQUIRED: &[&str] = &[
+    "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
+];
+
 #[allow(dead_code)] // Shared with the runtime selector for actual-reader tests.
 pub fn read_inputs(
     root: &Path,
@@ -350,6 +361,9 @@ pub fn read_inputs(
                 .is_some_and(|p| GATE_REQUIRED.contains(&p))
             {
                 return Err(format!("missing required Gate input {}", path.display()));
+            }
+            if relative.to_str().is_some_and(|p| KEY_REQUIRED.contains(&p)) {
+                return Err(format!("missing required key input {}", path.display()));
             }
             return Ok(());
         }

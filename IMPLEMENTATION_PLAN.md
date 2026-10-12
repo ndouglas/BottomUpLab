@@ -18,13 +18,13 @@
 **Goal**: Source-bound strict reporting and streaming validator
 **Success Criteria**: Complete fresh integrity; operational/scientific errors separated
 **Tests**: Tamper/source/CLI write-flush/parser tests and affected collector stamps
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 4: Adapter and viewer
 **Goal**: Bounded native-WASM and private web visualization
 **Success Criteria**: Parity, historical compatibility and actual-browser acceptance
 **Tests**: Input/import quotas, all-checkpoint privacy, lifecycle/receipt chronology
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 5: Frozen collection and delivery
 **Goal**: First/repeat, independent validation and published summary

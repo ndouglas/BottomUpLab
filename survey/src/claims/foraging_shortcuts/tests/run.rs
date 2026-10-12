@@ -628,3 +628,37 @@ fn source_reader_preserves_optional_non_gate_missing_paths_and_selection() {
         assert_eq!(entries.len(), usize::from(selected));
     }
 }
+
+#[test]
+fn key_source_closure_selects_references_and_requires_them() {
+    use super::super::run::source_identity::{read_inputs, selected};
+    let tmp = owned_tempdir();
+    for path in [
+        "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
+    ] {
+        assert!(selected(path), "unselected {path}");
+        assert!(
+            read_inputs(tmp.path(), std::path::Path::new(path), &mut vec![]).is_err(),
+            "missing {path}"
+        );
+        let file = tmp.path().join(path);
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, b"key source").unwrap();
+        let mut entries = vec![];
+        read_inputs(tmp.path(), std::path::Path::new(path), &mut entries).unwrap();
+        assert_eq!(entries, vec![(path.into(), b"key source".to_vec())]);
+    }
+    for file in [
+        "diagnostics.rs",
+        "sha256.rs",
+        "protocol.rs",
+        "references.rs",
+    ] {
+        assert!(selected(&format!(
+            "crates/sugarscape-core/src/key_delegation/{file}"
+        )));
+    }
+}

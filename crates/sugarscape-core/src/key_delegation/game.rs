@@ -18,6 +18,9 @@ pub struct GameTable {
     stats: CompileStats,
 }
 impl GameTable {
+    pub(super) fn into_parts(self) -> (Stratum, Vec<Row>, Analysis, CompileStats) {
+        (self.stratum, self.rows, self.analysis, self.stats)
+    }
     pub fn stratum(&self) -> &Stratum {
         &self.stratum
     }

@@ -164,3 +164,16 @@ fn source_reader_binds_gate_host_inputs_and_rejects_missing_files() {
     }
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn key_source_closure_requires_references() {
+    for path in [
+        "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
+    ] {
+        let inputs = entries().into_iter().filter(|(p, _)| p != path).map(Ok);
+        assert!(fingerprint(inputs).is_err(), "missing {path}");
+    }
+}

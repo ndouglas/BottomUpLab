@@ -8,6 +8,12 @@ use std::{
 };
 pub const DEFAULT_MANIFEST: &str = "survey/war1_study/fixtures/construction-manifest.json";
 pub const DIRECTORIES: &[&str] = &["crates/sugarscape-core/src", "survey/src/war1_study"];
+pub const KEY_REQUIRED: &[&str] = &[
+    "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
+];
 pub const FILES: &[&str] = &[
     "Cargo.toml",
     "Cargo.lock",
@@ -115,12 +121,18 @@ pub fn fingerprint(entries: &[(String, Vec<u8>)], manifest: &str) -> Result<Stri
         hash.update((bytes.len() as u64).to_be_bytes());
         hash.update(bytes);
     }
-    for path in FILES.iter().copied().chain(literal_paths()?).chain([
-        manifest,
-        "crates/sugarscape-core/src/lib.rs",
-        "survey/src/war1_study/mod.rs",
-        "survey/war1_study/contracts.py",
-    ]) {
+    for path in FILES
+        .iter()
+        .chain(KEY_REQUIRED)
+        .copied()
+        .chain(literal_paths()?)
+        .chain([
+            manifest,
+            "crates/sugarscape-core/src/lib.rs",
+            "survey/src/war1_study/mod.rs",
+            "survey/war1_study/contracts.py",
+        ])
+    {
         if !seen.contains(path) {
             return Err(format!("missing study input {path}"));
         }

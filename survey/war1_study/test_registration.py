@@ -78,6 +78,8 @@ class RegistrationTests(unittest.TestCase):
                 root = Path(temp).resolve()
                 # Use actual source bytes; mutation is confined to this temp tree.
                 shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
+                for manifest in ("Cargo.toml", "Cargo.lock"):
+                    shutil.copyfile(ROOT/manifest, root/manifest)
                 (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
                 (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
                 self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
@@ -112,6 +114,31 @@ class RegistrationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     registration.audit_literal_inputs(root)
 
+    def test_key_manifest_includes_are_exact_mandatory_paths(self):
+        import shutil
+        with tempfile.TemporaryDirectory(prefix="construction_test_key_include_") as temp:
+            root = Path(temp).resolve()
+            shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
+            for manifest in ("Cargo.toml", "Cargo.lock"):
+                shutil.copyfile(ROOT/manifest, root/manifest)
+            (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
+            (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
+            self.assertEqual(len(registration.audit_literal_inputs(root)), 229)
+            path = root/"crates/sugarscape-core/src/key_delegation/source_inputs.rs"
+            original = path.read_text()
+            (root/"unregistered.bin").write_bytes(b"undeclared asset")
+            path.write_text(original.replace('../../../../Cargo.toml', '../../../../unregistered.bin'))
+            with self.assertRaisesRegex(ValueError, "literal inventory"):
+                registration.audit_literal_inputs(root)
+            path.write_text(original)
+            for manifest in ("Cargo.toml", "Cargo.lock", "crates/sugarscape-core/Cargo.toml"):
+                target = root/manifest
+                raw = target.read_bytes()
+                target.unlink()
+                with self.subTest(missing=manifest), self.assertRaises((ValueError, OSError)):
+                    registration.audit_literal_inputs(root)
+                target.write_bytes(raw)
+
     def test_gate_host_inputs_are_mandatory(self):
         for path in ("crates/sugarscape-core/build.rs", "crates/sugarscape-core/build_support/surface_discovery.rs"):
             with self.subTest(path=path):
@@ -122,6 +149,8 @@ class RegistrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="construction_test_gate_include_") as temp:
             root = Path(temp).resolve()
             shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
+            for manifest in ("Cargo.toml", "Cargo.lock"):
+                shutil.copyfile(ROOT/manifest, root/manifest)
             (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
             (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
             self.assertEqual(len(registration.audit_literal_inputs(root)), 229)

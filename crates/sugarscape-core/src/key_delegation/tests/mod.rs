@@ -18,3 +18,5 @@ mod metrics;
 mod budget;
 
 mod full_reference;
+
+mod diagnostics;

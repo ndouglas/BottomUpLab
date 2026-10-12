@@ -148,10 +148,13 @@ def audit_literal_inputs(root: Path):
             if not target.is_relative_to(root / "crates/sugarscape-core/src"):
                 relative = str(target.relative_to(root))
                 if relative in (
+                    "Cargo.toml",
+                    "Cargo.lock",
+                    "crates/sugarscape-core/Cargo.toml",
                     "crates/sugarscape-core/build.rs",
                     "crates/sugarscape-core/build_support/surface_discovery.rs",
                 ):
-                    # These mandatory source files are separate from the fixed
+                    # These exact mandatory manifests/host sources are separate from the fixed
                     # external asset inventory and must actually exist.
                     read_regular(target, METADATA_LIMIT)
                 else:

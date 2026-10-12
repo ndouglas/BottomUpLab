@@ -164,3 +164,33 @@ fn source_reader_refuses_missing_gate_host_inputs() {
     }
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn key_source_closure_requires_references() {
+    let root = std::path::Path::new(source::ROOT);
+    let entries = source::inputs::read(root, source::MANIFEST_PATH).unwrap();
+    let original = source::inputs::fingerprint(&entries, source::MANIFEST_PATH).unwrap();
+    for path in [
+        "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+        "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
+    ] {
+        let mut changed = entries.clone();
+        changed
+            .iter_mut()
+            .find(|(p, _)| p == path)
+            .unwrap()
+            .1
+            .push(b' ');
+        assert_ne!(
+            original,
+            source::inputs::fingerprint(&changed, source::MANIFEST_PATH).unwrap()
+        );
+        let missing: Vec<_> = entries.iter().filter(|(p, _)| p != path).cloned().collect();
+        assert!(
+            source::inputs::fingerprint(&missing, source::MANIFEST_PATH).is_err(),
+            "missing {path}"
+        );
+    }
+}

@@ -90,6 +90,10 @@ def validate_inventory(packet):
 
 
 SOURCE_REQUIRED = (
+    "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
+    "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
     "Cargo.toml",
     "Cargo.lock",
     "crates/sugarscape-core/Cargo.toml",

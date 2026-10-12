@@ -14,6 +14,15 @@ macro_rules! wire_object {
   }
  };
 }
+mod diagnostics;
+mod protocol;
+mod references;
+mod source_inputs;
+pub use diagnostics::*;
+pub use source_inputs::{
+    reference_identity, reference_receipts, source_identity, source_receipts, Receipt,
+    REFERENCE_INPUTS, SOURCE_INPUTS,
+};
 mod budget;
 mod canonical;
 mod controller;
