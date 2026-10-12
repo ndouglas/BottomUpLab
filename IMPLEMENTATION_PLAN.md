@@ -12,13 +12,13 @@
 **Goal**: Atomic ownership, private histories and exhaustive schedule evaluation
 **Success Criteria**: All independent reference comparisons and precommit resource caps pass
 **Tests**: Strict wire, chronology, suffix activation, all pair/control/contrast tests
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 3: Diagnostic and CLI
 **Goal**: Source-bound strict reporting and streaming validator
 **Success Criteria**: Complete fresh integrity; operational/scientific errors separated
 **Tests**: Tamper/source/CLI write-flush/parser tests and affected collector stamps
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 4: Adapter and viewer
 **Goal**: Bounded native-WASM and private web visualization

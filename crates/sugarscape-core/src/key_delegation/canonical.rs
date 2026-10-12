@@ -30,6 +30,9 @@ pub fn trace_hash(episode: &Episode) -> Result<String, Error> {
     trace_identity(&body)
 }
 pub(super) fn trace_identity(body: &[u8]) -> Result<String, Error> {
+    receipt_identity("key-delegation-trace-v1", body)
+}
+pub(super) fn receipt_identity(path: &str, body: &[u8]) -> Result<String, Error> {
     #[derive(Serialize)]
     struct Receipt<'a> {
         path: &'a str,
@@ -37,7 +40,7 @@ pub(super) fn trace_identity(body: &[u8]) -> Result<String, Error> {
         sha256: String,
     }
     let receipt = Receipt {
-        path: "key-delegation-trace-v1",
+        path,
         bytes: u64::try_from(body.len()).map_err(|_| Error::ArithmeticOverflow)?,
         sha256: super::sha256::sha256(body),
     };

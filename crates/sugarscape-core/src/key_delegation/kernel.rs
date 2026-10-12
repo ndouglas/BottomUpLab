@@ -1,182 +1,266 @@
+use super::observation::observe;
 use super::types::*;
-use super::{choose, observation::observe};
+use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 pub fn run_episode(config: &Config, profile: Profile) -> Result<Episode, Error> {
-    run_with_capture(config, profile, &mut |_| Ok(()))
+    run_engine(config, profile, &mut |_, _| Ok(()), None, None, false)
 }
 pub fn run_with_capture(
     config: &Config,
     profile: Profile,
     capture: &mut dyn FnMut(&CapturePoint) -> Result<(), Error>,
 ) -> Result<Episode, Error> {
-    run_checked(config, profile, &mut |_, _| Ok(()), capture)
+    run_engine(
+        config,
+        profile,
+        &mut |_, _| Ok(()),
+        None,
+        Some(capture),
+        false,
+    )
 }
-
-/// Prospective partial Episode and appended Event count, before authoritative commit.
-/// The compiler can reject every registered boundary here without adding sensing.
+/// Legacy engineering observer runs after allocation preflight and before capture.
+#[cfg(test)]
 pub(super) fn run_checked(
     config: &Config,
     profile: Profile,
-    charge: &mut dyn FnMut(&Episode, u64) -> Result<(), Error>,
+    inspect: &mut dyn FnMut(&Episode, u64) -> Result<(), Error>,
     capture: &mut dyn FnMut(&CapturePoint) -> Result<(), Error>,
 ) -> Result<Episode, Error> {
-    config.validate()?;
-    profile.validate()?;
-    let mut state = PhysicalState {
-        positions: [
-            if config.stratum().distance() == 0 {
-                Cell::O
-            } else {
-                Cell::P
-            },
-            Cell::O,
-        ],
-        receiver_cargo: false,
-        resource: ResourceLocation::Cache,
-        key_owner: match config.initial_owner() {
-            InitialOwner::Giver => Role::Giver,
-            InitialOwner::Receiver => Role::Receiver,
-        },
-        spent: [0; 2],
-        reward: [0; 2],
-    };
-    let mut episode = Episode {
-        version: 1,
-        config: config.clone(),
+    run_engine(
+        config,
         profile,
-        words: profile.words(),
-        events: Vec::new(),
-        histories: [Vec::new(), Vec::new()],
-        outcome: outcome(&state, &[])?,
-    };
-    let initial = Clock {
-        round: 0,
-        phase: Phase::Initial,
-        role: None,
-    };
-    let mut candidate = episode.clone();
-    public(&mut candidate, initial, None);
-    for role in [Role::Giver, Role::Receiver] {
-        sense(&mut candidate, &state, role, initial);
-    }
-    let next = state.clone();
-    commit(
-        &mut episode,
-        &mut state,
-        candidate,
-        next,
-        initial,
-        charge,
-        capture,
-    )?;
-    for round in 1..=6 {
-        for role in [Role::Giver, Role::Receiver] {
-            let before_clock = Clock {
-                round,
-                phase: Phase::BeforeAction,
-                role: Some(role),
-            };
-            let mut candidate = episode.clone();
-            public(&mut candidate, before_clock, None);
-            sense(&mut candidate, &state, role, before_clock);
-            let next = state.clone();
-            commit(
-                &mut episode,
-                &mut state,
-                candidate,
-                next,
-                before_clock,
-                charge,
-                capture,
-            )?;
-            let view = make_view(&episode, &state, role, before_clock)?;
-            let token = view.word.token(round)?;
-            let intent = choose(&view)?;
-            let (next, result, paid) = action(config, &state, role, &token, &intent)?;
-            let clock = Clock {
-                round,
-                phase: Phase::AfterAction,
-                role: Some(role),
-            };
-            let mut candidate = episode.clone();
-            candidate.events.push(Event {
-                clock,
-                kind: EventKind::Action {
-                    role,
-                    token: token.clone(),
-                    intent: intent.clone(),
-                    result: result.clone(),
-                    paid,
-                },
-                before: state.clone(),
-                after: next.clone(),
-            });
-            public(&mut candidate, clock, None);
-            candidate.histories[role.index()].push(LocalEntry::OwnAction {
-                clock,
-                token,
-                intent: intent.clone(),
-                result: result.clone(),
-                paid,
-            });
-            if intent == Intent::Pass && result == ActionOutcome::Success {
-                for owner in [Role::Giver, Role::Receiver] {
-                    let peer = if owner == Role::Giver {
-                        Role::Receiver
-                    } else {
-                        Role::Giver
-                    };
-                    candidate.histories[owner.index()].push(LocalEntry::Ownership(
-                        OwnershipReceipt {
-                            clock,
-                            counterpart: config.ids().get(peer).into(),
-                            before: owner == Role::Giver,
-                            after: owner == Role::Receiver,
-                        },
-                    ));
-                }
+        &mut |_, _| Ok(()),
+        Some(inspect),
+        Some(capture),
+        false,
+    )
+}
+pub(super) fn run_budgeted(
+    config: &Config,
+    profile: Profile,
+    preflight: &mut dyn FnMut(&Prospective<'_>, u64) -> Result<(), Error>,
+) -> Result<Episode, Error> {
+    run_engine(config, profile, preflight, None, None, true)
+}
+/// Borrowed observations serialize directly from validated state; no String or Vec exists before charge.
+#[derive(Serialize)]
+struct BorrowedObservation<'a> {
+    clock: Clock,
+    cells: Cells<'a>,
+}
+struct Cells<'a> {
+    ids: &'a Ids,
+    state: &'a PhysicalState,
+    role: Role,
+}
+impl Serialize for Cells<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let visible: &[Cell] = match self.state.positions[self.role.index()] {
+            Cell::P => &[Cell::P, Cell::O],
+            Cell::O => &[Cell::P, Cell::O, Cell::C],
+            Cell::C => &[Cell::O, Cell::C],
+        };
+        let mut seq = s.serialize_seq(Some(visible.len()))?;
+        for cell in visible {
+            #[derive(Serialize)]
+            struct Image<'a> {
+                cell: Cell,
+                occupants: Occupants<'a>,
+                loose_token: bool,
             }
-            sense(&mut candidate, &next, role, clock);
-            commit(
-                &mut episode,
-                &mut state,
-                candidate,
-                next,
-                clock,
-                charge,
-                capture,
-            )?;
-            if state.resource == ResourceLocation::Delivered {
-                return finish(
-                    episode,
-                    state,
-                    round,
-                    Termination::Delivered,
-                    charge,
-                    capture,
-                );
+            seq.serialize_element(&Image {
+                cell: *cell,
+                occupants: Occupants {
+                    ids: self.ids,
+                    state: self.state,
+                    cell: *cell,
+                },
+                loose_token: *cell == Cell::C && self.state.resource == ResourceLocation::Cache,
+            })?;
+        }
+        seq.end()
+    }
+}
+struct Occupants<'a> {
+    ids: &'a Ids,
+    state: &'a PhysicalState,
+    cell: Cell,
+}
+impl Serialize for Occupants<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let roles = [Role::Giver, Role::Receiver];
+        let count = roles
+            .iter()
+            .filter(|r| self.state.positions[r.index()] == self.cell)
+            .count();
+        let mut seq = s.serialize_seq(Some(count))?;
+        for role in roles {
+            if self.state.positions[role.index()] == self.cell {
+                #[derive(Serialize)]
+                struct Occupant<'a> {
+                    role: Role,
+                    id: &'a str,
+                    cargo: bool,
+                    key: bool,
+                }
+                seq.serialize_element(&Occupant {
+                    role,
+                    id: self.ids.get(role),
+                    cargo: role == Role::Receiver && self.state.receiver_cargo,
+                    key: self.state.key_owner == role,
+                })?;
             }
         }
-    }
-    finish(episode, state, 6, Termination::Deadline, charge, capture)
-}
-
-fn public(e: &mut Episode, clock: Clock, termination: Option<Termination>) {
-    for h in &mut e.histories {
-        h.push(LocalEntry::Public { clock, termination });
+        seq.end()
     }
 }
-fn sense(e: &mut Episode, s: &PhysicalState, role: Role, clock: Clock) {
-    let o = observe(e.config.ids(), s, role, clock);
-    e.histories[role.index()].push(LocalEntry::Observed(o));
+#[derive(Serialize)]
+enum Pending<'a> {
+    Public {
+        clock: Clock,
+        termination: Option<Termination>,
+    },
+    Observed(BorrowedObservation<'a>),
+    OwnAction {
+        clock: Clock,
+        token: &'a Token,
+        intent: &'a Intent,
+        result: &'a ActionOutcome,
+        paid: u8,
+    },
+    Ownership(BorrowedReceipt<'a>),
+    Settlement {
+        clock: Clock,
+        reward: u8,
+        net: i16,
+    },
+}
+#[derive(Serialize)]
+struct BorrowedReceipt<'a> {
+    clock: Clock,
+    counterpart: &'a str,
+    before: bool,
+    after: bool,
+}
+impl Pending<'_> {
+    fn retain(&self) -> LocalEntry {
+        #[cfg(test)]
+        MATERIALIZED.set(MATERIALIZED.get() + 1);
+        match self {
+            Self::Public { clock, termination } => LocalEntry::Public {
+                clock: *clock,
+                termination: *termination,
+            },
+            Self::Observed(o) => {
+                LocalEntry::Observed(observe(o.cells.ids, o.cells.state, o.cells.role, o.clock))
+            }
+            Self::OwnAction {
+                clock,
+                token,
+                intent,
+                result,
+                paid,
+            } => LocalEntry::OwnAction {
+                clock: *clock,
+                token: (*token).clone(),
+                intent: (*intent).clone(),
+                result: (*result).clone(),
+                paid: *paid,
+            },
+            Self::Ownership(r) => LocalEntry::Ownership(OwnershipReceipt {
+                clock: r.clock,
+                counterpart: r.counterpart.into(),
+                before: r.before,
+                after: r.after,
+            }),
+            Self::Settlement { clock, reward, net } => LocalEntry::Settlement {
+                clock: *clock,
+                reward: *reward,
+                net: *net,
+            },
+        }
+    }
+}
+struct History<'a> {
+    old: &'a [LocalEntry],
+    pending: [Option<Pending<'a>>; 4],
+}
+impl Serialize for History<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut seq =
+            s.serialize_seq(Some(self.old.len() + self.pending.iter().flatten().count()))?;
+        for e in self.old {
+            seq.serialize_element(e)?;
+        }
+        for e in self.pending.iter().flatten() {
+            seq.serialize_element(e)?;
+        }
+        seq.end()
+    }
+}
+struct Events<'a> {
+    old: &'a [Event],
+    pending: Option<&'a Event>,
+}
+impl Serialize for Events<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut seq =
+            s.serialize_seq(Some(self.old.len() + usize::from(self.pending.is_some())))?;
+        for e in self.old.iter().chain(self.pending) {
+            seq.serialize_element(e)?;
+        }
+        seq.end()
+    }
+}
+#[derive(Serialize)]
+pub(super) struct Prospective<'a> {
+    version: u8,
+    config: &'a Config,
+    profile: &'a Profile,
+    words: &'a [OwnWord; 2],
+    events: Events<'a>,
+    histories: [History<'a>; 2],
+    outcome: Outcome,
+    #[serde(skip)]
+    pub clock: Clock,
+    #[serde(skip)]
+    previous_length: Option<(u64, u64)>,
+}
+impl Prospective<'_> {
+    pub fn json_len(&self) -> Result<u64, Error> {
+        use super::budget::{add, json_len};
+        let Some((previous, old_outcome)) = self.previous_length else {
+            return json_len(self);
+        };
+        let mut n = previous
+            .checked_sub(old_outcome)
+            .ok_or(Error::ArithmeticOverflow)?;
+        n = add(n, json_len(&self.outcome)?)?;
+        if let Some(e) = self.events.pending {
+            n = add(n, json_len(e)?)?;
+            if !self.events.old.is_empty() {
+                n = add(n, 1)?;
+            }
+        }
+        for h in &self.histories {
+            for (count, e) in (h.old.len()..).zip(h.pending.iter().flatten()) {
+                n = add(n, json_len(e)?)?;
+                if count > 0 {
+                    n = add(n, 1)?;
+                }
+            }
+        }
+        Ok(n)
+    }
 }
 fn make_view(e: &Episode, s: &PhysicalState, role: Role, clock: Clock) -> Result<View, Error> {
     let i = role.index();
     let last = e.histories[i]
         .iter()
         .rev()
-        .find_map(|entry| {
-            if let LocalEntry::Observed(o) = entry {
+        .find_map(|x| {
+            if let LocalEntry::Observed(o) = x {
                 Some(o.clone())
             } else {
                 None
@@ -197,78 +281,273 @@ fn make_view(e: &Episode, s: &PhysicalState, role: Role, clock: Clock) -> Result
         last_observation: last,
     })
 }
-fn commit(
-    e: &mut Episode,
-    s: &mut PhysicalState,
-    mut candidate: Episode,
-    next: PhysicalState,
-    clock: Clock,
-    charge: &mut dyn FnMut(&Episode, u64) -> Result<(), Error>,
-    capture: &mut dyn FnMut(&CapturePoint) -> Result<(), Error>,
-) -> Result<(), Error> {
-    next.validate()?;
-    candidate.outcome = outcome(&next, &candidate.events)?;
-    let added = candidate
-        .events
-        .len()
-        .checked_sub(e.events.len())
-        .ok_or(Error::ArithmeticOverflow)?;
-    charge(
-        &candidate,
-        u64::try_from(added).map_err(|_| Error::ArithmeticOverflow)?,
-    )?;
-    *e = candidate;
-    *s = next;
-    let point = CapturePoint {
-        clock,
-        views: [
-            make_view(e, s, Role::Giver, clock)?,
-            make_view(e, s, Role::Receiver, clock)?,
-        ],
-        physical: s.clone(),
-    };
-    capture(&point)
-}
-fn finish(
-    mut e: Episode,
-    mut s: PhysicalState,
-    round: u8,
-    termination: Termination,
-    charge: &mut dyn FnMut(&Episode, u64) -> Result<(), Error>,
-    capture: &mut dyn FnMut(&CapturePoint) -> Result<(), Error>,
+type Inspect<'a> = Option<&'a mut dyn FnMut(&Episode, u64) -> Result<(), Error>>;
+type Capture<'a> = Option<&'a mut dyn FnMut(&CapturePoint) -> Result<(), Error>>;
+fn run_engine(
+    config: &Config,
+    profile: Profile,
+    preflight: &mut dyn FnMut(&Prospective<'_>, u64) -> Result<(), Error>,
+    mut inspect: Inspect<'_>,
+    mut capture: Capture<'_>,
+    account: bool,
 ) -> Result<Episode, Error> {
-    let clock = Clock {
-        round,
-        phase: Phase::Finished,
+    config.validate()?;
+    profile.validate()?;
+    let words = profile.words();
+    let mut state = PhysicalState {
+        positions: [
+            if config.stratum().distance() == 0 {
+                Cell::O
+            } else {
+                Cell::P
+            },
+            Cell::O,
+        ],
+        receiver_cargo: false,
+        resource: ResourceLocation::Cache,
+        key_owner: if config.initial_owner() == InitialOwner::Giver {
+            Role::Giver
+        } else {
+            Role::Receiver
+        },
+        spent: [0; 2],
+        reward: [0; 2],
+    };
+    // Empty vectors allocate nothing. Config cloning is delayed until initial preflight succeeds.
+    let mut events = Vec::new();
+    let mut histories: [Vec<LocalEntry>; 2] = [Vec::new(), Vec::new()];
+    let mut clock = Clock {
+        round: 0,
+        phase: Phase::Initial,
         role: None,
     };
-    let mut next = s.clone();
-    if termination == Termination::Delivered {
-        next.reward = [
-            e.config.stratum().giver_share(),
-            12 - e.config.stratum().giver_share(),
-        ];
-    }
-    let mut candidate = e.clone();
-    candidate.events.push(Event {
-        clock,
-        kind: EventKind::Terminal(termination),
-        before: s.clone(),
-        after: next.clone(),
-    });
-    public(&mut candidate, clock, Some(termination));
-    for role in [Role::Giver, Role::Receiver] {
-        let i = role.index();
-        candidate.histories[i].push(LocalEntry::Settlement {
-            clock,
-            reward: next.reward[i],
-            net: i16::from(next.reward[i]) - i16::from(next.spent[i]),
+    let mut episode_config = None;
+    let mut previous_length = None;
+    loop {
+        let mut next = state.clone();
+        let mut event = None;
+        let mut termination = None;
+        let active = clock.role;
+        if clock.phase == Phase::AfterAction {
+            let role = active.ok_or_else(|| history_error("active transaction role"))?;
+            let token = words[role.index()].token(clock.round)?;
+            // Same own-only decision function as public choose; native prefixes were constructed here.
+            let intent = super::controller::own_intent(
+                role,
+                token.clone(),
+                state.positions[role.index()],
+                role == Role::Receiver && state.receiver_cargo,
+            )?;
+            let (n, result, paid) = action(config, &state, role, &token, &intent)?;
+            next = n;
+            event = Some(Event {
+                clock,
+                kind: EventKind::Action {
+                    role,
+                    token,
+                    intent,
+                    result,
+                    paid,
+                },
+                before: state.clone(),
+                after: next.clone(),
+            });
+        } else if clock.phase == Phase::Finished {
+            let term = if state.resource == ResourceLocation::Delivered {
+                Termination::Delivered
+            } else {
+                Termination::Deadline
+            };
+            termination = Some(term);
+            if term == Termination::Delivered {
+                next.reward = [
+                    config.stratum().giver_share(),
+                    12 - config.stratum().giver_share(),
+                ];
+            }
+            event = Some(Event {
+                clock,
+                kind: EventKind::Terminal(term),
+                before: state.clone(),
+                after: next.clone(),
+            });
+        }
+        next.validate()?;
+        let pending = [Role::Giver, Role::Receiver].map(|role| {
+            let mut entries: [Option<Pending<'_>>; 4] = [None, None, None, None];
+            let mut n = 0;
+            entries[n] = Some(Pending::Public { clock, termination });
+            n += 1;
+            if let Some(Event {
+                kind:
+                    EventKind::Action {
+                        role: actor,
+                        token,
+                        intent,
+                        result,
+                        paid,
+                    },
+                ..
+            }) = &event
+            {
+                if *actor == role {
+                    entries[n] = Some(Pending::OwnAction {
+                        clock,
+                        token,
+                        intent,
+                        result,
+                        paid: *paid,
+                    });
+                    n += 1;
+                }
+                if *intent == Intent::Pass && *result == ActionOutcome::Success {
+                    entries[n] = Some(Pending::Ownership(BorrowedReceipt {
+                        clock,
+                        counterpart: config.ids().get(if role == Role::Giver {
+                            Role::Receiver
+                        } else {
+                            Role::Giver
+                        }),
+                        before: role == Role::Giver,
+                        after: role == Role::Receiver,
+                    }));
+                    n += 1;
+                }
+            }
+            if clock.phase == Phase::Initial
+                || active == Some(role)
+                    && matches!(clock.phase, Phase::BeforeAction | Phase::AfterAction)
+            {
+                entries[n] = Some(Pending::Observed(BorrowedObservation {
+                    clock,
+                    cells: Cells {
+                        ids: config.ids(),
+                        state: &next,
+                        role,
+                    },
+                }));
+            } else if clock.phase == Phase::Finished {
+                entries[n] = Some(Pending::Settlement {
+                    clock,
+                    reward: next.reward[role.index()],
+                    net: i16::from(next.reward[role.index()]) - i16::from(next.spent[role.index()]),
+                });
+            }
+            History {
+                old: &histories[role.index()],
+                pending: entries,
+            }
         });
+        let o = outcome(&next, events.iter().chain(event.as_ref()))?;
+        let prospective = Prospective {
+            version: 1,
+            config,
+            profile: &profile,
+            words: &words,
+            events: Events {
+                old: &events,
+                pending: event.as_ref(),
+            },
+            histories: pending,
+            outcome: o,
+            clock,
+            previous_length,
+        };
+        let added = u64::from(event.is_some());
+        preflight(&prospective, added)?;
+        if account {
+            previous_length = Some((
+                prospective.json_len()?,
+                super::budget::json_len(&prospective.outcome)?,
+            ));
+        }
+        // No pending event/history/config payload is allocated or retained before the preceding guard.
+        let retained = prospective.histories.each_ref().map(|h| {
+            h.pending
+                .each_ref()
+                .map(|e| e.as_ref().map(Pending::retain))
+        });
+        let o = prospective.outcome;
+        if episode_config.is_none() {
+            episode_config = Some(config.clone());
+        }
+        for (h, entries) in histories.iter_mut().zip(retained) {
+            h.extend(entries.into_iter().flatten());
+        }
+        if let Some(e) = event {
+            events.push(e);
+        }
+        state = next;
+        if inspect.is_some() || capture.is_some() {
+            let e = Episode {
+                version: 1,
+                config: config.clone(),
+                profile,
+                words: words.clone(),
+                events: events.clone(),
+                histories: histories.clone(),
+                outcome: o.clone(),
+            };
+            if let Some(f) = inspect.as_mut() {
+                f(&e, added)?;
+            }
+            if let Some(f) = capture.as_mut() {
+                f(&CapturePoint {
+                    clock,
+                    views: [
+                        make_view(&e, &state, Role::Giver, clock)?,
+                        make_view(&e, &state, Role::Receiver, clock)?,
+                    ],
+                    physical: state.clone(),
+                })?;
+            }
+        }
+        clock = match (clock.phase, clock.role) {
+            (Phase::Initial, _) => Clock {
+                round: 1,
+                phase: Phase::BeforeAction,
+                role: Some(Role::Giver),
+            },
+            (Phase::BeforeAction, role) => Clock {
+                phase: Phase::AfterAction,
+                role,
+                ..clock
+            },
+            (Phase::AfterAction, _) if state.resource == ResourceLocation::Delivered => Clock {
+                phase: Phase::Finished,
+                role: None,
+                ..clock
+            },
+            (Phase::AfterAction, Some(Role::Giver)) => Clock {
+                phase: Phase::BeforeAction,
+                role: Some(Role::Receiver),
+                ..clock
+            },
+            (Phase::AfterAction, Some(Role::Receiver)) if clock.round < 6 => Clock {
+                round: clock.round + 1,
+                phase: Phase::BeforeAction,
+                role: Some(Role::Giver),
+            },
+            (Phase::AfterAction, _) => Clock {
+                phase: Phase::Finished,
+                role: None,
+                ..clock
+            },
+            (Phase::Finished, _) => {
+                return Ok(Episode {
+                    version: 1,
+                    config: episode_config
+                        .ok_or_else(|| history_error("missing initial config"))?,
+                    profile,
+                    words,
+                    events,
+                    histories,
+                    outcome: o,
+                })
+            }
+        };
     }
-    commit(&mut e, &mut s, candidate, next, clock, charge, capture)?;
-    Ok(e)
 }
-
 pub(super) fn action(
     config: &Config,
     before: &PhysicalState,
@@ -381,7 +660,10 @@ fn increment(v: &mut u8) -> Result<(), Error> {
     *v = v.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
     Ok(())
 }
-fn outcome(s: &PhysicalState, events: &[Event]) -> Result<Outcome, Error> {
+fn outcome<'a>(
+    s: &PhysicalState,
+    events: impl IntoIterator<Item = &'a Event>,
+) -> Result<Outcome, Error> {
     let net = [
         i16::from(s.reward[0]) - i16::from(s.spent[0]),
         i16::from(s.reward[1]) - i16::from(s.spent[1]),
@@ -466,4 +748,60 @@ fn outcome(s: &PhysicalState, events: &[Event]) -> Result<Outcome, Error> {
         }
     }
     Ok(o)
+}
+#[cfg(test)]
+thread_local! {static MATERIALIZED:std::cell::Cell<usize>=const{std::cell::Cell::new(0)};}
+#[cfg(test)]
+pub(super) fn test_preflight_order(config: &Config) {
+    use std::cell::Cell as Counter;
+    let p = Profile::new(486, 60).unwrap();
+    let mut counts = Vec::new();
+    run_engine(
+        config,
+        p,
+        &mut |e, _| {
+            assert_eq!(e.json_len()?, super::budget::json_len(e)?);
+            counts.push(e.json_len()?);
+            Ok(())
+        },
+        None,
+        None,
+        true,
+    )
+    .unwrap();
+    for rejected in 0..counts.len() {
+        MATERIALIZED.set(0);
+        let captures = Counter::new(0);
+        let before = Counter::new(0);
+        let calls = Counter::new(0);
+        let last_captured_materializations = Counter::new(0);
+        let result = run_engine(
+            config,
+            p,
+            &mut |e, _| {
+                assert_eq!(MATERIALIZED.get(), last_captured_materializations.get());
+                let i = calls.get();
+                calls.set(i + 1);
+                assert_eq!(e.json_len()?, counts[i]);
+                if i == rejected {
+                    before.set(MATERIALIZED.get());
+                    return Err(Error::ResourceLimit {
+                        resource: "test boundary".into(),
+                        limit: counts[i] - 1,
+                    });
+                }
+                Ok(())
+            },
+            None,
+            Some(&mut |_| {
+                captures.set(captures.get() + 1);
+                last_captured_materializations.set(MATERIALIZED.get());
+                Ok(())
+            }),
+            true,
+        );
+        assert!(result.is_err());
+        assert_eq!(captures.get(), rejected);
+        assert_eq!(MATERIALIZED.get(), before.get());
+    }
 }

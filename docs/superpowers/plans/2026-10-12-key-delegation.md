@@ -10,7 +10,7 @@
 
 **Spec:** [Key delegation design](../specs/2026-10-11-key-delegation-design.md), commit `1d42e54485d9918ef937398c44ecfbccba95e8e5`, approved by the user's “LGTM!” on 2026-10-12. This plan does not alter its physical rules.
 
-**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are complete, with reviewed protocol and exactly three independently approved reference fixtures. Task 2 native kernel implementation and scoped independent review are complete; Task 3 game, metrics, and preallocation budgets are next. Tasks 4–7 have not started. No scientific measurement has begun. Feasibility and precollection gates remain binding.
+**Status:** Execution approved by the user on 2026-10-12 (“Great! Let’s proceed.”). Task 1 preservation and independent registration are complete, with reviewed protocol and exactly three independently approved reference fixtures. Tasks 2–3 native kernel, exhaustive game, metrics, and preallocation budgets are complete and independently approved. Task 4 source-bound diagnostic and CLI are next; Tasks 5–7 have not started. No scientific measurement has begun. Feasibility and precollection gates remain binding.
 
 ## Global Constraints
 
