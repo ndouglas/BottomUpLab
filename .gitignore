@@ -68,3 +68,6 @@ survey/out/collusion-memory1-saved-followup-20261011/
 
 # Local bounded deterministic pricing operator probe
 survey/out/collusion-memory1-operator-probe-20261011/
+
+# Local exact pricing generality counterexample certificates
+survey/out/collusion-memory1-generality-proof-20261012/
