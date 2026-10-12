@@ -286,6 +286,11 @@ impl FullEvidence {
             )
             .unwrap();
         }
+        for path in source::inputs::KEY_REQUIRED {
+            let dest = root.join(path);
+            std::fs::create_dir_all(dest.parent().unwrap()).unwrap();
+            std::fs::copy(std::path::Path::new(source::ROOT).join(path), dest).unwrap();
+        }
         let entries = source::inputs::read(&root, source::MANIFEST_PATH).unwrap();
         let frozen_hash = source::inputs::fingerprint(&entries, source::MANIFEST_PATH).unwrap();
         let inventory = serde_json::json!({"schema":"war1-study-source-inventory-v1","compiled_inputs_sha256":frozen_hash,"entries":entries.iter().map(|(path,bytes)|gate::Artifact{path:path.clone(),sha256:wire::sha256(bytes),bytes:bytes.len() as u64}).collect::<Vec<_>>()});
