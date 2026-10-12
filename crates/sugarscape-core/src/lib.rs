@@ -7,7 +7,6 @@ pub mod agent;
 pub mod agreement;
 pub mod anasazi;
 pub mod ants;
-pub mod assistance;
 pub mod auctions;
 pub mod bali;
 pub mod bits;
@@ -80,3 +79,6 @@ pub mod war;
 
 /// Six-round paid gate assistance with local histories.
 pub mod gate_assistance;
+
+/// Assistance games: the paperclip game and the off-switch game (milestone 39).
+pub mod assistance;
