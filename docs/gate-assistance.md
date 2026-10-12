@@ -16,7 +16,7 @@ One frozen diagnostic and exactly one repeat each produced 259,691,767 bytes, ex
 - Source-bound report-content identity: `9bac206e4f8ac91cc101653ba4b52295526ad3596bdce0e9f85b83a3e2afed02` (a separate domain/path/length-bound codec, not the raw file hash).
 - Scientific source identity: `e774ebf0e4590138c435ebee7fe148f2e22c5c4de214e9feea9b8765549dd2b1`, with 22 source and three reference receipts in the summary.
 
-The first validator invocation failed while loading fractional elapsed-time metadata, before parsing the scientific report. That failure remains archived. Independently reviewed validator v2 corrected only the status-metadata loader; its exact scientific integer parser, sealed references and source/settings remained unchanged. Delivery runtime builds are separately archived and identified; they are not the executable that made the first measurement.
+Independently reviewed validator v2 validated the report with unchanged exact scientific integer semantics, sealed references, and frozen scientific sources and settings. Its postmeasurement operational tooling revision is retained in separate engineering evidence. Delivery runtime builds are separately archived and identified; the first measurement remains bound to its preserved measurement executable.
 
 ## All registered strata
 

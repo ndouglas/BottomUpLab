@@ -10,7 +10,7 @@
 
 **Spec:** [Approved gate design](../specs/2026-10-11-gate-assistance-design.md), commit 161a664, approved by the user “LGTM!” on 2026-10-11.
 
-**Status:** Execution approved by the user’s “LGTM!” on 2026-10-11. Tasks 1–6 are complete with independently approved native laboratory, adapter, and browser visualization. Task 7 integration, frozen collection, and delivery are in progress; no scientific measurement has begun.
+**Status:** Complete. All seven tasks are implemented and independently reviewed. Frozen first/repeat collection, independent full-census validation, recorded web summary, local verification, and exact-source CI and Pages deployment passed on `13b26693f29a69b8fec19141151b2c72a0446a51`. The completed owned stage tracker is retained in ignored evidence and removed from the repository. This final documentation closure receives its own exact-commit CI and Pages verification; evidence and worktree are retained.
 
 ## Global Constraints
 
