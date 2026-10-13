@@ -108,7 +108,7 @@ impl Write for Bounded {
 }
 pub fn encode(value: &impl Serialize, limit: usize, newline: bool) -> Result<Vec<u8>, String> {
     let mut out = Bounded {
-        bytes: Vec::new(),
+        bytes: Vec::with_capacity(limit.min(1024)),
         limit,
     };
     serde_json::to_writer(&mut out, value).map_err(|e| e.to_string())?;
