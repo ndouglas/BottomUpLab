@@ -47,7 +47,7 @@ export interface CompareShell { figure: HTMLElement; header: HTMLElement; progre
 export function compareShell(): CompareShell {
   const header = h('header', { class: 'world-header' });
   const progress = h('p', { class: 'hint copy-progress', role: 'status' }, 'Copying A…');
-  const canvas = h('canvas', { class: 'grid-b', 'aria-label': 'Sugarscape grid B', hidden: true });
+  const canvas = h('canvas', { class: 'grid-b', 'aria-label': 'World grid B', hidden: true });
   const ring = h('canvas', { class: 'ring-view', 'aria-label': 'Ring World’s ring B', hidden: true });
   const figure = h('figure', { class: 'world', id: 'world-b' }, header, progress, ring, canvas);
   document.querySelector('#grids')!.append(figure);

@@ -1,4 +1,5 @@
 import './style.css';
+import { FILE_PREFIX } from './brand';
 import { askKeep, CompareView, compareShell, type Playground, type WorldName } from './compare/compare-view';
 import { copyWorld } from './compare/lockstep';
 import { COMPARE_PRESETS, comparePresetStates } from './compare-presets';
@@ -180,9 +181,9 @@ async function main(): Promise<void> {
     tabs.show('Inspect');
   };
 
-  const slug = (e: Engine) => `sugarscape-${e.presetId ?? 'custom'}-seed${e.seed}-t${e.tick}`;
+  const slug = (e: Engine) => `${FILE_PREFIX}-${e.presetId ?? 'custom'}-seed${e.seed}-t${e.tick}`;
   /** File stems for what covers both worlds in Compare (charts, the session). */
-  const stem = () => (compare ? `sugarscape-compare-t${engine.tick}` : slug(engine));
+  const stem = () => (compare ? `${FILE_PREFIX}-compare-t${engine.tick}` : slug(engine));
   const worlds = (): ExportWorld[] => {
     const c = compare;
     return c
@@ -251,7 +252,7 @@ async function main(): Promise<void> {
     running: () => (compare?.lock ?? engine).running,
     base: () => {
       const c = compare;
-      return c ? `sugarscape-compare-seed${engine.seed}-vs-seed${c.b.seed}` : `sugarscape-${engine.presetId ?? 'custom'}-seed${engine.seed}`;
+      return c ? `${FILE_PREFIX}-compare-seed${engine.seed}-vs-seed${c.b.seed}` : `${FILE_PREFIX}-${engine.presetId ?? 'custom'}-seed${engine.seed}`;
     },
   });
   engine.on('run', () => record.sync());

@@ -1,4 +1,5 @@
 import type { Lockstep } from '../compare/lockstep';
+import { SITE_NAME } from '../brand';
 import { randomSeed, type Engine, type RunControls, type Speed } from '../engine';
 import { errorMessage } from '../errors';
 import { winterShown } from '../minds';
@@ -152,7 +153,7 @@ export class Toolbar {
     this.el = h(
       'div',
       { class: 'toolbar' },
-      h('h1', { title: 'Press ? for keyboard shortcuts' }, 'SugarScape'),
+      h('h1', { title: 'Press ? for keyboard shortcuts' }, SITE_NAME),
       h('div', { class: 'group' }, this.play, this.step, this.speed, this.rate),
       this.timeline.el,
       this.stopControl.el,
