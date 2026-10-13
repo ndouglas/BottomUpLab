@@ -117,12 +117,31 @@ Recovered GeoSim code stays reference-only: GeoSim0 declares GPL-2.0-or-later; t
 
 ## Queue
 
-In rough order: complete original-and-critique pairs first, then the large projects. Every entry is
-worth doing; "size" is a guess at the milestone's scale.
+The order follows the [alignment program](studies/2026-10-11-alignment-program.md): items 40–44
+are its reproduction queue, and 2 and 26 serve the same thread (oversight against violation; the
+learned commons that experiments A4 and A5 sit next to). Every entry is worth doing; "size" is a
+guess at the milestone's scale.
 
 | # | Model | Original | Critique or follow-up | Size | Shape |
 |---|---|---|---|---|---|
 | 2 | Inspection games | `ai-coordination/avenhaus-von-stengel-zamir-2002-handbook-gt-inspection-games.pdf` | — | small | monitoring against violation; the oversight core of the swarm-coordination study |
+| 26 | Sequential social dilemmas | `multi-agent-coordination/leibo-et-al-2017-arxiv-marl-in-sequential-social-dilemmas.pdf` | `multi-agent-coordination/`: Perolat et al. 2017 (commons), Hughes et al. 2018 (inequity aversion) | medium | learners in gathering and commons games |
+| 40 | AI Safety Gridworlds | `alignment/leike-et-al-2017-arxiv-ai-safety-gridworlds.pdf` | `alignment/wainwright-eckersley-2020-safelife.pdf` | medium | thought experiments as environments: off-switch, side effects, reward gaming |
+| 41 | Negotiable RL and multi-principal assistance | `alignment/desai-critch-russell-2018-neurips-negotiable-reinforcement-learning.pdf` | `alignment/fickinger-zhuang-hadfield-menell-russell-2020-arxiv-multi-principal-assistance-games.pdf`; Critch 2017 wanted | small | one agent, two principals; weight shifts to the better-calibrated one |
+| 42 | Hybrid human–machine populations | `alignment/booker-et-al-2023-…`, `alignment/guo-et-al-2023-iscience-…`, `alignment/fernandez-domingos-et-al-2022-scirep-…` | `alignment/shirado-christakis-2017-nature-…` (human subjects: model only); `alignment/crandall-et-al-2018-natcomms-…`, `alignment/ishowo-oloko-et-al-2019-…` (the machine penalty) | medium | bots as a second species in cooperation games |
+| 43 | Consequences of misaligned AI | `alignment/zhuang-hadfield-menell-2020-neurips-consequences-of-misaligned-ai.pdf` | `alignment/hadfield-menell-hadfield-2019-aies-incomplete-contracting-and-ai-alignment.pdf` | small | a proxy that omits attributes can be arbitrarily bad |
+| 44 | The AI Economist | `alignment/zheng-et-al-2022-sciadv-ai-economist.pdf` | — | large | a learned planner over a Sugarscape-like economy |
+
+## Parked
+
+Parked on 2026-10-13, when the project narrowed to the alignment program: language, belief,
+social psychology, organizations, markets, politics, archaeology, agriculture and terrain. The
+user wants to do these; they rank below the AI work on impact. Numbers are unchanged so other
+documents still point at the right rows, the papers stay filed, and any entry can move back to
+the queue.
+
+| # | Model | Original | Critique or follow-up | Size | Shape |
+|---|---|---|---|---|---|
 | 3 | Naming game | `language/steels-1995-artificial-life-self-organizing-spatial-vocabulary.pdf`; `language/baronchelli-felici-loreto-caglioti-steels-2006-jstatmech-sharp-transition-shared-vocabularies.pdf` | `language/`: Dall'Asta et al. 2006 (networks); Baronchelli 2016 (the minimal rules) | small | new kind (conventions emerge; N^1.5 consensus) |
 | 4 | Category game | `language/puglisi-baronchelli-loreto-2008-pnas-cultural-route-linguistic-categories.pdf` | `language/baronchelli-gong-puglisi-loreto-2010-pnas-universality-color-naming.pdf` (World Color Survey) | medium | naming game on a continuum; color terms |
 | 5 | Lewis signaling games | `language/huttegger-skyrms-smead-zollman-2010-synthese-lewis-signaling-partial-pooling.pdf` | `language/barrett-2009-…`; Skyrms 2010 (partial) | small | codes invented by reinforcement; partial pooling |
@@ -146,7 +165,6 @@ worth doing; "size" is a guess at the milestone's scale.
 | 23 | Leadership in animal groups | `collective-motion/couzin-krause-franks-levin-2005-nature-effective-leadership-animal-groups.pdf` | `collective-motion/vicsek-…-1995-prl-…`, `collective-motion/couzin-krause-james-ruxton-franks-2002-jtb-collective-memory-spatial-sorting.pdf` (a re-post) | medium | an informed minority steers; Vicsek's transition |
 | 24 | Adaptive parties | `politics/kollman-miller-page-1992-sfi-wp-adaptive-parties-in-spatial-elections.pdf` | `politics/kollman-miller-page-1993-sfi-wp-…`; Laver 2005 wanted | medium | parties climbing an electoral landscape |
 | 25 | Division of labor | `multi-agent-coordination/theraulaz-bonabeau-deneubourg-1998-sfi-wp-response-threshold-reinforcement.pdf` | Bonabeau et al. 1996 wanted | small | response thresholds; specialists emerge |
-| 26 | Sequential social dilemmas | `multi-agent-coordination/leibo-et-al-2017-arxiv-marl-in-sequential-social-dilemmas.pdf` | `multi-agent-coordination/`: Perolat et al. 2017 (commons), Hughes et al. 2018 (inequity aversion) | medium | learners in gathering and commons games |
 | 27 | War, space and states | `archaeology/turchin-currie-turner-gavrilets-2013-pnas-war-space-old-world-complex-societies.pdf` (+ SI) | `archaeology/currie-…-2020-hssc-…` with its gridded data (CC0) | large | military technology from the steppe on a real map, 1500 BCE–1500 CE; geography and states |
 | 28 | Chiefdom cycling | `archaeology/gavrilets-anderson-turchin-2010-cliodynamics-cycling-in-complexity-of-early-societies.pdf` | — | medium | conquest and collapse of chiefdoms on a lattice |
 | 29 | Circumscription | `archaeology/williams-mesoudi-2024-jas-formal-test-abm-circumscription-theory.pdf` (Carneiro 1970 wanted) | `archaeology/`: Williams & Mesoudi 2025 (Oaxaca), Zinkina et al. 2016 (cross-cultural) | medium | states where arable land is walled in; a natural test on generated terrain |
@@ -159,11 +177,6 @@ worth doing; "size" is a guess at the milestone's scale.
 | 36 | Scattered strips | `agriculture/mccloskey-1976-research-econ-history-open-fields-behavior-towards-risk.pdf` | `agriculture/mccloskey-1991-jeh-prudent-peasant-open-fields.pdf` | small | medieval open fields as insurance |
 | 37 | Chayanov's rule | `agriculture/hammel-2005-pnas-chayanov-revisited.pdf` | `agriculture/puleston-tuljapurkar-winterhalder-2014-plos-one-invisible-cliff.pdf` | small | household labor over the family cycle |
 | 38 | Generated terrain and hydrology | `terrain/`: Perlin 2002, Gustavson 2005; Barnes et al. 2014 (priority-flood, flats), Tarboton 1997 (D∞), Mark 1983 (D8); Cordonnier et al. 2016, Génevaux et al. 2013 (erosion, hydrology); Smith & Barstad 2004 (orographic rain) | `terrain/`: Hack 1957, Rinaldo et al. 2014, Carraro et al. 2020 (OCNet) as realism checks; Horton 1945 and Braun & Willett 2013 wanted | large | our own milestone: a terrain generator validated against geomorphology's laws, then geography-driven models on ensembles of worlds |
-| 40 | AI Safety Gridworlds | `alignment/leike-et-al-2017-arxiv-ai-safety-gridworlds.pdf` | `alignment/wainwright-eckersley-2020-safelife.pdf` | medium | thought experiments as environments: off-switch, side effects, reward gaming |
-| 41 | Negotiable RL and multi-principal assistance | `alignment/desai-critch-russell-2018-neurips-negotiable-reinforcement-learning.pdf` | `alignment/fickinger-zhuang-hadfield-menell-russell-2020-arxiv-multi-principal-assistance-games.pdf`; Critch 2017 wanted | small | one agent, two principals; weight shifts to the better-calibrated one |
-| 42 | Hybrid human–machine populations | `alignment/booker-et-al-2023-…`, `alignment/guo-et-al-2023-iscience-…`, `alignment/fernandez-domingos-et-al-2022-scirep-…` | `alignment/shirado-christakis-2017-nature-…` (human subjects: model only); `alignment/crandall-et-al-2018-natcomms-…`, `alignment/ishowo-oloko-et-al-2019-…` (the machine penalty) | medium | bots as a second species in cooperation games |
-| 43 | Consequences of misaligned AI | `alignment/zhuang-hadfield-menell-2020-neurips-consequences-of-misaligned-ai.pdf` | `alignment/hadfield-menell-hadfield-2019-aies-incomplete-contracting-and-ai-alignment.pdf` | small | a proxy that omits attributes can be arbitrarily bad |
-| 44 | The AI Economist | `alignment/zheng-et-al-2022-sciadv-ai-economist.pdf` | — | large | a learned planner over a Sugarscape-like economy |
 
 ## Wanted
 
