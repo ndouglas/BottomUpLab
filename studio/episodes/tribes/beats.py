@@ -16,7 +16,7 @@ calm — seed 7 with culture off, for the population comparison.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 CLOSE_EYE, CLOSE_AT = (0.5, -6.4, 4.0), (0.5, -0.5, 1.2)
 # The whole 8 × 8 board, so the family stays in frame as it wanders (the board wraps).
@@ -70,6 +70,6 @@ BEATS = [
     Beat("question", "Nobody chose a side.\nTheir neighbors chose for them.", 6.0, shot="divided", start_tick=3000,
          caption_y=0.0, title=True, params=TRIBE,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Tribes — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Tribes — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

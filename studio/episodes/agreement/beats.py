@@ -1,6 +1,6 @@
 """How extremists win: the approved fourteen-beat relative-agreement film."""
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 S = {'colors': 'start', 'motion_blur': False}
 A = ('agreement-markers', 'agreement-diagram')
@@ -42,7 +42,7 @@ BEATS = [
     beat('lean', 'A small imbalance makes one side more likely to win.', 'lean', extra=('agreement-results', 'agreement-comparison'), compare='lean-balanced'),
     beat('printed', "With their alternative's printed rule,\nthe moderates pull the extremists toward the middle.", 'printed'),
     beat('neighbors', 'Hear only neighbors on this lattice,\nand neither extreme takes over the crowd.', 'neighbors', seconds=8, extra=('agreement-horizon',)),
-    Beat('end', 'How extremists win - After Deffuant et al., 2002\nndouglas.github.io/SugarScape', 7,
+    Beat('end', f'How extremists win - After Deffuant et al., 2002\n{SITE_URL}', 7,
          caption_y=.45, params=S,
          camera=(Move(0, 7, (0, -5.5, 1.8), (0, 0, .6), (0, -5.2, 1.7), (0, 0, .6), lens0=50, lens1=53),)),
 ]

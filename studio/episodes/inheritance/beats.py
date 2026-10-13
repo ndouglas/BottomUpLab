@@ -16,7 +16,7 @@ heirs, plain — iii-4-inheritance and iii-2-sex (identical but for rule I),
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 FAMILY_EYE, FAMILY_AT = (0.5, -8.6, 5.6), (0.5, -0.5, 1.4)
 WIDE_EYE, WIDE_AT = (0, -56, 30), (0, -2, 0)
@@ -63,6 +63,6 @@ BEATS = [
     Beat("question", "Nobody earned it.\nIt was waiting for them.", 6.0, shot="heirs", start_tick=1000,
          caption_y=0.0, title=True, params={"colors": "family"},
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Inheritance — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Inheritance — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

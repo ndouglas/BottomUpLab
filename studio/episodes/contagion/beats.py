@@ -23,7 +23,7 @@ plague — the same seed with a 40-bit novel disease (our experiment): 53% sick
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WARD_EYE, WARD_AT = (0, -8.5, 7.5), (0, 0.2, 0.5)
 WIDE_EYE, WIDE_AT = (0, -56, 30), (0, -2, 0)
@@ -70,6 +70,6 @@ BEATS = [
          camera=(Move(0, 9, (0, -44, 26), (0, 0, 0), (0, -58, 32), WIDE_AT, orbit=0.15),)),
     Beat("question", "A plague needs something\nthis world has never known.", 6.0, shot="plague", start_tick=500,
          caption_y=0.0, title=True, params=WIDE, camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Contagion — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Contagion — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

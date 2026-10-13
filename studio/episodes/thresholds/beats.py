@@ -1,6 +1,6 @@
 """Following the Crowd, episode 7: approved thresholds storyboard."""
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 S={'colors':'participation','motion_blur':False}
 A=('thresholds-panel','thresholds-markers')
@@ -33,6 +33,6 @@ BEATS=[
     beat('sparse','With few links, most sparks stay small.','sparse',7,4),
     beat('middle','With a middling number of links,\nmost sparks spread through nearly the whole network.','middle',8,5),
     beat('dense','In our 1,000-node networks, many sparks die out.\nSome still sweep nearly the whole network.','dense',9,5,compare='dense-large'),
-    Beat('end','The riot that needs one person - After Granovetter, 1978; Watts, 2002\nndouglas.github.io/SugarScape',5,
+    Beat('end',f'The riot that needs one person - After Granovetter, 1978; Watts, 2002\n{SITE_URL}',5,
          caption_y=.45,camera=(Move(0,5,(0,-5.5,1.8),(0,0,.6),(0,-5.2,1.7),(0,0,.6),lens0=50,lens1=53),)),
 ]

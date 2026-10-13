@@ -19,7 +19,7 @@ mild — milder metapunishment to 10,000, every 25th: collapsed by 2,500.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WIDE_EYE, WIDE_AT = (0, -46, 40), (0, -1.5, 0)
 LOW_EYE, LOW_AT = (0, -28, 20), (0, 2, 0)
@@ -60,6 +60,6 @@ BEATS = [
     Beat("point", "Both were right.\nOne sentence decides the long run.", 6.0, shot="axel", start_tick=400,
          caption_y=0.0, title=True,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -54, 48), WIDE_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Norms — after Axelrod, 1986; Galán & Izquierdo, 2005\nndouglas.github.io/SugarScape", 5.0,
+    Beat("end", f"Norms — after Axelrod, 1986; Galán & Izquierdo, 2005\n{SITE_URL}", 5.0,
          caption_y=0.45, camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

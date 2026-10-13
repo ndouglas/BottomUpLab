@@ -66,20 +66,20 @@ describe('share links', () => {
     const json = new TextEncoder().encode(JSON.stringify({ v: 4, s: 1, c: {} }));
     const compressed = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
     const token = bytesToBase64Url(new Uint8Array(await new Response(compressed).arrayBuffer()));
-    await expect(decodeShare(token)).rejects.toThrow('not a SugarScape share link');
+    await expect(decodeShare(token)).rejects.toThrow('not a BottomUpLab share link');
   });
 
   it('rejects garbage', async () => {
-    await expect(decodeShare('not-a-real-token')).rejects.toThrow('not a SugarScape share link');
+    await expect(decodeShare('not-a-real-token')).rejects.toThrow('not a BottomUpLab share link');
     const wrong = bytesToBase64Url(new TextEncoder().encode('{}'));
-    await expect(decodeShare(wrong)).rejects.toThrow('not a SugarScape share link');
+    await expect(decodeShare(wrong)).rejects.toThrow('not a BottomUpLab share link');
   });
 
   it('rejects a valid payload whose config is an array', async () => {
     const json = new TextEncoder().encode(JSON.stringify({ v: 1, s: 1, c: [] }));
     const compressed = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
     const token = bytesToBase64Url(new Uint8Array(await new Response(compressed).arrayBuffer()));
-    await expect(decodeShare(token)).rejects.toThrow('not a SugarScape share link');
+    await expect(decodeShare(token)).rejects.toThrow('not a BottomUpLab share link');
   });
 
   it('rejects a payload that decompresses past the size cap', async () => {
@@ -87,7 +87,7 @@ describe('share links', () => {
     const compressed = new Blob([wire]).stream().pipeThrough(new CompressionStream('deflate-raw'));
     const token = bytesToBase64Url(new Uint8Array(await new Response(compressed).arrayBuffer()));
     expect(token.length).toBeLessThan(40_000);
-    await expect(decodeShare(token)).rejects.toThrow('not a SugarScape share link');
+    await expect(decodeShare(token)).rejects.toThrow('not a BottomUpLab share link');
   });
 
   it('base64url round-trips every padding length', () => {
@@ -139,8 +139,8 @@ describe('experiment links', () => {
 
   it('rejects playground links and garbage', async () => {
     const playground = await encodeShare({ config, seed: 1 });
-    await expect(decodeSweep(playground)).rejects.toThrow('not a SugarScape experiment link');
-    await expect(decodeSweep('garbage')).rejects.toThrow('not a SugarScape experiment link');
+    await expect(decodeSweep(playground)).rejects.toThrow('not a BottomUpLab experiment link');
+    await expect(decodeSweep('garbage')).rejects.toThrow('not a BottomUpLab experiment link');
   });
 });
 
@@ -182,7 +182,7 @@ describe('session links', () => {
       'x',
     ];
     for (const e of bad) {
-      await expect(decodeShare(await tokenOf({ v: 3, c: config, s: 1, e }))).rejects.toThrow('not a SugarScape share link');
+      await expect(decodeShare(await tokenOf({ v: 3, c: config, s: 1, e }))).rejects.toThrow('not a BottomUpLab share link');
     }
   });
 });
@@ -199,8 +199,8 @@ describe('compare links and session files', () => {
     expect(back.b.log).toEqual(b.log);
     expect(back.b.landscapes?.[0]).toBeNull();
     expect(Array.from(back.b.landscapes![1]!)).toEqual(Array.from(b.landscapes[1]!));
-    await expect(decodeCompare(await encodeShare({ config, seed: 1 }))).rejects.toThrow('not a SugarScape compare link');
-    await expect(decodeCompare('garbage')).rejects.toThrow('not a SugarScape compare link');
+    await expect(decodeCompare(await encodeShare({ config, seed: 1 }))).rejects.toThrow('not a BottomUpLab compare link');
+    await expect(decodeCompare('garbage')).rejects.toThrow('not a BottomUpLab compare link');
   });
 
   it('reads #c= apart from #s= and #x=', () => {
@@ -219,8 +219,8 @@ describe('compare links and session files', () => {
     if (two.kind !== 'compare') throw new Error(two.kind);
     expect(two.state.a.log).toEqual(log);
     expect(two.state.b.seed).toBe(6);
-    expect(() => parseSessionFile('{"v":3}')).toThrow('not a SugarScape session file');
-    expect(() => parseSessionFile('nope')).toThrow('not a SugarScape session file');
+    expect(() => parseSessionFile('{"v":3}')).toThrow('not a BottomUpLab session file');
+    expect(() => parseSessionFile('nope')).toThrow('not a BottomUpLab session file');
   });
 });
 
@@ -244,7 +244,7 @@ describe('models in links', () => {
   it('refuses a comparison of two models (a link or a file)', async () => {
     const schelling = { model: 'schelling' } as SchellingConfig;
     const mixed = { a: { config, seed: 1 }, b: { config: schelling, seed: 1 } };
-    await expect(decodeCompare(await encodeCompare(mixed))).rejects.toThrow('not a SugarScape compare link');
-    expect(() => parseSessionFile(sessionFileText({ kind: 'compare', state: mixed }))).toThrow('not a SugarScape session file');
+    await expect(decodeCompare(await encodeCompare(mixed))).rejects.toThrow('not a BottomUpLab compare link');
+    expect(() => parseSessionFile(sessionFileText({ kind: 'compare', state: mixed }))).toThrow('not a BottomUpLab session file');
   });
 });

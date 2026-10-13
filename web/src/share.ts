@@ -179,7 +179,7 @@ export async function decodeShare(token: string): Promise<ShareState> {
   try {
     return fromWire(await unpackJson(token));
   } catch {
-    throw new Error('not a SugarScape share link');
+    throw new Error('not a BottomUpLab share link');
   }
 }
 
@@ -203,7 +203,7 @@ export async function decodeCompare(token: string): Promise<CompareState> {
     if (!isObject(json) || json.v !== 3) bad();
     return samePair(fromWire(json.a), fromWire(json.b));
   } catch {
-    throw new Error('not a SugarScape compare link');
+    throw new Error('not a BottomUpLab compare link');
   }
 }
 
@@ -225,7 +225,7 @@ export function parseSessionFile(text: string): SessionFile {
   } catch {
     // Falls through to the error below.
   }
-  throw new Error('not a SugarScape session file');
+  throw new Error('not a BottomUpLab session file');
 }
 
 /** `#x=` links (Decision 22): base64url(deflate-raw(sweep JSON)). */
@@ -239,7 +239,7 @@ export async function decodeSweep(token: string): Promise<Sweep> {
     if (opened.kind !== 'sweep') throw new Error(opened.kind);
     return opened.sweep;
   } catch {
-    throw new Error('not a SugarScape experiment link');
+    throw new Error('not a BottomUpLab experiment link');
   }
 }
 

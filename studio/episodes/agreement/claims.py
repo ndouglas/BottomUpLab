@@ -8,6 +8,7 @@ import json
 import statistics
 import measure as m
 from agreement_visual import select_pair, overlap
+from episode import SITE_URL
 
 CAP = 20000
 BASE = dict(agents=200, mu=.2, extremists=.05, uncertainty=1.4,
@@ -43,7 +44,7 @@ CAPTIONS = [
  'A small imbalance makes one side more likely to win.',
  "With their alternative's printed rule,\nthe moderates pull the extremists toward the middle.",
  'Hear only neighbors on this lattice,\nand neither extreme takes over the crowd.',
- 'How extremists win - After Deffuant et al., 2002\nndouglas.github.io/SugarScape',
+ f'How extremists win - After Deffuant et al., 2002\n{SITE_URL}',
 ]
 
 

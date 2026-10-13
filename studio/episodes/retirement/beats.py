@@ -1,6 +1,6 @@
 """Approved fourteen beats: sampled frame indices, explicitly labeled native periods."""
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 
 def beat(name,caption,seconds,shot='teaching',start=0,speed=.001,compare=None):
@@ -37,7 +37,7 @@ BEATS=[
  beat('policy','After 100 years, eligibility\nmoves from 65 to 62.',6,'policy_original',start=31,speed=1.1,compare='policy_revised'),
  beat('thresholds','Raise the imitation thresholds,\nand many runs miss our target within 100 years.',8,'policy_censored',start=34,speed=4.2,compare='policy_original'),
  beat('meaning','How many retire, and at what age,\nare different questions.',7,'all',start=1),
- Beat('end','When to retire - After Axtell & Epstein, 1999; Epstein, 2006\nndouglas.github.io/SugarScape',6,
+ Beat('end',f'When to retire - After Axtell & Epstein, 1999; Epstein, 2006\n{SITE_URL}',6,
       shot='teaching',start_tick=3,ticks_per_second=.001,caption_y=.45,
       overlays=('retirement-closing',),params={'motion_blur':False},
       camera=(Move(0,6,(0,-5.5,1.8),(0,0,.6),(0,-5.2,1.7),(0,0,.6),lens0=50,lens1=53),)),

@@ -12,7 +12,7 @@ class RetirementEpisodeTests(unittest.TestCase):
         beats=episode.load_episode('retirement')
         spec=(ROOT/'docs/superpowers/specs/2026-10-03-retirement-spike.md').read_text()
         captions=re.findall(r'\| \d+ \| \d+ \| \w+ \| “(.*?)” \|',spec)
-        self.assertEqual([b.caption for b in beats],[c.replace('\\n','\n')for c in captions])
+        self.assertEqual([b.caption for b in beats],[c.replace('\\n','\n').replace('ndouglas.github.io/SugarScape',episode.SITE_URL) for c in captions])
         self.assertEqual(cut.total_frames([b.frames for b in beats],12),2940)
         self.assertEqual([round(b.seconds-.4)for b in beats[:-1]]+[round(beats[-1].seconds)],[7,6,8,8,7,7,7,7,7,7,6,8,7,6])
         self.assertEqual((beats[3].shot,beats[3].start_tick),('teaching',3))

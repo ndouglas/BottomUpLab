@@ -27,7 +27,7 @@ spiked — pv-spiked, seed 3: never settles, about as mixed as chance.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 BOARD_EYE, BOARD_AT = (0, -16, 16.5), (0, -1.8, 0)
 PV_EYE, PV_AT = (0, -7.5, 8.8), (0, 0.4, 0)
@@ -101,6 +101,6 @@ BEATS = [
          shot="segregated", start_tick=50, caption_y=0.0, title=True, params=S,
          camera=(Move(0, 6.5, GVN_EYE, GVN_AT, (0, -38, 86), GVN_AT, lens0=32, lens1=32, orbit=0.1),)),
     Beat("end", "Variations on a theme — after Schelling, 1971; Pancs & Vriend, 2007;\n"
-         "Gauvin et al., Singh et al., 2009; Zhang, 2004 — ndouglas.github.io/SugarScape", 6.0, caption_y=0.45,
+         f"Gauvin et al., Singh et al., 2009; Zhang, 2004 — {SITE_URL}", 6.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

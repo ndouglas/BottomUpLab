@@ -20,7 +20,7 @@ calm — the same world and seed with seasons off.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 EAST_EYE, AT = (62, -4, 34), (0, 0, 0)
 NORTH = (0, 12, 0)
@@ -63,6 +63,6 @@ BEATS = [
     Beat("question", "Hard times don't just shrink a society.\nThey decide who's in it.", 6.0, shot="world",
          start_tick=500, caption_y=0.0, title=True,
          camera=(Move(0, 6, (60, -4, 33), AT, (74, -4, 42), AT, orbit=0.1),)),
-    Beat("end", "Seasons — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Seasons — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

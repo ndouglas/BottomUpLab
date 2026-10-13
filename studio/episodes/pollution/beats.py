@@ -17,7 +17,7 @@ clean — the same world and seed with its schedule removed: pollution never sta
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 HILL = (14, 14, 1.8)
 WIDE_EYE, WIDE_AT = (0, -56, 30), (0, -2, 0)
@@ -67,6 +67,6 @@ BEATS = [
          camera=(Move(0, 7, (0, -60, 34), (-8, 0, 0), (-2, -58, 33), (-8, 0, 0)),)),
     Beat("question", "Everyone made the mess.\nEveryone lives in it.", 6.0, shot="world", start_tick=500,
          caption_y=0.0, title=True, camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Pollution — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Pollution — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

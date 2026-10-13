@@ -22,7 +22,7 @@ endless — iii-11-combat-fixed, seed 1: both tribes held at 200; 4,564 kills
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 FIGHT_EYE, FIGHT_AT = (-0.5, -6.5, 4.2), (-0.5, -0.5, 0.8)
 WARY_EYE, WARY_AT = (-0.5, -8.0, 5.0), (-0.5, -1.0, 0.8)
@@ -83,6 +83,6 @@ BEATS = [
     Beat("question", "Nobody fights an equal.\nWar waits until someone can't lose.", 6.0, shot="conquest",
          start_tick=2000, caption_y=0.0, title=True, params=TRIBE,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "War — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"War — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

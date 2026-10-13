@@ -19,7 +19,7 @@ cycles — ns-fig-2 (mutation, 300 meetings a generation), seed 12 (typical of
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WIDE_EYE, WIDE_AT = (0, -37, 41), (0, 5, 0)
 LOW_EYE, LOW_AT = (0, -22, 13), (0, 1, 0)
@@ -61,6 +61,6 @@ BEATS = [
     Beat("point", "A good name helps only\nwhere people can keep track.", 6.0, shot="paper", start_tick=80,
          caption_y=0.0, title=True,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -48, 50), WIDE_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Reputation — after Nowak & Sigmund, 1998\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Reputation — after Nowak & Sigmund, 1998\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

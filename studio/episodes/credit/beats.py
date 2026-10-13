@@ -17,7 +17,7 @@ world — iv-5-credit, seed 17 (typical of 20): 51 loans by tick 20, about
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 # The whole 10 × 10 board: the pair wander apart after the loan (across the
 # wrapped edge, too) and meet again as it is repaid.
@@ -63,6 +63,6 @@ BEATS = [
          camera=hold(SIDE_EYE, SIDE_AT, lens=37)),
     Beat("question", "Every generation borrows\nfrom the one before.", 6.0, shot="world", start_tick=1000,
          caption_y=0.0, title=True, camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Credit — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Credit — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

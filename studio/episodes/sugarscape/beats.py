@@ -23,7 +23,7 @@ wealth — ii-5-wealth, seed 11 (typical of 20 seeds); the rich beat ends at
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 HILL = (14, 14, 1.8)
 WIDE_EYE, WIDE_AT = (0, -56, 30), (0, -2, 0)
@@ -89,6 +89,6 @@ BEATS = [
     Beat("question", "So why do some Flumps\nhave so much more than others?", 5.5, shot="wealth", start_tick=500,
          overlays=("stacks",), caption_y=0.0, title=True,
          camera=(Move(0, 5.5, (-2, -38, 24), (9, 0, 0), (-2, -52, 34), (6, 0, 0), orbit=-0.08),)),
-    Beat("end", "Sugarscape — Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Sugarscape — Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

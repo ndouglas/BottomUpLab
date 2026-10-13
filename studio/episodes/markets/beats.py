@@ -23,7 +23,7 @@ market — iv-3-trade, seed 19 (typical of 20 for the market): 355 exchanges
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 PANTRY_EYE, PANTRY_AT = (0, -12, 10), (0, -0.3, 0.4)
 SWAP_EYE, SWAP_AT = (0, -7.2, 6.2), (0, -0.2, 0.5)
@@ -76,6 +76,6 @@ BEATS = [
          camera=hold(SIDE_EYE, SIDE_AT, lens=37)),
     Beat("question", "Trade made the pie bigger.\nIt didn't share it out.", 6.0, shot="market", start_tick=1000,
          caption_y=0.0, title=True, camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "Markets — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Markets — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

@@ -195,7 +195,7 @@ Deliberately missing entrances and sparse gaps remain in the score. Measurements
 fixed rules are in `episodes/thresholds/measurements.md`, and the source audit is
 in `docs/superpowers/specs/2026-10-02-thresholds-spike.md`.
 
-Closing cards use `<title> - After <Names>, <Year>\nndouglas.github.io/SugarScape`
+Closing cards use `<title> - After <Names>, <Year>\nndouglas.github.io/BottomUpLab` (`episode.SITE_URL`)
 above a single camera-facing agent. A no-shot beat named `end` with `caption_y=0.45`
 uses the established composition and one late blink.
 

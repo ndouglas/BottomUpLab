@@ -22,7 +22,7 @@ below — nbm-continuous on 99 × 99: 50 % cheats, periodic edges, b = 1.71,
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 CLOSE_EYE, CLOSE_AT = (0, -6.8, 9.6), (0, -0.3, 0.3)
 TOP_EYE, TOP_AT = (0, -42, 108), (0, 1, 0)
@@ -68,6 +68,6 @@ BEATS = [
     Beat("point", "Nobody has to be nice.\nThey just have to be neighbors.", 6.5, shot="below", start_tick=200,
          caption_y=0.0, title=True,
          camera=(Move(0, 6.5, TOP_EYE, TOP_AT, (0, -70, 60), TOP_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Spatial games — after Nowak & May, 1992; Huberman & Glance, 1993;\nNowak, Bonhoeffer & May, 1994\nndouglas.github.io/SugarScape", 5.4, caption_y=0.45,
+    Beat("end", f"Spatial games — after Nowak & May, 1992; Huberman & Glance, 1993;\nNowak, Bonhoeffer & May, 1994\n{SITE_URL}", 5.4, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

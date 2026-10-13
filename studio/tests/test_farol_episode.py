@@ -14,7 +14,7 @@ class FarolEpisodeTests(unittest.TestCase):
         beats=episode.load_episode('farol')
         spec=(ROOT/'docs/superpowers/specs/2026-10-02-farol-spike.md').read_text()
         captions=re.findall(r'\| \d+ \| \w+ \| “(.*?)” \|',spec)
-        self.assertEqual([b.caption for b in beats],[c.replace('\\n','\n') for c in captions])
+        self.assertEqual([b.caption for b in beats],[c.replace('\\n','\n').replace('ndouglas.github.io/SugarScape',episode.SITE_URL) for c in captions])
         measured=json.loads((ROOT/'studio/episodes/farol/measurements.json').read_text())
         self.assertEqual(cut.total_frames([b.frames for b in beats],12)/30,95)
         self.assertEqual(beats[0].start_tick,0)

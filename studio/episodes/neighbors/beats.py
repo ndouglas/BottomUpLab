@@ -18,7 +18,7 @@ mixed — s71-integrate, seed 6: 38, 39, 16, 2 move; still from round 5 with
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 BOARD_EYE, BOARD_AT = (0, -16, 16.5), (0, -1.8, 0)
 LOW_EYE, LOW_AT = (0, -10, 7), (0, 1.5, 0)
@@ -73,6 +73,6 @@ BEATS = [
     Beat("point", "Nobody wanted a divided town.\nThey just didn't want to be outnumbered.", 6.0, shot="board", start_tick=6,
          caption_y=0.0, title=True, params=SCHELLING,
          camera=(Move(0, 6, BOARD_EYE, BOARD_AT, (0, -21, 21), BOARD_AT, lens0=32, lens1=32, orbit=0.1),)),
-    Beat("end", "Neighbors like me — after Schelling, 1969, 1971\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Neighbors like me — after Schelling, 1969, 1971\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

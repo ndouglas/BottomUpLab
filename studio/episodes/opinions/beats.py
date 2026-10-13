@@ -25,7 +25,7 @@ small — 50 agents, ε 0.22, seed 1: two camps (66 % and 34 %).
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 S = {"colors": "start"}
 HK = ("diagram",)
@@ -85,6 +85,6 @@ BEATS = [
     Beat("point", "Who you'll listen to decides whether a crowd agrees,\nsplits, or shatters.", 6.5, shot="three",
          start_tick=10, caption_y=0.0, title=True, params=S,
          camera=(Move(0, 6.5, *view("three"), *view("three", 1.3), lens0=32, lens1=32, orbit=0.1),)),
-    Beat("end", "Listening to the like-minded — after Hegselmann & Krause, 2002\nndouglas.github.io/SugarScape", 5.0,
+    Beat("end", f"Listening to the like-minded — after Hegselmann & Krause, 2002\n{SITE_URL}", 5.0,
          caption_y=0.45, camera=(Move(0, 5, (0, -5.5, 1.8), (0, 0, 0.6), (0, -5.2, 1.7), (0, 0, 0.6), lens0=50, lens1=53),)),
 ]

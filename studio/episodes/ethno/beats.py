@@ -20,7 +20,7 @@ blind1 — ha-standard with color-blind Flumps (discrimination none), seed 20
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 CLOSE_EYE, CLOSE_AT = (0, -9.2, 10.4), (0, -0.4, 0.2)
 WIDE_EYE, WIDE_AT = (0, -46, 44), (0, 2, 0)
@@ -74,6 +74,6 @@ BEATS = [
     Beat("point", "Favoritism didn't make them helpful.\nFamily did.", 6.0, shot="land", start_tick=1380, caption_y=0.0,
          title=True, params=TAG,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -60, 50), WIDE_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Ethnocentrism — after Hammond & Axelrod, 2006; Jansson, 2013\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Ethnocentrism — after Hammond & Axelrod, 2006; Jansson, 2013\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

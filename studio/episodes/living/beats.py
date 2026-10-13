@@ -16,7 +16,7 @@ low — dpd-run-4 (R = 1), seed 18 (typical): nobody left at cycle 243.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 CLOSE_EYE, CLOSE_AT = (0, -9.2, 10.4), (0, -0.4, 0.2)
 WIDE_EYE, WIDE_AT = (0, -30, 30), (0, 1, 0)
@@ -69,6 +69,6 @@ BEATS = [
     Beat("point", "Mixed with strangers, helpers vanish.\nAmong neighbors, they fill the world.", 6.0, shot="land",
          start_tick=500, caption_y=0.0, title=True, params={"colors": "strategy"},
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -40, 34), WIDE_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Living neighbors — after Epstein, 1998\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Living neighbors — after Epstein, 1998\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

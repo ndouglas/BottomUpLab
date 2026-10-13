@@ -1,6 +1,6 @@
 """The fourteen approved captions; frame indices deliberately differ from rounds."""
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 
 def beat(name,caption,shot,seconds=7,start=400,speed=2,compare=None):
@@ -26,6 +26,6 @@ BEATS=[
     beat('short','With short memories,\nthey crowd the same side.','m2',7,400,4),
     beat('middle','An intermediate memory helps them split\nalmost evenly, without talking.','m6',7,400,4),
     beat('long','Too much memory, and coordination\nfalls back near chance.','m12',7,400,4),
-    Beat('end',"Nobody goes, it's too crowded - After Arthur, 1994; Challet & Zhang, 1997\nndouglas.github.io/SugarScape",6,
+    Beat('end',f"Nobody goes, it's too crowded - After Arthur, 1994; Challet & Zhang, 1997\n{SITE_URL}",6,
          caption_y=.45,camera=(Move(0,6,(0,-5.5,1.8),(0,0,.6),(0,-5.2,1.7),(0,0,.6),lens0=50,lens1=53),)),
 ]

@@ -1,7 +1,10 @@
-# SugarScape
+# BottomUpLab
 
-A browser playground for the Sugarscape model from Joshua M. Epstein and Robert Axtell,
-*Growing Artificial Societies: Social Science from the Bottom Up* (1996).
+Agent-based models in the browser: societies, markets, games and minds that grow from
+local rules, each reproduced from its source paper and measured against it. The project
+began as a playground for the Sugarscape model from Joshua M. Epstein and Robert Axtell,
+*Growing Artificial Societies: Social Science from the Bottom Up* (1996), and takes its
+name from that subtitle. Live at <https://ndouglas.github.io/BottomUpLab/>.
 
 The simulation is written in Rust (`crates/sugarscape-core`), compiled to WebAssembly
 (`crates/sugarscape-wasm`), and driven by a small TypeScript front end (`web/`).

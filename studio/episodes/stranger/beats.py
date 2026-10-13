@@ -16,7 +16,7 @@ faces, strangers — Friends and strangers' fixed partners (cra-frn, seed 15)
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 GRID_EYE, GRID_AT = (0, -24, 26), (0, 0.5, 0)
 TOP_EYE, TOP_AT = (0, -42, 108), (0, 1, 0)
@@ -88,6 +88,6 @@ BEATS = [
     Beat("point", "Why help a stranger?\nThe Flumps do, when something makes the stranger less strange.", 6.5,
          shot="faces", start_tick=400, caption_y=0.0, title=True, params=FOLLOW,
          camera=(Move(0, 6.5, GRID_EYE, GRID_AT, (0, -32, 34), GRID_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Why help a stranger? — seven episodes, ten papers, 1986–2006\nndouglas.github.io/SugarScape", 5.5,
+    Beat("end", f"Why help a stranger? — seven episodes, ten papers, 1986–2006\n{SITE_URL}", 5.5,
          caption_y=0.45, camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

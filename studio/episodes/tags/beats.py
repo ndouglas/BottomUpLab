@@ -17,7 +17,7 @@ clones — eh-clones-only, seed 1 (typical): giving climbs to about 75 % by 75.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 RING_EYE, RING_AT = (0, -38, 62), (0, 2.5, 0)
 NEAR_EYE, NEAR_AT = (0, -22, 30), (0, 0, 0)
@@ -63,6 +63,6 @@ BEATS = [
          camera=hold(RING_EYE, RING_AT, lens=35, drift=(0, 1, -1))),
     Beat("point", "It wasn't tolerance.\nIt was twins.", 6.0, shot="long", start_tick=3400, caption_y=0.0, title=True,
          camera=(Move(0, 6, RING_EYE, RING_AT, (0, -40, 56), RING_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Tags — after Riolo, Cohen & Axelrod, 2001; Edmonds & Hales, 2003\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"Tags — after Riolo, Cohen & Axelrod, 2001; Edmonds & Hales, 2003\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

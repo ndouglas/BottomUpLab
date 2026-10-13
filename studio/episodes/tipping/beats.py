@@ -18,7 +18,7 @@ with a third the tolerance: from 40 and 40, all Red by step 61.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WIDE_EYE, WIDE_AT = (0, -22, 17), (0, -1.0, 0)
 LOW_EYE, LOW_AT = (0, -12, 6), (0, 1, 0)
@@ -66,6 +66,6 @@ BEATS = [
     Beat("point", "Whether a neighborhood stays mixed depends not only\non how tolerant people are, but on who, "
          "and how many.", 6.5, shot="fig19", start_tick=32, caption_y=0.0, title=True, overlays=AREA, params=TIP,
          camera=(Move(0, 6.5, WIDE_EYE, WIDE_AT, (0, -28, 22), WIDE_AT, lens0=26, lens1=26, orbit=0.1),)),
-    Beat("end", "The tipping point — after Schelling, 1969, 1971\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"The tipping point — after Schelling, 1969, 1971\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

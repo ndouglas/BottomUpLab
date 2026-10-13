@@ -7,7 +7,7 @@ class ThresholdsEpisodeTest(unittest.TestCase):
     def test_approved_storyboard_ends_with_standard_closing_card(self):
         beats=episode.load_episode('thresholds')
         self.assertEqual(len(beats),14)
-        self.assertEqual(beats[-1].caption,'The riot that needs one person - After Granovetter, 1978; Watts, 2002\nndouglas.github.io/SugarScape')
+        self.assertEqual(beats[-1].caption,'The riot that needs one person - After Granovetter, 1978; Watts, 2002\nndouglas.github.io/BottomUpLab')
         self.assertEqual(beats[-1].caption_y,.45)
         self.assertIsNone(beats[-1].shot)
         self.assertEqual(beats[12].compare,'dense-large')

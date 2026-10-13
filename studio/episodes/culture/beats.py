@@ -25,7 +25,7 @@ wander — dock-mobility-15 (the Sugarscape), seed 8: 100 cultures to one by
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 TEN_EYE, TEN_AT = (0, -11, 12.5), (0, 0.4, 0)
 TWELVE_EYE, TWELVE_AT = (0, -13, 14.5), (0, 0.5, 0)
@@ -80,6 +80,6 @@ BEATS = [
     Beat("point", "Neighbors grow alike, and the map stays divided.", 6.0, shot="sample", start_tick=800,
          caption_y=0.0, title=True, overlays=("lanes",), params=C,
          camera=(Move(0, 6.0, TEN_EYE, TEN_AT, (0, -15, 17), TEN_AT, lens0=32, lens1=32, orbit=0.1),)),
-    Beat("end", "One culture or many — after Axelrod, 1997\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"One culture or many — after Axelrod, 1997\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

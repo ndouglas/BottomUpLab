@@ -19,7 +19,7 @@ half — cra-ffr-05, seed 5: about 2.2 to period 250, collapsed by 300.
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WIDE_EYE, WIDE_AT = (0, -24, 26), (0, 0.5, 0)
 LOW_EYE, LOW_AT = (0, -15, 11), (0, 1, 0)
@@ -66,6 +66,6 @@ BEATS = [
     Beat("point", "Cooperation doesn't need neighbors.\nIt needs the same faces.", 6.0, shot="friends", start_tick=400,
          caption_y=0.0, title=True,
          camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -32, 34), WIDE_AT, lens0=35, lens1=35, orbit=0.1),)),
-    Beat("end", "Friends and strangers — after Cohen, Riolo & Axelrod, 2001\nndouglas.github.io/SugarScape", 5.0,
+    Beat("end", f"Friends and strangers — after Cohen, Riolo & Axelrod, 2001\n{SITE_URL}", 5.0,
          caption_y=0.45, camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]

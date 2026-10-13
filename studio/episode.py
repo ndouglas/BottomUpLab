@@ -8,6 +8,7 @@ import animate
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FPS = 30
+SITE_URL = "ndouglas.github.io/BottomUpLab"  # the closing card of every episode
 
 
 @dataclass(frozen=True)

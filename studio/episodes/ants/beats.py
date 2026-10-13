@@ -1,6 +1,6 @@
 """Ants at two food piles: the fourteen approved beats."""
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 
 def beat(name,caption,shot,seconds=7,start=0,speed=1):
@@ -25,5 +25,5 @@ BEATS=[
     beat('neighbors','Alfarano and Milaković counted neighbors,\nrather than one partner per meeting.','ring',8,0,0.01),
     beat('growth','With their rule, growth weakens herding on rings.\nRandom networks keep their swings.','random',8,0,15),
     beat('independent','A few Flumps who never copy\ncan calm the crowd.','independent',8,0,15),
-    Beat('end','Ants at two food piles - After Kirman, 1993; Alfarano & Milaković, 2007\nndouglas.github.io/SugarScape',5,caption_y=.45,camera=(Move(0,5,(0,-5.5,1.8),(0,0,.6),(0,-5.2,1.7),(0,0,.6),lens0=50,lens1=53),)),
+    Beat('end',f'Ants at two food piles - After Kirman, 1993; Alfarano & Milaković, 2007\n{SITE_URL}',5,caption_y=.45,camera=(Move(0,5,(0,-5.5,1.8),(0,0,.6),(0,-5.2,1.7),(0,0,.6),lens0=50,lens1=53),)),
 ]

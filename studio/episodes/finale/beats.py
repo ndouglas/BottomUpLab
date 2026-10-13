@@ -16,7 +16,7 @@ collide — iii-12-collision, seed 17: opposed blocks in the corners; each tribe
 """
 
 from camera import Move
-from episode import Beat
+from episode import Beat, SITE_URL
 
 WIDE_EYE, WIDE_AT = (0, -56, 30), (0, -2, 0)
 SIDE_EYE, SIDE_AT = (0, -60, 34), (-10, 0, 0)
@@ -73,6 +73,6 @@ BEATS = [
          params={**TRIBE, **LEDGER}, camera=hold((0, -70, 40), WIDE_AT, lens=34)),
     Beat("question", "The rules are simple.\nNot every story in the book is in them.", 6.0, shot="everything",
          start_tick=300, caption_y=0.0, title=True, camera=(Move(0, 6, WIDE_EYE, WIDE_AT, (0, -70, 40), WIDE_AT, orbit=0.1),)),
-    Beat("end", "What didn't reproduce — after Epstein & Axtell, 1996\nndouglas.github.io/SugarScape", 5.0, caption_y=0.45,
+    Beat("end", f"What didn't reproduce — after Epstein & Axtell, 1996\n{SITE_URL}", 5.0, caption_y=0.45,
          camera=hold((0, -5.5, 1.8), (0, 0, 0.6), lens=50, drift=(0, 0.3, -0.1))),
 ]
