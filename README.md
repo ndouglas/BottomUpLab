@@ -3762,10 +3762,18 @@ Requirements: Rust with the `wasm32-unknown-unknown` target, `wasm-pack`, Node 2
 ## Tests
 
     cargo test                                                      # whole workspace, incl. the CLI
+    cargo test --manifest-path crates/sugarscape-experiments-wasm/Cargo.toml # episode bindings (own workspace)
     cargo test -p sugarscape-core                                   # unit + property tests
     cargo test -p sugarscape-core --release --test book -- --ignored # book reproductions
-    wasm-pack test --node crates/sugarscape-wasm                    # bindings
-    cd web && npm run build && npm test                             # front-end logic (build first: the engine tests load the real WASM package)
+    wasm-pack test --node crates/sugarscape-wasm                    # engine bindings
+    wasm-pack test --node crates/sugarscape-experiments-wasm        # episode (provenance) bindings
+    cd web && npm run build && npm test                             # front-end logic (build first: the tests load the real WASM packages)
+
+The web build produces two WebAssembly packages: the engine (`web/src/wasm-pkg/`,
+the playground and sweeps, budgeted at 8 MB raw) and the experiments package
+(`web/src/experiments-pkg/`), which only the episodes worker loads. The
+experiments crate is its own Cargo workspace, like `survey/`, so the root
+manifest and lockfile that core compiles in as provenance inputs stay unchanged.
 
 The book reproduction tests include a carrying-capacity check that reproduces the book's
 claim that the population stabilizes at approximately 224 agents on the default 50×50

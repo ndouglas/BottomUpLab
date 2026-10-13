@@ -32,6 +32,10 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            crates/sugarscape-experiments-wasm -> target
       - uses: jetli/wasm-pack-action@v0.4.0
         with:
           # Pinned: "latest" silently falls back to v0.9.1 when the release lookup

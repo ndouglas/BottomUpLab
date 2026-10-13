@@ -68,7 +68,9 @@ the engine crate does, plus `wasm-bindgen`, `console_error_panic_hook` and
 `serde_json`, with `wasm-bindgen-test` as its dev-dependency. The moved code
 uses nothing else. It must not depend on
 `sugarscape-wasm`: an rlib dependency would carry every engine export into the
-experiments bundle. The workspace `Cargo.toml` lists the new member.
+experiments bundle. The crate is its own Cargo workspace, as `survey/` is,
+with its own committed lockfile and the root profiles repeated; it is not a
+member of the root workspace (see the implementation note at the end).
 
 The CLI crate and the survey crate already use the cluster natively and are
 unchanged.
@@ -124,8 +126,9 @@ Page changes:
   TypeScript's `tsc --noEmit` separately rejects any page import of those
   names from the engine package, because its generated `.d.ts` no longer
   declares them.
-- `cargo test --workspace` and `cargo clippy --all-targets` cover the new
-  crate through workspace membership. The CI `wasm` job adds
+- The root `cargo test --workspace` and `cargo clippy --all-targets` do not
+  reach the new crate. CI runs `cargo fmt --check`, `cargo clippy` and
+  `cargo test` for it by manifest path, and the `wasm` job adds
   `wasm-pack test --node crates/sugarscape-experiments-wasm`.
 - Core's tests, the CLI's tests, the survey, the war-study literal inventory
   and the caching-parity authentication of `lib.rs` are untouched because
@@ -134,10 +137,11 @@ Page changes:
 
 ### CI and deployment
 
-- `.github/workflows/ci.yml`: the `wasm` job gains the second
-  `wasm-pack test --node` line. The `web` job and `pages.yml` run
-  `npm run build`, which now builds both packages and checks the budget; no
-  workflow edit beyond the one line.
+- `.github/workflows/ci.yml`: the `lint` and `test` jobs gain manifest-path
+  steps for the crate, the `wasm` job gains the second `wasm-pack test --node`
+  line, and the `rust-cache` steps of the jobs that build the crate (and in
+  `pages.yml`) list its target directory. The `web` job and `pages.yml` run
+  `npm run build`, which now builds both packages and checks the budget.
 - Expected results after the change, to be recorded in the plan's final
   measurement step: engine bundle about 6.6 MB raw and 2.1 MB gzipped;
   experiments bundle whatever the cluster plus the engine code it references
@@ -173,5 +177,43 @@ Page changes:
 - Dev-mode builds (`--dev`) skip link-time optimization, so the dev engine
   bundle may stay larger than the release one. Only the release bundle, which
   is what deploys, is budgeted.
-- Two wasm-pack builds lengthen `npm run build` and the Pages deploy by one
-  build of the smaller crate. Acceptable.
+- Two wasm-pack builds lengthen `npm run build` and the Pages deploy. Because
+  the crate is its own workspace with its own target directory, the second
+  build compiles core again rather than reusing the engine build's artifacts;
+  measured costs are in the implementation note below.
+
+## Measured after implementation
+
+Release builds with wasm-pack 0.15.0 and wasm-opt, 2026-10-12.
+
+| Bundle | Raw bytes | Gzipped bytes |
+|---|---|---|
+| Engine, `sugarscape_bg.wasm` (every page load) | 6,581,596 | 2,098,853 |
+| Experiments, `experiments_bg.wasm` (episodes worker only) | 36,437,274 | 3,108,125 |
+| Single bundle before the split, built from the same base commit | 41,512,040 | 4,692,428 |
+| Single bundle as shipped when this design was written | 23,623,911 | 4,155,336 |
+
+The last row was a local artifact built before key delegation merged; key
+delegation added about 8.5 MB of embedded fixtures, which is why the
+like-for-like row above it is larger. The experiments bundle is almost
+entirely data: four data segments hold about 32 MB of embedded JSON fixtures,
+and its code is smaller than the engine's. The engine budget is 8,000,000 raw
+bytes, checked by `web/scripts/wasm-budget.mjs`.
+
+Implementation note: core compiles the root `Cargo.toml` and `Cargo.lock` in
+as reviewed provenance inputs (`key_delegation::source_inputs`), and the key
+registration metadata pins their digests, so adding a workspace member breaks
+core's own tests. The experiments crate is therefore its own Cargo workspace,
+as `survey/` already is: an empty `[workspace]` table, a committed lockfile of
+its own, and the root profiles repeated. The root manifest and lockfile are
+byte-identical to those before the split, and CI runs fmt, clippy and the
+tests for the crate by manifest path.
+
+Measured cost of the separate target directory, cold, on the development
+laptop: `cargo clippy` 27 s, `cargo test` 2 min 11 s (core in the test
+profile), `wasm-pack test --node` 3 min 23 s, and the release
+`wasm-pack build` 1 min 03 s, the same as the engine's. In CI, `rust-cache`
+keeps these warm until core changes. Pointing the crate at the root target
+directory with `[build] target-dir` might let cargo reuse core's artifacts
+across the two workspace roots; that is untested and left as a follow-up to
+measure.
