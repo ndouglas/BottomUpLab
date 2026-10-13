@@ -3,9 +3,9 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { burrow_access_replay_json, initSync } from './wasm-pkg/sugarscape.js';
+import { burrow_access_replay_json, initSync } from './experiments-pkg/experiments.js';
 
-initSync({ module: readFileSync(new URL('./wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+initSync({ module: readFileSync(new URL('./experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 const examples = ['access-explore', 'access-known-goal'];
 const seeds = ['7', '18446744073709551615'];
 const configPath = (example: string) => fileURLToPath(new URL(`../../docs/examples/burrow/${example}.json`, import.meta.url));

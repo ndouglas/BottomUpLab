@@ -5,8 +5,13 @@
   "scripts": {
     "pretest": "cargo build --release -p sugarscape-cli --manifest-path ../Cargo.toml",
     "test": "vitest run",
-    "wasm": "wasm-pack build ../crates/sugarscape-wasm --target web --release --out-dir ../../web/src/wasm-pkg --out-name sugarscape",
-    "wasm:dev": "wasm-pack build ../crates/sugarscape-wasm --target web --dev --out-dir ../../web/src/wasm-pkg --out-name sugarscape",
+    "wasm:engine": "wasm-pack build ../crates/sugarscape-wasm --target web --release --out-dir ../../web/src/wasm-pkg --out-name sugarscape",
+    "wasm:experiments": "wasm-pack build ../crates/sugarscape-experiments-wasm --target web --release --out-dir ../../web/src/experiments-pkg --out-name experiments",
+    "wasm:engine:dev": "wasm-pack build ../crates/sugarscape-wasm --target web --dev --out-dir ../../web/src/wasm-pkg --out-name sugarscape",
+    "wasm:experiments:dev": "wasm-pack build ../crates/sugarscape-experiments-wasm --target web --dev --out-dir ../../web/src/experiments-pkg --out-name experiments",
+    "wasm:budget": "node scripts/wasm-budget.mjs",
+    "wasm": "npm run wasm:engine && npm run wasm:experiments && npm run wasm:budget",
+    "wasm:dev": "npm run wasm:engine:dev && npm run wasm:experiments:dev",
     "dev": "npm run wasm:dev && vite",
     "build": "npm run wasm && tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit"

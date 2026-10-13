@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { initSync, experiment_catalog_json, experiment_run_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_catalog_json, experiment_run_json } from '../experiments-pkg/experiments.js';
 import { projectCheckpoint, resultPayload } from './projection';
 import { surfaceDisplay, surfaceChoiceLabel } from './surface-projection';
 import { obj, list } from './presentation';
 import type { EpisodeRecord, StudyDescriptor } from './types';
-initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 const descriptor = (JSON.parse(experiment_catalog_json()) as StudyDescriptor[]).find(d => String(d.id) === 'surface_discovery')!;
 const record = JSON.parse(experiment_run_json(JSON.stringify(descriptor.default_input))) as EpisodeRecord;
 it('selected own checkpoint excludes evaluator, peer and future sentinels', () => {

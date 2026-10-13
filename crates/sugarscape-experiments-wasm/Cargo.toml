@@ -1,0 +1,37 @@
+[package]
+name = "sugarscape-experiments-wasm"
+description = "WASM bindings for the Minds provenance experiments, loaded only by the episodes worker"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# Not a member of the repository's workspace, like survey/. Adding a member
+# would change the root Cargo.toml and Cargo.lock, which core compiles in as
+# reviewed provenance inputs (key_delegation::source_inputs and the key
+# registration metadata). This crate keeps its own lockfile instead.
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sugarscape-core = { path = "../sugarscape-core" }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+serde_json = "1"
+
+[dev-dependencies]
+# The Node test inspects JsValue errors through js-sys; the exports themselves do not use it.
+js-sys = "0.3"
+wasm-bindgen-test = "0.3"
+
+# Profiles are read only from a workspace root, so the root workspace's are repeated here.
+[profile.release]
+lto = true
+opt-level = 3
+
+[profile.test]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true
+debug = "line-tables-only"

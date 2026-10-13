@@ -3,8 +3,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { projectCheckpoint, resultPayload } from './projection';
 import { gateDisplay } from './gate-projection';
 import type { EpisodeRecord } from './types';
-import { initSync, experiment_run_json } from '../wasm-pkg/sugarscape.js';
-initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+import { initSync, experiment_run_json } from '../experiments-pkg/experiments.js';
+initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 describe.each([
   ['supplied near', 1, 3, 0, 540, 60],
   ['supplied far', 2, 6, 1, 423, 30],

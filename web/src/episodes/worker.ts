@@ -1,5 +1,5 @@
 // This worker owns its WASM instance. The page terminates it on every end state.
-import init, { experiment_catalog_json, experiment_recorded_json, experiment_run_json, experiment_validate_json } from '../wasm-pkg/sugarscape.js';
+import init, { experiment_catalog_json, experiment_recorded_json, experiment_run_json, experiment_validate_json } from '../experiments-pkg/experiments.js';
 import { parseErrors } from '../types';
 import type { EpisodeRecord, Json, StudyDescriptor, WorkerReply, WorkerRequest } from './types';
 let started = false;

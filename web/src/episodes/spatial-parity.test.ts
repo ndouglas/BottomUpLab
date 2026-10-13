@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json } from '../experiments-pkg/experiments.js';
 import { rendererAvailable } from './catalog';
 import { historicalSourceBytes } from './test-fixtures/historical-source';
 import type { EpisodeRecord, Json, StudyDescriptor } from './types';
@@ -13,7 +13,7 @@ type ObjectJson = { [key: string]: Json };
 type Path = (string | number)[];
 interface InspectionLeaf { path: Path; category: 'target' | 'inspection_float' | 'snapshot_bytes'; value: Json }
 const cwd = fileURLToPath(new URL('../../../', import.meta.url));
-const wasmBytes = readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url));
+const wasmBytes = readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url));
 initSync({ module: wasmBytes });
 async function hash(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), value => value.toString(16).padStart(2, '0')).join('');

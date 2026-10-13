@@ -1,7 +1,7 @@
 //! Node tests of actual checked WASM exports, including complete reproduction.
 use serde_json::{json, Value};
 use sugarscape_core::browser_experiments as core;
-use sugarscape_wasm::{
+use sugarscape_experiments_wasm::{
     experiment_catalog_json, experiment_recorded_json, experiment_run_json,
     experiment_validate_json,
 };

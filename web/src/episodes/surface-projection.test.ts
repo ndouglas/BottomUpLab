@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { initSync, experiment_catalog_json, experiment_run_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_catalog_json, experiment_run_json } from '../experiments-pkg/experiments.js';
 import { projectCheckpoint } from './projection';
 import { surfaceDisplay, surfaceSummary } from './surface-projection';
 import { obj, list } from './presentation';
 import type { EpisodeRecord, Json, StudyDescriptor } from './types';
-initSync({module:readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm',import.meta.url))});
+initSync({module:readFileSync(new URL('../experiments-pkg/experiments_bg.wasm',import.meta.url))});
 const catalog = JSON.parse(experiment_catalog_json()) as StudyDescriptor[];
 function run(study:string, patch:Record<string,Json> = {}):EpisodeRecord {
  const input=structuredClone(obj(catalog.find(d=>d.id===study)!.default_input));

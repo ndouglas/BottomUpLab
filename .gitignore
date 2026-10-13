@@ -24,6 +24,7 @@ target
 node_modules/
 web/dist/
 web/src/wasm-pkg/
+web/src/experiments-pkg/
 .claude/worktrees/
 
 # Flump studio build outputs

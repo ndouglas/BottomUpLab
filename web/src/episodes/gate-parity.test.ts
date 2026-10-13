@@ -3,9 +3,9 @@ import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { expect, it } from 'vitest';
-import { initSync, experiment_run_json, experiment_validate_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_run_json, experiment_validate_json } from '../experiments-pkg/experiments.js';
 import type { EpisodeRecord } from './types';
-initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 const cwd = fileURLToPath(new URL('../../../', import.meta.url));
 for (const [name, holding_cost, holder_share, distance, holder, retriever] of [
  ['supplied near',1,3,0,540,60], ['supplied far',2,6,1,423,30], ['non-equilibrium delayed deadline',1,3,0,540,15], ['idle deadline',1,0,0,0,0],

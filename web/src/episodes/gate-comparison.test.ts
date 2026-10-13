@@ -4,8 +4,8 @@ import { gateComparisonKey, gateMatchedInputs, gateSettingLabel } from './gate-c
 import { matchingCheckpoint } from './comparison';
 import type { EpisodeRecord, StudyDescriptor } from './types';
 import { beforeAll } from 'vitest';
-import { initSync, experiment_run_json } from '../wasm-pkg/sugarscape.js';
-initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+import { initSync, experiment_run_json } from '../experiments-pkg/experiments.js';
+initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 let near: EpisodeRecord, idle: EpisodeRecord;
 beforeAll(() => {
  const run = (holder:number,retriever:number):EpisodeRecord => JSON.parse(experiment_run_json(JSON.stringify({study:'gate_assistance',stratum:{holding_cost:1,holder_share:3,distance:0},profile:{holder,retriever},ids:{holder:'Agent-A',retriever:'Agent-B'}})));

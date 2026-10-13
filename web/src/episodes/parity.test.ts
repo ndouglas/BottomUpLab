@@ -3,10 +3,10 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json, experiment_recorded_json } from '../wasm-pkg/sugarscape.js';
+import { initSync, experiment_catalog_json, experiment_run_json, experiment_validate_json, experiment_recorded_json } from '../experiments-pkg/experiments.js';
 import type { StudyDescriptor } from './types';
 
-initSync({ module: readFileSync(new URL('../wasm-pkg/sugarscape_bg.wasm', import.meta.url)) });
+initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 const cwd = fileURLToPath(new URL('../../../', import.meta.url));
 function native(op: string, text?: string): unknown {
   const scratch = mkdtempSync(`${tmpdir()}/episode-parity-`);
