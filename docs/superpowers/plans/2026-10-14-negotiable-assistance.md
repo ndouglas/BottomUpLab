@@ -10,7 +10,9 @@
 
 **Spec:** [Approved design](../specs/2026-10-14-negotiable-assistance-design.md), commit `89823ae`; written approval: user's “LGTM!” on 2026-10-14.
 
-**Status:** Plan for review. Implementation, reference generation and scientific collection have not started. Plan approval permits engineering implementation and unit/reference checks; scientific first/repeat collection and publication require their separate authorization.
+**Status:** User-approved plan; engineering implementation, independently approved v2 references and required unit/integration/source/build checks are complete. Fresh Task 4 and whole-branch reviews remain pending. Scientific first/repeat collection and publication remain separately authorized work and have not run.
+
+**Recorded integration rulings:** F5 selection is shared through `claims/mod.rs` with an equivalent import in its existing consumer; its validators are unchanged. The String-returning `build_record` convenience is test-only, while shipped callbacks preserve typed mathematical/operational failures. The current compatibility bridge updates only the two `lib.rs` byte/SHA receipts for the exact 21-byte module export; original JSON, historical identity fields and every other receipt are preserved. These narrow scope/interface adjustments are retained in the SDD ledger for fresh review.
 
 ## Global Constraints
 
