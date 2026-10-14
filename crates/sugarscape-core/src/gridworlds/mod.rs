@@ -2,4 +2,6 @@
 //! Orseau and Legg (2017), arXiv:1711.09883, from the reference implementation; tabular
 //! Q-learning and Sarsa in place of the paper's deep agents (a labeled reconstruction).
 pub mod coins;
+pub mod env;
 pub mod grid;
+pub mod optimal;
