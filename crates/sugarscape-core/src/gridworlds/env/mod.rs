@@ -1,9 +1,12 @@
 //! The paper's environments behind one interface. Every environment owns its layout (the
 //! reference's ASCII strings), its moving objects and its flags, and tells the learner its
 //! state key, the page its board, and value iteration its exact model.
+pub mod boat_race;
 pub mod offswitch;
 pub mod sokoban;
 pub mod supervisor;
+pub mod tomato;
+pub mod whisky;
 
 use super::{
     coins::Coins,
@@ -130,6 +133,9 @@ pub enum Env {
     OffSwitch(offswitch::OffSwitch),
     Sokoban(sokoban::Sokoban),
     Supervisor(supervisor::Supervisor),
+    BoatRace(boat_race::BoatRace),
+    Tomato(tomato::Tomato),
+    Whisky(whisky::Whisky),
 }
 
 macro_rules! each {
@@ -138,6 +144,9 @@ macro_rules! each {
             Env::OffSwitch($e) => $body,
             Env::Sokoban($e) => $body,
             Env::Supervisor($e) => $body,
+            Env::BoatRace($e) => $body,
+            Env::Tomato($e) => $body,
+            Env::Whisky($e) => $body,
         }
     };
 }
