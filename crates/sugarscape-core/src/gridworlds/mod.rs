@@ -4,4 +4,5 @@
 pub mod coins;
 pub mod env;
 pub mod grid;
+pub mod learner;
 pub mod optimal;
