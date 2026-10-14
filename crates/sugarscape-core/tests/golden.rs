@@ -470,6 +470,15 @@ const MODEL_GOLDEN: &[(&str, u64)] = &[
     ("gridworlds-neutral", 0x94a19e44cc984d08),
     ("gridworlds-foe", 0xaf2a88579faa5b94),
     ("gridworlds-island", 0xb1d46649d58dbcab),
+    // Consequences of misaligned AI: 200 ticks, seed 1.
+    ("misaligned-recommender-proxy", 0x15bfaf872143c81b),
+    ("misaligned-recommender-gradient", 0x8a12788db5a3296f),
+    ("misaligned-recommender-impact", 0xeb3243e1a59e3239),
+    ("misaligned-recommender-interactive", 0xea03c5fe034d086a),
+    ("misaligned-recommender-slow-human", 0x15d5e00d2ba7ac9a),
+    ("misaligned-recommender-optimal", 0xe7eed5b02255e249),
+    ("misaligned-recommender-wasteful", 0xd943f791df3bb4b4),
+    ("misaligned-logarithmic-floor", 0x4b67a8e858a8924f),
 ];
 
 fn fingerprint(id: &str) -> u64 {

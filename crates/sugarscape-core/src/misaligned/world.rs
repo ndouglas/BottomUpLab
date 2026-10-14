@@ -521,4 +521,47 @@ mod tests {
         assert!(w.series("nope").is_none());
         assert_eq!(w.population(), 2);
     }
+
+    #[test]
+    fn frames_have_the_declared_size_and_draw_the_bars() {
+        let mut w = world(MisalignedConfig::default());
+        w.run(2);
+        assert_eq!(w.size(), (200, 152));
+        let mut buf = vec![];
+        for mode in ["", "bars"] {
+            w.render(mode, "", &mut buf).unwrap();
+            assert_eq!(buf.len(), 200 * 152 * 4, "{mode}");
+        }
+        assert!(w.render("surface", "", &mut buf).is_err());
+        w.render("bars", "", &mut buf).unwrap();
+        // Bar c (index 2, x 104..144) is unmentioned: its column at mid-height is orange; bar a's
+        // top rows are background because a ≈ 1 of 10.
+        let at = |x: usize, y: usize| &buf[(y * 200 + x) * 4..(y * 200 + x) * 4 + 3];
+        assert_eq!(at(124, 60), &[235, 150, 60]);
+        assert_eq!(at(28, 115), &[70, 130, 230], "bar a is drawn from the bottom up (row 119 is the floor line)");
+        assert_ne!(at(28, 10), &[70, 130, 230], "and is short");
+        // The optimum tick on bar d (index 3) sits at y_of(5) = 119 − round(0.5 · 119) = 59 (and 58).
+        assert_eq!(at(172, 59), &[240, 210, 70]);
+        // The strip is filled from its left edge (x = 8) to the current utility, which lies right of x = 20.
+        assert!((128..144).any(|y| at(20, y) == [70, 130, 230] || at(20, y) == [230, 70, 70] || at(20, y) == [150, 150, 150]));
+    }
+
+    #[test]
+    fn inspection_reads_bars_gaps_and_the_strip() {
+        let mut w = world(MisalignedConfig::default());
+        w.run(1);
+        let bar: serde_json::Value = serde_json::from_str(&w.inspect_json(124, 60).unwrap()).unwrap();
+        assert_eq!((bar["panel"].as_str(), bar["index"].as_u64(), bar["name"].as_str(), bar["in_proxy"].as_bool()), (Some("attribute"), Some(2), Some("c"), Some(false)));
+        assert!(bar["sensitivity"].as_f64().unwrap() > 0.0 && bar["rank"].as_u64().is_some());
+        assert_eq!(bar["start"].as_f64(), Some(7.0));
+        assert_eq!(bar["optimum"].as_f64(), Some(5.0));
+        assert_eq!(bar["limit"].as_f64(), Some(0.0));
+        let gap: serde_json::Value = serde_json::from_str(&w.inspect_json(50, 60).unwrap()).unwrap();
+        assert_eq!(gap["panel"], "utility");
+        let strip: serde_json::Value = serde_json::from_str(&w.inspect_json(100, 135).unwrap()).unwrap();
+        assert_eq!((strip["panel"].as_str(), strip["utility_start"].as_f64(), strip["optimum"].as_f64()), (Some("utility"), Some(16.0), Some(20.0)));
+        assert_eq!(strip["switched_off"], false);
+        assert!(strip["outcome"]["proxy_history"].is_array());
+        assert!(w.inspect_json(200, 0).is_err() && w.inspect_json(0, 152).is_err());
+    }
 }

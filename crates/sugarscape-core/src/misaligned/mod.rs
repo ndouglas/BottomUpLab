@@ -4,11 +4,13 @@
 //! the climber, the starts and the human's interval are ours.
 mod config;
 pub mod human;
+mod presets;
 pub mod robots;
 mod stats;
 mod view;
 mod world;
 pub mod worlds;
 pub use config::*;
+pub use presets::presets;
 pub use stats::{series_names, MisalignedSnapshot, SERIES};
 pub use world::{MisalignedWorld, Outcome, ProxyChange};
