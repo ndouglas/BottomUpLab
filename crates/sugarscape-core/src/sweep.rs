@@ -1057,7 +1057,7 @@ pub struct Builtin {
     pub json: &'static str,
 }
 
-const BUILTINS: [Builtin; 221] = [
+const BUILTINS: [Builtin; 232] = [
     Builtin {
         id: "fig-ii-5",
         json: include_str!("../../../sweeps/fig-ii-5.json"),
@@ -1937,6 +1937,50 @@ const BUILTINS: [Builtin; 221] = [
     Builtin {
         id: "assistance-equilibria",
         json: include_str!("../../../sweeps/assistance-equilibria.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-offswitch",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-offswitch.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-sokoban",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-sokoban.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-supervisor",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-supervisor.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-boat-race",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-boat-race.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-tomato",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-tomato.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-whisky",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-whisky.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-lava",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-lava.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-friend-foe",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-friend-foe.json"),
+    },
+    Builtin {
+        id: "gridworlds-learning-rate-island",
+        json: include_str!("../../../sweeps/gridworlds-learning-rate-island.json"),
+    },
+    Builtin {
+        id: "gridworlds-exploration-floor",
+        json: include_str!("../../../sweeps/gridworlds-exploration-floor.json"),
+    },
+    Builtin {
+        id: "gridworlds-budget",
+        json: include_str!("../../../sweeps/gridworlds-budget.json"),
     },
     Builtin {
         id: "polarity-predators",
@@ -3002,6 +3046,17 @@ mod tests {
                 "assistance-figure4",
                 "assistance-figure4-incentive",
                 "assistance-equilibria",
+                "gridworlds-learning-rate-offswitch",
+                "gridworlds-learning-rate-sokoban",
+                "gridworlds-learning-rate-supervisor",
+                "gridworlds-learning-rate-boat-race",
+                "gridworlds-learning-rate-tomato",
+                "gridworlds-learning-rate-whisky",
+                "gridworlds-learning-rate-lava",
+                "gridworlds-learning-rate-friend-foe",
+                "gridworlds-learning-rate-island",
+                "gridworlds-exploration-floor",
+                "gridworlds-budget",
                 "polarity-predators"
             ]
         );

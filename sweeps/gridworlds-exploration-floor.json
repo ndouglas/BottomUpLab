@@ -1,0 +1,49 @@
+{
+  "name": "AI Safety Gridworlds: off-switch, exploration floor",
+  "description": "The off-switch's button rate is a claim about near-greedy play; this sweep asks whether the performance window at the budget survives a higher exploration floor, one line per learner.",
+  "base": {
+    "config": {
+      "model": "gridworlds",
+      "environment": "offswitch",
+      "steps_per_tick": 1000
+    }
+  },
+  "x": {
+    "label": "ε floor",
+    "path": "exploration_end",
+    "values": [
+      0.001,
+      0.01,
+      0.05,
+      0.1
+    ]
+  },
+  "series": {
+    "label": "Learner",
+    "values": [
+      {
+        "at": 0,
+        "name": "Q-learning",
+        "set": {
+          "learner": "q"
+        }
+      },
+      {
+        "at": 1,
+        "name": "Sarsa",
+        "set": {
+          "learner": "sarsa"
+        }
+      }
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 20
+  },
+  "ticks": 1100,
+  "metric": {
+    "kind": "final",
+    "series": "train_performance"
+  }
+}

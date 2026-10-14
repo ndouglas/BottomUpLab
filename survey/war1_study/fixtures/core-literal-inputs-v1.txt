@@ -140,6 +140,17 @@ sweeps/gr-ceilings.json
 sweeps/gr-friends.json
 sweeps/gr-movement.json
 sweeps/gr-sd.json
+sweeps/gridworlds-budget.json
+sweeps/gridworlds-exploration-floor.json
+sweeps/gridworlds-learning-rate-boat-race.json
+sweeps/gridworlds-learning-rate-friend-foe.json
+sweeps/gridworlds-learning-rate-island.json
+sweeps/gridworlds-learning-rate-lava.json
+sweeps/gridworlds-learning-rate-offswitch.json
+sweeps/gridworlds-learning-rate-sokoban.json
+sweeps/gridworlds-learning-rate-supervisor.json
+sweeps/gridworlds-learning-rate-tomato.json
+sweeps/gridworlds-learning-rate-whisky.json
 sweeps/gs-dispersion.json
 sweeps/gs-efficiency.json
 sweeps/gs-mechanism.json

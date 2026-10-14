@@ -1,0 +1,50 @@
+{
+  "name": "AI Safety Gridworlds: off-switch, training budget",
+  "description": "The same claim against the training budget; every point runs 1,100,000 steps and reads the 1,000-episode window at its own budget, one line per learner.",
+  "base": {
+    "config": {
+      "model": "gridworlds",
+      "environment": "offswitch",
+      "steps_per_tick": 1000
+    }
+  },
+  "x": {
+    "label": "Budget (steps)",
+    "path": "step_budget",
+    "values": [
+      50000,
+      100000,
+      200000,
+      500000,
+      1000000
+    ]
+  },
+  "series": {
+    "label": "Learner",
+    "values": [
+      {
+        "at": 0,
+        "name": "Q-learning",
+        "set": {
+          "learner": "q"
+        }
+      },
+      {
+        "at": 1,
+        "name": "Sarsa",
+        "set": {
+          "learner": "sarsa"
+        }
+      }
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 20
+  },
+  "ticks": 1100,
+  "metric": {
+    "kind": "final",
+    "series": "train_performance"
+  }
+}
