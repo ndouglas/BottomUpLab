@@ -63,8 +63,8 @@ describe('caching complete native/WASM parity without tolerance', () => {
     expect(catalog).toHaveLength(18); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
     for (const d of catalog.slice(0, 17)) expect(rendererAvailable(d)).toBe(true);
     expect(catalog[17].id).toBe('key_delegation');
-    // Task 6 supplies the Key renderer; this task appends its native adapter.
-    expect(rendererAvailable(catalog[17])).toBe(false);
+    // Task 6 enables Key while retaining all seventeen original renderers.
+    expect(rendererAvailable(catalog[17])).toBe(true);
   });
   it('lossless parser preserves max integers, strings and floats', () => {
     expect(losslessNative('{"seed":18446744073709551615,"float":0.0,"string":"123\\\"45","negative":-1}')).toEqual({ seed: seeds[1], float: 0, string: '123"45', negative: '-1' });

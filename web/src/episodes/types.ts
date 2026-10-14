@@ -1,8 +1,8 @@
 import type { FieldError } from '../types';
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-export type StudyId = 'wink' | 'testimony' | 'testimony_game' | 'strategic_reporting' | 'strategy_inference' | 'adversarial_audit' | 'shared_surface' | 'active_surface' | 'surface_discovery' | 'burrow_excavation' | 'burrow_access' | 'foraging_fixed' | 'foraging_passage' | 'foraging_construction' | 'protection_recaching' | 'deception_gestures' | 'gate_assistance';
+export type StudyId = 'wink' | 'testimony' | 'testimony_game' | 'strategic_reporting' | 'strategy_inference' | 'adversarial_audit' | 'shared_surface' | 'active_surface' | 'surface_discovery' | 'burrow_excavation' | 'burrow_access' | 'foraging_fixed' | 'foraging_passage' | 'foraging_construction' | 'protection_recaching' | 'deception_gestures' | 'gate_assistance' | 'key_delegation';
 export interface StudyDescriptor {
-  id: StudyId; family: 'game' | 'testimony' | 'surface' | 'spatial' | 'gate'; title: string;
+  id: StudyId; family: 'game' | 'testimony' | 'surface' | 'spatial' | 'gate' | 'key'; title: string;
   supplied: string; question: string; default_input: Json; controls: Json;
 }
 export interface Checkpoint {

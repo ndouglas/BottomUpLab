@@ -5,8 +5,8 @@ export function projectCheckpoint(record: EpisodeRecord, index: number, perspect
   if (!at) throw new Error('checkpoint out of range');
   return perspective.kind === 'researcher' ? at : { ...at, researcher: null, local: { [perspective.agent]: at.local[perspective.agent] ?? null } };
 }
-/** Discovery and Gate evaluator material is Researcher-only, including terminal checkpoints. */
+/** Discovery, Gate and Key evaluator material is Researcher-only, including terminal checkpoints. */
 export function resultPayload(record: EpisodeRecord, index: number, perspective: Perspective): Json {
-  if (['surface_discovery', 'gate_assistance'].includes(record.study) && perspective.kind !== 'researcher') return null;
+  if (['surface_discovery', 'gate_assistance', 'key_delegation'].includes(record.study) && perspective.kind !== 'researcher') return null;
   return perspective.kind === 'researcher' || index === record.checkpoints.length - 1 ? record.payload : null;
 }

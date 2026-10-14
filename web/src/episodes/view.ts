@@ -1,3 +1,5 @@
+import { renderKey, renderKeyResult } from './key-view';
+import { keyComparisonKey, keyMatchedInputs, keySettingLabel, matchKeyCheckpoint } from './key-comparison';
 import { h } from '../ui/dom';
 import { downloadText } from '../downloads';
 import { createEpisodeClient } from './client';
@@ -177,23 +179,25 @@ export class EpisodeView {
     this.playButton.title = this.playButton.disabled ? 'Reduced motion: use Previous, Next, or the checkpoint slider.' : 'Play retained checkpoints';
     this.shownTitle.textContent = descriptor.title;
     this.shownNote.textContent = `Shown successful episode · ${label(record.semantics)}. Editing controls above changes the next run.`;
+    if (record.study === 'key_delegation' && obj(record.input).selector === 'InitiallyEquipped') this.shownNote.textContent += ' Changed initial ownership: Receiver starts with the key. Main-game regrets and equilibrium classification are unavailable. This is a physical control, not a matched causal transfer estimate.';
     const projected = projectCheckpoint(record, this.replay.index, this.perspective);
-    const rendered = descriptor.family === 'gate' ? renderGate(projected, renderDescriptor(descriptor)) : descriptor.family === 'game' ? renderGame(projected, renderDescriptor(descriptor)) : descriptor.family === 'testimony' ? renderTestimony(projected, renderDescriptor(descriptor)) : descriptor.family === 'spatial' ? (['protection_recaching','deception_gestures'].includes(descriptor.id)?renderCaching:renderSpatial)(projected, renderDescriptor(descriptor)) : renderSurface(projected, renderDescriptor(descriptor));
+    const rendered = descriptor.family === 'key' ? renderKey(projected, renderDescriptor(descriptor)) : descriptor.family === 'gate' ? renderGate(projected, renderDescriptor(descriptor)) : descriptor.family === 'game' ? renderGame(projected, renderDescriptor(descriptor)) : descriptor.family === 'testimony' ? renderTestimony(projected, renderDescriptor(descriptor)) : descriptor.family === 'spatial' ? (['protection_recaching','deception_gestures'].includes(descriptor.id)?renderCaching:renderSpatial)(projected, renderDescriptor(descriptor)) : renderSurface(projected, renderDescriptor(descriptor));
     const payload = resultPayload(record, this.replay.index, this.perspective);
     const result = h('section', { class: 'episode-result' });
     if (payload !== null) {
       const p = obj(payload);
       result.append(h('div', {}, h('h3', {}, this.perspective.kind === 'researcher' ? 'Researcher — complete episode result' : 'Final episode result'), fact('Availability', descriptor.family === 'surface' ? surfaceSummary(payload).status : p.availability ?? p.status ?? 'complete'), p.expected_payoff !== undefined ? fact('Conditional expected payoff', p.expected_payoff) : null, p.conditional_regret !== undefined ? fact('Conditional expected regret', p.conditional_regret) : null, p.outcome ? fact('Outcome', p.outcome) : null, p.fingerprint ? fact('Fingerprint', p.fingerprint) : null, details('Shown input and rules identity', { input: record.input, rules_identity: record.rules_identity }), p.retained_audit_summary ? details('Retained population and guarantee measurements', p.retained_audit_summary) : null));
+      if (descriptor.family === 'key') result.append(renderKeyResult(payload));
       if (descriptor.family === 'gate') result.append(renderGateResult(payload));
       if (descriptor.family === 'surface') result.append(renderSurfaceResult(payload));
       if (descriptor.family === 'spatial') result.append(renderSpatialResult(payload));
       if (record.semantics === 'conditional_case') result.append(h('p', { class: 'hint' }, 'Conditional expectations are not a realized reward. Private truth and signals are unavailable.'));
-    } else result.append(h('p', { class: 'hint' }, ['surface_discovery', 'gate_assistance'].includes(record.study) ? 'Episode results are available only in Researcher perspective.' : 'Complete results become available at the final checkpoint or in Researcher perspective.'));
+    } else result.append(h('p', { class: 'hint' }, ['surface_discovery', 'gate_assistance', 'key_delegation'].includes(record.study) ? 'Episode results are available only in Researcher perspective.' : 'Complete results become available at the final checkpoint or in Researcher perspective.'));
     this.stage.replaceChildren(rendered, result);
     this.drawComparison(record, descriptor);
   }
   private async compare(input: Json, original: EpisodeRecord, axis?: SpatialAxis): Promise<void> {
-    const key = (value: Json) => original.study === 'gate_assistance' ? gateComparisonKey(value) : axis ? spatialComparisonKey(value, axis) : comparisonKey(value);
+    const key = (value: Json) => original.study === 'key_delegation' ? keyComparisonKey(value) : original.study === 'gate_assistance' ? gateComparisonKey(value) : axis ? spatialComparisonKey(value, axis) : comparisonKey(value);
     if (this.busy || key(input) !== key(original.input)) return;
     const generation = this.generation;
     this.setBusy(true); this.status.textContent = 'Running matched policy…';
@@ -207,12 +211,12 @@ export class EpisodeView {
     } catch (error) { this.error(error); } finally { this.setBusy(false); }
   }
   private drawComparison(record: EpisodeRecord, descriptor: StudyDescriptor): void {
-    const spatial = descriptor.family === 'spatial', gate = descriptor.family === 'gate';
-    this.comparisonSlot.hidden = descriptor.family !== 'surface' && !spatial && !gate;
+    const spatial = descriptor.family === 'spatial', gate = descriptor.family === 'gate', keyStudy = descriptor.family === 'key';
+    this.comparisonSlot.hidden = descriptor.family !== 'surface' && !spatial && !gate && !keyStudy;
     if (this.comparisonSlot.hidden) return;
     this.axisPicker.parentElement!.hidden = !spatial;
-    this.comparisonSlot.querySelector('h3')!.textContent = gate ? 'Matched Gate schedule comparison' : spatial ? 'Matched original control comparison' : descriptor.id === 'surface_discovery' ? 'Matched primary policy comparison' : 'Matched original policy comparison';
-    this.comparisonSlot.querySelector('.hint')!.textContent = gate ? 'Changes only the selector or fixed raw schedule pair. Retains stratum, identifiers and fixed protocol. Team optimum, pure equilibrium and fixed script are distinct labels. Sequential pairs retain at most two episodes.' : spatial ? 'Changes one declared original control. Retains geometry, resources, spawn order, goals, seed, horizon and sampling. Same seed does not promise paired random draws. Only compatible choices are listed.' : descriptor.id === 'surface_discovery' ? 'Changes only the primary policy. Retains mechanism, investigator role, identifiers and complete sequence. Compare the three primary policies as sequential pairs; at most two episodes are retained. KnownRaw and InspectOnly remain labeled controls in the setting selector.' : 'Changes only the declared policy or Agent pair. Retains the mechanism, role, identifiers, priors and complete sequence.';
+    this.comparisonSlot.querySelector('h3')!.textContent = keyStudy ? 'Matched Key schedule comparison' : gate ? 'Matched Gate schedule comparison' : spatial ? 'Matched original control comparison' : descriptor.id === 'surface_discovery' ? 'Matched primary policy comparison' : 'Matched original policy comparison';
+    this.comparisonSlot.querySelector('.hint')!.textContent = keyStudy ? 'Retains stratum and identifiers. Selector and raw schedules are distinct choices. Initially equipped changes starting ownership and has no main-game classification or matched causal transfer interpretation. At most two episodes are retained.' : gate ? 'Changes only the selector or fixed raw schedule pair. Retains stratum, identifiers and fixed protocol. Team optimum, pure equilibrium and fixed script are distinct labels. Sequential pairs retain at most two episodes.' : spatial ? 'Changes one declared original control. Retains geometry, resources, spawn order, goals, seed, horizon and sampling. Same seed does not promise paired random draws. Only compatible choices are listed.' : descriptor.id === 'surface_discovery' ? 'Changes only the primary policy. Retains mechanism, investigator role, identifiers and complete sequence. Compare the three primary policies as sequential pairs; at most two episodes are retained. KnownRaw and InspectOnly remain labeled controls in the setting selector.' : 'Changes only the declared policy or Agent pair. Retains the mechanism, role, identifiers, priors and complete sequence.';
     if (spatial) {
       const axes = obj(descriptor.controls).comparisons;
       const rows = Array.isArray(axes) ? axes.map(obj) : [];
@@ -221,9 +225,9 @@ export class EpisodeView {
       this.spatialAxis = declaredSpatialAxis(descriptor, this.axisPicker.value);
     } else this.spatialAxis = null;
     const axis = this.spatialAxis;
-    const candidates = gate ? gateMatchedInputs(record.input, descriptor) : axis ? spatialMatchedInputs(record.input, descriptor, axis.id) : matchedInputs(record.input, descriptor);
-    const name = (input: Json) => gate ? gateSettingLabel(input) : axis ? `${label(axis.id)}: ${String(spatialAxisValue(input, axis))}` : surfaceSettingLabel(input);
-    const key = (input: Json) => gate ? gateComparisonKey(input) : axis ? spatialComparisonKey(input, axis) : comparisonKey(input);
+    const candidates = keyStudy ? keyMatchedInputs(record.input, descriptor) : gate ? gateMatchedInputs(record.input, descriptor) : axis ? spatialMatchedInputs(record.input, descriptor, axis.id) : matchedInputs(record.input, descriptor);
+    const name = (input: Json) => keyStudy ? keySettingLabel(input) : gate ? gateSettingLabel(input) : axis ? `${label(axis.id)}: ${String(spatialAxisValue(input, axis))}` : surfaceSettingLabel(input);
+    const key = (input: Json) => keyStudy ? keyComparisonKey(input) : gate ? gateComparisonKey(input) : axis ? spatialComparisonKey(input, axis) : comparisonKey(input);
     const optionsKey = JSON.stringify(candidates);
     // Updating checkpoint content must not detach controls being focused or dragged.
     // Only a changed compatible candidate set replaces options/reset selection.
@@ -238,7 +242,7 @@ export class EpisodeView {
     this.comparisonBody.replaceChildren();
     if (!other) return;
     const at = record.checkpoints[this.replay.index];
-    const index = this.comparisonIndex ?? matchingCheckpoint(other.checkpoints, at);
+    const index = this.comparisonIndex ?? (keyStudy ? matchKeyCheckpoint(record, other, this.replay.index) ?? -1 : matchingCheckpoint(other.checkpoints, at));
     this.comparisonCounts.textContent = `Independent timelines: shown ${record.checkpoints.length} checkpoints; comparison ${other.checkpoints.length} checkpoints.`;
     this.comparisonName.textContent = name(other.input);
     this.comparisonSeek.max = String(other.checkpoints.length - 1);
@@ -247,10 +251,10 @@ export class EpisodeView {
       this.comparisonBody.append(h('p', { role: 'status' }, 'Unavailable at this public clock and stage. This run ended or did not visit this checkpoint; no wait or state is inferred. Use its independent timeline to inspect it.'));
       return;
     }
-    this.comparisonBody.append(h('p', {}, `${index + 1} / ${other.checkpoints.length} · ${this.comparisonIndex === null ? 'Matched public clock and stage' : 'Independent checkpoint'}`), gate ? renderGate(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : spatial ? (['protection_recaching','deception_gestures'].includes(descriptor.id)?renderCaching:renderSpatial)(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : renderSurface(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)));
+    this.comparisonBody.append(h('p', {}, `${index + 1} / ${other.checkpoints.length} · ${this.comparisonIndex === null ? 'Matched public clock and stage' : 'Independent checkpoint'}`), keyStudy ? renderKey(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : gate ? renderGate(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : spatial ? (['protection_recaching','deception_gestures'].includes(descriptor.id)?renderCaching:renderSpatial)(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)) : renderSurface(projectCheckpoint(other, index, this.perspective), renderDescriptor(descriptor)));
     const payload = resultPayload(other, index, this.perspective);
-    if (payload !== null) this.comparisonBody.append(h('h3', {}, this.perspective.kind === 'researcher' ? 'Researcher · comparison complete result' : 'Comparison final result'), gate ? renderGateResult(payload) : spatial ? renderSpatialResult(payload) : renderSurfaceResult(payload));
-    else if (['surface_discovery', 'gate_assistance'].includes(record.study)) this.comparisonBody.append(h('p', { class: 'hint' }, 'Comparison episode results are available only in Researcher perspective.'));
+    if (payload !== null) this.comparisonBody.append(h('h3', {}, this.perspective.kind === 'researcher' ? 'Researcher · comparison complete result' : 'Comparison final result'), keyStudy ? renderKeyResult(payload) : gate ? renderGateResult(payload) : spatial ? renderSpatialResult(payload) : renderSurfaceResult(payload));
+    else if (['surface_discovery', 'gate_assistance', 'key_delegation'].includes(record.study)) this.comparisonBody.append(h('p', { class: 'hint' }, 'Comparison episode results are available only in Researcher perspective.'));
   }
   pause(): void { this.replay.pause(); this.draw(); }
   dispose(): void {
