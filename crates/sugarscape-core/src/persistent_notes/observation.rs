@@ -1,12 +1,5 @@
 use super::types::*;
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn writer_program(arm: Arm) -> WriterProgram {
     match arm {
         Arm::Retained | Arm::Erased => WriterProgram::ObserveWrite,
@@ -14,13 +7,6 @@ pub(super) fn writer_program(arm: Arm) -> WriterProgram {
         Arm::NoAcquireNoNote => WriterProgram::Silent,
     }
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn belief(request: Option<Good>) -> [Ratio; 2] {
     match request {
         None => [Ratio::HALF, Ratio::HALF],
@@ -28,13 +14,6 @@ pub(super) fn belief(request: Option<Good>) -> [Ratio; 2] {
         Some(Good::Right) => [Ratio::ZERO, Ratio::ONE],
     }
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn initial_view(
     config: &Config,
     role: Role,
@@ -87,13 +66,6 @@ pub(super) fn initial_view(
     sense(&mut view, physical, clock);
     view
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn synchronize(p: &mut Checkpoint) {
     for role in [Role::Writer, Role::Reader] {
         let a = &p.physical.participants[role.index()];
@@ -108,13 +80,6 @@ pub(super) fn synchronize(p: &mut Checkpoint) {
         v.reward = a.reward;
     }
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn sense(view: &mut View, physical: &Physical, clock: &Clock) {
     let Some(cell) = view.cell else {
         return;

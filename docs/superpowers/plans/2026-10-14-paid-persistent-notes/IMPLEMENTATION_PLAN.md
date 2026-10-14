@@ -14,7 +14,7 @@
 **Tests**: Transaction/privacy/custody/route/tie/ledger/counter/replay tests.
 **Status**: In Progress
 
-Task 2 implements the private atomic world and sealed raw transaction witnesses. Task 3 completes view-based routine dispatch and public episode runners; Stage 2 stays In Progress pending its review.
+Task 2 implements the private atomic world and sealed raw transaction witnesses. Task 3 now implements view-only routine dispatch, public episode runners, all exact census reducers and frozen deterministic budget accounting. Complete typed reference agreement passed in engineering verification; Final focused, Clippy, format, preservation and affected legacy registration gates passed. Stage 2 stays In Progress pending fresh Task 3 review.
 
 ## Stage 3: Diagnostics and CLI
 **Goal**: Source-bound exact reports, saved validator, summary and bounded commands.

@@ -2,36 +2,15 @@ use super::{observation, types::*, validation::validate_checkpoint};
 
 /// Researcher state; participant decisions receive a single owned View instead.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(crate) struct World {
     config: Config,
     state: Checkpoint,
     note_survived: bool,
     completion_clock: Option<Clock>,
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 fn invalid_history(message: &str) -> Error {
     Error::InvalidHistory(message.into())
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 fn commit_candidate<T: Clone, F>(live: &mut T, transaction: F) -> Result<(), Error>
 where
     F: FnOnce(&mut T) -> Result<(), Error>,
@@ -41,13 +20,6 @@ where
     *live = candidate;
     Ok(())
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn charge(credits: &mut u64, spent: &mut u64, cost: u64) -> Result<(), Error> {
     let next_credits = credits
         .checked_sub(cost)
@@ -57,13 +29,6 @@ pub(super) fn charge(credits: &mut u64, spent: &mut u64, cost: u64) -> Result<()
     *spent = next_spent;
     Ok(())
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 impl World {
     pub(crate) fn new(config: &Config) -> Result<Self, Error> {
         config.validate()?;
@@ -126,6 +91,7 @@ impl World {
     pub(crate) fn checkpoint(&self) -> &Checkpoint {
         &self.state
     }
+    #[cfg(test)]
     pub(crate) fn act(&mut self, actor: Role, primitive: Primitive) -> Result<(), Error> {
         self.act_with_capture(actor, primitive, &mut |_| Ok(()))
     }
@@ -411,6 +377,7 @@ impl World {
         }
         Ok(())
     }
+    #[cfg(test)]
     pub(crate) fn depart(&mut self) -> Result<(), Error> {
         self.depart_with_capture(&mut |_| Ok(()))
     }
@@ -452,6 +419,7 @@ impl World {
             capture(p)
         })
     }
+    #[cfg(test)]
     pub(crate) fn finish(&mut self) -> Result<(), Error> {
         self.finish_with_capture(&mut |_| Ok(()))
     }
@@ -503,13 +471,6 @@ impl World {
     }
 }
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 impl World {
     pub(crate) fn outcome(&self) -> Result<Outcome, Error> {
         validate_checkpoint(&self.state)?;

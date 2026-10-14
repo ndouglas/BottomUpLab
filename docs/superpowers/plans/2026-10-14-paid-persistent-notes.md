@@ -207,7 +207,7 @@ These values come from the sealed Right-request boundary witnesses; do not call 
 
 **Interfaces:** Consumes Task 2 local View/transaction runner and Task 1 ordered keys/limits. Produces `choose`, `blank_fallback`, `registered_strata`, `evaluate`, complete expected metrics/contrasts/envelope and typed resource counters. `choose` consumes only View; it cannot accept Config or researcher state.
 
-- [ ] **Step 1: Write red tests for supported local choices and the off-grid tie.** Use integer comparison with checked multiplication, avoiding floating thresholds:
+- [x] **Step 1: Write red tests for supported local choices and the off-grid tie.** Use integer comparison with checked multiplication, avoiding floating thresholds:
 
 ```rust
 assert_eq!(blank_fallback(3, 6)?, BlankChoice::GuessLeft); // off-grid equality witness
@@ -217,7 +217,7 @@ assert_eq!(registered_strata().len(), 144);
 ```
 
 Construct Writer views whose own program is ObserveWrite and own request is Left/Right after paid inspection; assert corresponding raw notes. A missing own observation must be rejected as invalid history, not filled from Config. Reader blank behavior depends on own share/prices; nonblank behavior uses only its read. Retain a genuine red test result before code.
-- [ ] **Step 2: Implement the four finite routines and runner.** Writer always occupies the same four slots. Reader tracks only its own route progress/observations; ReadAdaptive consumes its supplied initial read, inspects iff `2*i < g` after Blank, picks L otherwise; direct inspection is forced for InspectFirst; Oracle receives its labeled initial target only. The runner captures committed boundaries and terminates at delivery/deadline, never charges unused suffixes. Keep archived exact event count per episode beneath 16.
+- [x] **Step 2: Implement the four finite routines and runner.** Writer always occupies the same four slots. Reader tracks only its own route progress/observations; ReadAdaptive consumes its supplied initial read, inspects iff `2*i < g` after Blank, picks L otherwise; direct inspection is forced for InspectFirst; Oracle receives its labeled initial target only. The runner captures committed boundaries and terminates at delivery/deadline, never charges unused suffixes. Keep archived exact event count per episode beneath 16.
 
 The private note encoder and exported blank decision have these exact local-only bodies:
 
@@ -234,7 +234,7 @@ pub fn blank_fallback(i: u64, g: u64) -> Result<BlankChoice, Error> {
     Ok(if twice_cost < g { BlankChoice::Inspect } else { BlankChoice::GuessLeft })
 }
 ```
-- [ ] **Step 3: Write route/ledger regression tests and pass them.** For the defaults s=w=r=1,i=4,b=0 and H=Right:
+- [x] **Step 3: Write route/ledger regression tests and pass them.** For the defaults s=w=r=1,i=4,b=0 and H=Right:
 
 ```rust
 let retained = run_episode(&Config::example(Arm::Retained, ReaderRoutine::ReadAdaptive, Good::Right))?;
@@ -248,7 +248,7 @@ assert!(erased.checkpoints.len() <= 16);
 ```
 
 Verify the six-action blank-inspection path, b=6/i=8 blank guessing, both H values, wrong BlindGuess, Oracle and all categorized costs against references. Test public history equality before H-dependent paid sensing and exact view-based replay.
-- [ ] **Step 4: Implement exact census and comparison reducers.** Iterate the protocol order s,w,r,i,b, then Arm/Routine/Good. Use reduced integer ratios with checked cross-products. Contrast request-wise rows at fixed keys, then average with mass 1/2; no per-request privileged routine selection. Retain all 2,304 means, 4,608 request-wise contrasts, 2,304 mean contrasts and 576 envelope keys/all ties. Exclude Oracle from the envelope. Validate prospective formulas by comparing saved reference arrays, not using the formulas as the implementation's only oracle.
+- [x] **Step 4: Implement exact census and comparison reducers.** Iterate the protocol order s,w,r,i,b, then Arm/Routine/Good. Use reduced integer ratios with checked cross-products. Contrast request-wise rows at fixed keys, then average with mass 1/2; no per-request privileged routine selection. Retain all 2,304 means, 4,608 request-wise contrasts, 2,304 mean contrasts and 576 envelope keys/all ties. Exclude Oracle from the envelope. Validate prospective formulas by comparing saved reference arrays, not using the formulas as the implementation's only oracle.
 
 Use this private metrics helper for equally weighted request pairs; signed odd values remain exact:
 

@@ -204,13 +204,6 @@ pub fn primitive_from_json(text: &str) -> Result<Primitive, Error> {
     primitive.validate()?;
     Ok(primitive)
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Task 3 connects this private kernel to its view-based runner"
-    )
-)]
 pub(super) fn validate_checkpoint(p: &Checkpoint) -> Result<(), Error> {
     let fail = || Error::InvalidHistory("inconsistent state".into());
     for role in [Role::Writer, Role::Reader] {

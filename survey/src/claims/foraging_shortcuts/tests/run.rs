@@ -691,21 +691,26 @@ fn source_identity_includes_gridworlds_compiled_sweep_literals() {
 }
 
 #[test]
-fn source_identity_includes_paid_notes_kernel_reference() {
+fn source_identity_includes_paid_notes_reference_fixtures() {
     use super::super::run::source_identity::{fingerprint, selected};
-    let path = "crates/sugarscape-core/src/persistent_notes/tests/fixtures/kernel-reference.json";
-    let fixture_fingerprint = |bytes: &[u8]| {
-        fingerprint(
-            [(path.to_owned(), bytes.to_vec())]
-                .into_iter()
-                .filter(|(path, _)| selected(path))
-                .map(Ok),
-        )
-        .unwrap()
-    };
-    assert_ne!(
-        fixture_fingerprint(b"original sealed kernel fixture"),
-        fixture_fingerprint(b"changed sealed kernel fixture"),
-        "compiled paid notes fixture changes must affect the current delivery identity"
-    );
+    for path in [
+        "crates/sugarscape-core/src/persistent_notes/tests/fixtures/kernel-reference.json",
+        "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json",
+        "crates/sugarscape-core/src/persistent_notes/tests/fixtures/limits-reference.json",
+    ] {
+        let fixture_fingerprint = |bytes: &[u8]| {
+            fingerprint(
+                [(path.to_owned(), bytes.to_vec())]
+                    .into_iter()
+                    .filter(|(path, _)| selected(path))
+                    .map(Ok),
+            )
+            .unwrap()
+        };
+        assert_ne!(
+            fixture_fingerprint(b"original sealed fixture"),
+            fixture_fingerprint(b"changed sealed fixture"),
+            "paid notes fixture changes must affect the current delivery identity: {path}"
+        );
+    }
 }
