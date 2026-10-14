@@ -10,19 +10,19 @@
 **Goal:** A tested fail-closed wrapper and independently approved packing/resource certificate.
 **Success Criteria:** Create-only attempt directories; refuse an existing legacy report; archive raw stdout/stderr/status/report, canonical records and source/binary/toolchain/settings provenance; maintain exclusive ownership of the legacy path between attempts; retain any failure and stop without retries. All declared report keys/rows are validated. No scientific invocation before fresh review.
 **Tests:** Temporary fake child processes exercise existing destinations, concurrent legacy ownership, nonzero exit, malformed/partial JSON, unexpected or duplicate claim IDs, timed raw differences with equal mathematical records, timeout, memory-bound refusal, output-bound refusal, source/binary mutation, and safe process-group termination. Exactly one first/repeat invocation is permitted, using the immutable production limits below.
-**Status:** In Progress
+**Status:** Complete
 
 ## Stage 2: Collect first and repeat
 **Goal:** Two immutable archives under the originally reserved destinations.
 **Success Criteria:** Each actual invocation is capped at 120 seconds, 512 MiB child peak RSS and 32 MiB total retained output; exceeded limits or any failed attempt stop the campaign. Both reports contain exactly negotiable.cake, negotiable.pareto and negotiable.priority, all expected rows, honest verdicts and matching source identities. Comparison preserves timings in raw reports and compares canonical mathematical records separately. No favorable rerun. No other group is executed.
 **Tests:** Preflight certificate and attempt ownership; actual exit/resource/output receipts; independent full record census, canonical equality and sealed reference comparison; source/binary before/after identity checks.
-**Status:** Not Started
+**Status:** Complete
 
 ## Stage 3: Interpret and verify delivery
 **Goal:** Dated findings and reproducibility links grounded in the retained observations.
 **Success Criteria:** Separate finite equation agreement from theorem, sequential recursion, fairness or realized welfare claims. Describe cake payoffs/ties, both Pareto conventions, priority updates and impossible observations. Correct stale prior plan/spec review status from preserved reviews. Update only relevant repository research links; no external publication, push or merge.
 **Tests:** Independent findings/evidence review; Python/reference/collector checks; no unexpected source/config/reference changes; all archive identities verify. Archive completed tracking before removing owned temporary tracker.
-**Status:** Not Started
+**Status:** In Progress — findings implemented; independent delivery review pending
 
 ## Fixed operational contract
 
