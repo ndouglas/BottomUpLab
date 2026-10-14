@@ -88,3 +88,6 @@ pub mod assistance;
 
 /// AI Safety Gridworlds: eight environments with hidden performance functions (milestone 40).
 pub mod gridworlds;
+
+/// Consequences of misaligned AI: a proxy on a subset of the attributes (milestone 43).
+pub mod misaligned;

@@ -105,7 +105,7 @@ the constraint is not increasing, which is the first finding named above, tested
 - **Impact-minimizing limit** from a start s⁰: unmentioned attributes at s⁰_K, proxy attributes
   equal on the remaining surface: recommender √((capacity − Σ_K s⁰ᵢ²)/|J|); logarithmic
   (capacity − Σ_K s⁰ᵢ)/|J|. From (1, 1, 7, 7) with J = {a, b} the limit is the start (no slack);
-  from (1, 1, 6, 6) it is 12 + 2√13.
+  from (1, 1, 6, 6) it is 12 + 2√14 (the remaining 100 − 72 = 28 split between a and b).
 - **Constraint correction:** a point moved off the surface is returned to C = 0 along ∇C over the
   free attributes (one-dimensional Newton iteration to 1e-12); attributes at the floor stay there.
 
@@ -113,12 +113,12 @@ the constraint is not increasing, which is the first finding named above, tested
 
 | Target | Statement | Rule |
 |---|---|---|
-| Theorem 1 | if proxy optimization converges, every unmentioned attribute is at its floor | gradient robot, fixed proxy {a, b}, both worlds, rate 0.01, 5,000 ticks: each unmentioned attribute within 1e-3 of the floor |
+| Theorem 1 | if proxy optimization converges, every unmentioned attribute is at its floor | gradient robot, fixed proxy {a, b}, both worlds, rate 0.1, 5,000 ticks (the flow contracts by about 1.4 % per tick at that rate, so endpoints are at machine precision; at rate 0.01 they would still be 1e-2 away): each unmentioned attribute within 1e-3 of the floor |
 | Figure 2 right, Theorem 2 in the example | every proxy subset ends at its closed-form limit, below the start | gradient endpoints within 1e-3 of the limit for every subset of size 1, 2, 3; all six pairs end below U⁰ = 16 |
-| Proposition 2 | the impact-minimizing robot never lowers U and reaches its limit | gradient, fixed {a, b}, impact minimizing, starts (1, 1, 7, 7) and (1, 1, 6, 6): U nondecreasing within 1e-9 at every tick; endpoint within 1e-3 of 16 and 12 + 2√13 |
+| Proposition 2 | the impact-minimizing robot never lowers U and reaches its limit | gradient, fixed {a, b}, impact minimizing, starts (1, 1, 7, 7) and (1, 1, 6, 6): U nondecreasing within 1e-9 at every tick; endpoint within 1e-3 of 16 and 12 + 2√14 |
 | Proposition 3 | the wasteful robot loses in any interval, so OFF at once is maxmin | wasteful robot at waste 0.1, rate 0.1: the gain after δ ∈ {1, 2, 5, 10, 50} ticks is negative at all five |
-| Theorem 3, Proposition 4 | an efficient robot with the top-J proxy, re-specified often enough, only improves | gradient, human `top`, rate 0.01, intervals 1 and 10, 5,000 ticks: U nondecreasing within 1e-9 throughout; the final gap to U* reported |
-| Proposition 5 | most-and-least with impact minimization converges to the human optimum | gradient, human `extremes`, impact minimizing, both worlds, both recommender starts: U within 1e-3 of U* by 5,000 ticks |
+| Theorem 3, Proposition 4 | an efficient robot with the top-J proxy, re-specified often enough, only improves | gradient, human `top`, rate 0.01, intervals 1 and 10, 5,000 ticks: U nondecreasing within 1e-9 at every tick before the first tick at which U comes within 1e-2 of U*, and at least U* − 1e-2 at every tick after it (the guarantee ends when the top three sensitivities are equal, which here is the optimum; afterward the human's re-specification chatters by at most one interval's travel); the first such tick and the final gap reported |
+| Proposition 5 | most-and-least with impact minimization converges to the human optimum | gradient, human `extremes`, impact minimizing, both worlds, both recommender starts: U within 1e-3 of U* by 10,000 ticks (the logarithmic world's pairwise transfers contract by only 0.1 % per tick near balance) |
 | Theorem 2, "arbitrarily low" (on our instance) | the limit utility falls without bound as the floor falls | logarithmic, gradient, fixed {a, b}, floors 1, 0.3, 0.1, 0.03, 0.01, 0.003, 0.001: endpoints within 1e-3 of the closed form, strictly decreasing in the floor, below −5 at 0.001 |
 
 ### Direction targets (Figure 2 left and right)
@@ -142,7 +142,7 @@ reproduced; the timing depends on the unknown step and start and is reported, no
 
 - `recommender-floor-flat`: gradient, fixed {a, b}, floors 0, −1, −5: the endpoints of c and d
   (expected 0 at every floor, because the sum of squares is not increasing below zero).
-- `interval-break`: from the interval sweep, the gain at the horizon against δ with and without
+- `interval-break`: from the interval sweep (rate 0.1), the gain at the horizon against δ with and without
   OFF on loss, and the first δ at which U decreases at some tick.
 - `proxy-size`: the fixed-proxy limits 10, 10√2, 10√3 and the climber's peak and final gain for
   |J| = 1 ({a}), 2 ({a, b}), 3 ({a, b, c}): the 2019 paper's "sell the firm" direction (a more
@@ -151,7 +151,7 @@ reproduced; the timing depends on the unknown step and start and is reported, no
 
 ## Decision rules
 
-- Exact targets: endpoints within 1e-3 (the flow's step error at rate 0.01), monotonicity with
+- Exact targets: endpoints within 1e-3 of the closed form after 5,000 ticks at rate 0.1 (the fixed point of the projected flow is exact; the tolerance covers convergence), monotonicity with
   1e-9 slack, as stated per target.
 - Direction targets on the climber: on 20-seed means, as stated; one violation fails the claim.
 - Reported rows carry no target.
@@ -204,8 +204,8 @@ infeasible start or a floor at or below zero in that world.
 
 ## Dynamics
 
-**Tick.** If the world is switched off, nothing moves. Otherwise, first, if the tick is a multiple
-of `interval` (and at tick 0), the human acts: under `top` or `extremes` J is recomputed from the
+**Tick.** If the world is switched off, nothing moves. Otherwise, first, if the tick count is a positive
+multiple of `interval`, the human acts (the human also acts once when the world is created, at tick 0): under `top` or `extremes` J is recomputed from the
 current sensitivities (ties toward the lower index), the frozen set becomes K under
 `impact_minimizing`, the proxy's reference values s_K are taken from the current state, and under
 `stop_on_loss` the human sends OFF if U is below its value at the previous interaction. Then the
@@ -213,14 +213,14 @@ robot makes `moves_per_tick` moves. A snapshot follows every tick; the snapshot 
 the start.
 
 **Climber.** A proposal s′ = s + N(0, step²) on every attribute not frozen (polar Box–Muller, two
-uniform draws per attempt, rejection outside the unit disc). Accept if Ũ(s′) > Ũ(s), C(s′) ≤ 0 and
-every s′ᵢ ≥ floor; otherwise the state stays. `accepted` records the tick's acceptance share.
+uniform draws per attempt, rejection outside the unit disc). Accept if C(s′) ≤ 0, every s′ᵢ ≥ floor and
+then Ũ(s′) > Ũ(s), feasibility first so the logarithmic world never evaluates a logarithm at or below zero; otherwise the state stays. `accepted` records the tick's acceptance share.
 
 **Gradient.** The direction is ∇Ũ over the free attributes (not frozen, not at the floor with a
-negative component). If C(s) < 0 the robot moves `rate` along the unit direction and, if that
+negative component). If C(s) < 0 the robot moves `rate · d / max(1, |d|)` along the direction d (unit speed far from a stationary point, proportional near one, so every move is at most `rate` long and the flow converges without chatter) and, if that
 leaves the feasible set, the move is shortened to the surface. If C(s) = 0 (within 1e-9), the
 direction is projected onto the tangent space of C over the free attributes, the robot moves
-`rate` along it, and the correction returns the point to C = 0 along ∇C; an attribute that the
+`rate · d / max(1, |d|)` along it, and the correction returns the point to C = 0 along ∇C; an attribute that the
 move would take below the floor is set to the floor and frozen for that move's correction. The
 robot stops when the projected direction vanishes.
 
@@ -246,7 +246,7 @@ the proxy history with its ticks, the OFF tick if any.
 
 - `misaligned-figure2-pairs`: recommender, climber, x = `step` ∈ {0.25, 0.5, 1, 2}, series = the
   six pairs (set by the booleans), 20 seeds, 1,000 ticks, metric final `gain`.
-- `misaligned-interval`: recommender, gradient at rate 0.01, human `top`, x = `interval` ∈ {1, 2,
+- `misaligned-interval`: recommender, gradient at rate 0.1 (so that interval × rate spans 0.1 to 20, from well inside Theorem 3's neighborhood to past the whole path), human `top`, x = `interval` ∈ {1, 2,
   5, 10, 20, 50, 100, 200}, series = `stop_on_loss` off and on, 2,000 ticks, metric final `gain`.
 - `misaligned-floor`: gradient, fixed {a, b}, x = `floor` ∈ {1, 0.3, 0.1, 0.03, 0.01, 0.003,
   0.001}, series = logarithmic (capacity 40, start 4, 4, 16, 16) and recommender (capacity 100,
@@ -290,7 +290,7 @@ assistance and gridworlds.
 
 - Unit tests on `worlds.rs` against the closed forms: the optimum, the fixed-proxy limits (10√|J|
   at floor 0; the logarithmic form), the impact-minimizing limits (16 from the sphere start,
-  12 + 2√13 from (1, 1, 6, 6)), sensitivities, the correction landing on C = 0 within 1e-12.
+  12 + 2√14 from (1, 1, 6, 6)), sensitivities, the correction landing on C = 0 within 1e-12.
 - Robot tests: the gradient robot's path on the sphere from (1, 1, 7, 7) with proxy {a, b} passes
   within 1e-3 of (5, 5, 5, 5); the climber never accepts an infeasible, floor-violating or
   proxy-lowering move; the wasteful robot stops at the floor.

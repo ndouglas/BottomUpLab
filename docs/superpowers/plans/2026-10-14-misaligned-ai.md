@@ -159,8 +159,8 @@ mod tests {
         let (s, u) = r.impact_limit(&[1.0, 1.0, 7.0, 7.0], AB);
         assert!(close(&s, &[1.0, 1.0, 7.0, 7.0], 1e-12) && (u - 16.0).abs() < 1e-12, "no slack: the start");
         let (s, u) = r.impact_limit(&[1.0, 1.0, 6.0, 6.0], AB);
-        assert!(close(&s, &[13f64.sqrt(), 13f64.sqrt(), 6.0, 6.0], 1e-12));
-        assert!((u - (12.0 + 2.0 * 13f64.sqrt())).abs() < 1e-12);
+        assert!(close(&s, &[14f64.sqrt(), 14f64.sqrt(), 6.0, 6.0], 1e-12));
+        assert!((u - (12.0 + 2.0 * 14f64.sqrt())).abs() < 1e-12);
         let (s, _) = logarithmic().impact_limit(&[4.0, 4.0, 16.0, 16.0], [true, false, true, false]);
         assert!(close(&s, &[10.0, 4.0, 10.0, 16.0], 1e-12));
     }
@@ -2150,7 +2150,7 @@ pub fn presets() -> Vec<ModelPreset> {
           "The same proxy under steepest ascent along the sphere, the efficient robot of §4: utility rises to the human optimum of 20 at (5, 5, 5, 5) and then falls to the proxy's limit of 10√2 ≈ 14.14 with c and d at the floor (Theorem 1).",
           gradient()),
         p("misaligned-recommender-impact", "A robot that leaves the unmentioned alone can only gain",
-          "Proposition 2: the unmentioned attributes are frozen at their starting values, so gains in the proxy are gains in utility. From (1, 1, 6, 6), inside the sphere, a and b rise to √13 each and utility to 12 + 2√13 ≈ 19.21; from the default start on the sphere there is nothing to gain.",
+          "Proposition 2: the unmentioned attributes are frozen at their starting values, so gains in the proxy are gains in utility. From (1, 1, 6, 6), inside the sphere, a and b rise to √14 each and utility to 12 + 2√14 ≈ 19.48; from the default start on the sphere there is nothing to gain.",
           MisalignedConfig { impact_minimizing: true, start_c: 6.0, start_d: 6.0, ..gradient() }),
         p("misaligned-recommender-interactive", "A human who re-specifies often keeps the robot near the best world",
           "Theorem 3 and Proposition 4: every 10 ticks the human gives the robot the two most sensitive attributes as its proxy; the efficient robot moves at most 0.01 per tick. Utility rises to the optimum and stays within one interval's travel of it.",
