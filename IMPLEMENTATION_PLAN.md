@@ -24,11 +24,11 @@
 **Goal**: Bounded native-WASM and private web visualization
 **Success Criteria**: Parity, historical compatibility and actual-browser acceptance
 **Tests**: Input/import quotas, all-checkpoint privacy, lifecycle/receipt chronology
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 5: Frozen collection and delivery
 **Goal**: First/repeat, independent validation and published summary
 **Success Criteria**: Whole review and exact final CI/Pages success
 **Tests**: Full required gates, complete streaming census and recorded export equality
-**Status**: Not Started
+**Status**: In Progress
 
