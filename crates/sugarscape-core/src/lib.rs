@@ -88,3 +88,5 @@ pub mod assistance;
 
 /// AI Safety Gridworlds: eight environments with hidden performance functions (milestone 40).
 pub mod gridworlds;
+
+pub mod negotiable;

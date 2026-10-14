@@ -1,3 +1,6 @@
+#[path = "../../build_support/f5_source_identity.rs"]
+pub(crate) mod f5_source_identity;
+
 mod agreement;
 mod ants;
 mod assistance;
@@ -36,6 +39,8 @@ mod minds7;
 mod minds8;
 pub(crate) mod minds8b;
 pub(crate) mod minds9;
+mod negotiable;
+mod negotiable_records;
 mod norms;
 mod opinions;
 pub(crate) mod protection;
@@ -60,6 +65,7 @@ pub fn all() -> Vec<Claim> {
         auctions::claims(),
         assistance::claims(),
         gridworlds::claims(),
+        negotiable::claims(),
         ants::claims(),
         bali::claims(),
         ch2::claims(),
@@ -106,3 +112,6 @@ pub fn all() -> Vec<Claim> {
 #[cfg(test)]
 #[path = "burrow_tests.rs"]
 mod burrow_tests;
+
+#[cfg(test)]
+mod negotiable_tests;
