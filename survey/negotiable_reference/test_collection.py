@@ -9,6 +9,7 @@ import signal
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from survey.negotiable_reference import collection as c, reference as r
 
@@ -145,7 +146,7 @@ class ProcessTests(unittest.TestCase):
             return {"source_sha256": SOURCE, "input_sha256": hashlib.sha256(self.input.read_bytes()).hexdigest(),
                     "binary_sha256": hashlib.sha256(self.binary.read_bytes()).hexdigest()}
         return c._collect_pair(command, self.legacy, self.archives, snapshot,
-                               c._Limits(**caps))
+                               c._Limits(**caps), reviewed=snapshot())
 
     def success_body(self):
         return f"pathlib.Path({str(self.legacy)!r}).write_bytes(pathlib.Path({str(self.payload)!r}).read_bytes())\nprint('raw timing', time.monotonic())\n"
@@ -188,9 +189,48 @@ class ProcessTests(unittest.TestCase):
             self.run_child(self.success_body())
         self.assertEqual(list(target.iterdir()), [])
 
+    def test_reviewed_certificate_drift_before_core_never_spawns_child(self):
+        marker = self.root / "spawned"
+        fake = self.root / "handoff.py"
+        fake.write_text(f"from pathlib import Path; Path({str(marker)!r}).write_text('spawned')\n" +
+                        "import pathlib,time\n" + self.success_body())
+        reviewed = {"source_sha256": SOURCE, "binary_identity": "reviewed"}
+        changed = {**reviewed, "binary_identity": "changed after review"}
+        certificate = self.root / "reviewed.json"
+        certificate.write_text(json.dumps(reviewed))
+        def certify(*, _allow_drift=False):
+            return changed if _allow_drift else reviewed
+        with patch.object(c, "certify", certify), patch.object(c, "COMMAND", [sys.executable, str(fake)]), \
+                patch.object(c, "LEGACY", self.legacy), patch.object(c, "ARCHIVES", self.archives):
+            with self.assertRaisesRegex(ValueError, "identity"):
+                c.run_first_repeat(certificate)
+        self.assertFalse(marker.exists())
+        self.assertFalse(self.archives.exists())
+
+    def test_after_snapshot_failure_still_archives_owned_raw_report(self):
+        fake = self.root / "after-failure.py"
+        fake.write_text("import pathlib,time\n" + self.success_body())
+        baseline = {"source_sha256": SOURCE}
+        calls = 0
+        def snapshot():
+            nonlocal calls
+            calls += 1
+            if calls == 3:
+                raise OSError("after snapshot unavailable")
+            return baseline
+        c._collect_pair([sys.executable, str(fake)], self.legacy, self.archives, snapshot, c._Limits(), reviewed=baseline)
+        self.assertTrue((self.archives / "first/report.json").is_file())
+        self.assertEqual((self.archives / "first/report.json").read_bytes(), self.payload.read_bytes())
+        self.assertIn("after snapshot unavailable", self.status()["error"])
+        self.assertIn("report.json", self.status()["files"])
+        self.assertFalse((self.archives / "repeat").exists())
+
     def test_binary_change_during_child_stops(self):
         self.run_child(self.success_body() + f"pathlib.Path({str(self.binary)!r}).write_text('changed')\n")
         self.assertIn("identity", self.status()["error"])
+        self.assertTrue((self.archives / "first/report.json").is_file())
+        self.assertEqual((self.archives / "first/report.json").read_bytes(), self.payload.read_bytes())
+        self.assertIn("report.json", self.status()["files"])
         self.assertFalse((self.archives / "repeat").exists())
 
     def test_nonzero_exit_retains_failure_and_stops_repeat(self):
@@ -238,6 +278,10 @@ class ProcessTests(unittest.TestCase):
     def test_report_file_overflow_is_bounded(self):
         self.run_child(f"pathlib.Path({str(self.legacy)!r}).write_bytes(b'x' * 1000000)\n", total_bytes=128 * 1024)
         self.assertEqual(self.status()["state"], "failed")
+        self.assertIn("raw_report", self.status())
+        self.assertEqual(self.status()["raw_report"]["bytes"], 128 * 1024 // 3)
+        self.assertTrue(self.status()["raw_report"]["at_byte_limit"])
+        self.assertIn("report.json", self.status()["files"])
         self.assertLessEqual(sum(p.stat().st_size for p in (self.archives / 'first').iterdir()), 128 * 1024)
 
     def test_peak_rss_breach_is_not_accepted(self):
