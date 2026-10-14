@@ -56,6 +56,7 @@ fn the_builtin_sweeps_parse_and_name_real_paths() {
         "gridworlds-learning-rate-island",
         "gridworlds-exploration-floor",
         "gridworlds-budget",
+        "gridworlds-q-init-whisky",
     ];
     for id in ids {
         let s = sweep::builtin(id).unwrap_or_else(|| panic!("no builtin {id}"));

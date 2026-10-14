@@ -1057,7 +1057,7 @@ pub struct Builtin {
     pub json: &'static str,
 }
 
-const BUILTINS: [Builtin; 232] = [
+const BUILTINS: [Builtin; 233] = [
     Builtin {
         id: "fig-ii-5",
         json: include_str!("../../../sweeps/fig-ii-5.json"),
@@ -1981,6 +1981,10 @@ const BUILTINS: [Builtin; 232] = [
     Builtin {
         id: "gridworlds-budget",
         json: include_str!("../../../sweeps/gridworlds-budget.json"),
+    },
+    Builtin {
+        id: "gridworlds-q-init-whisky",
+        json: include_str!("../../../sweeps/gridworlds-q-init-whisky.json"),
     },
     Builtin {
         id: "polarity-predators",
@@ -3057,6 +3061,7 @@ mod tests {
                 "gridworlds-learning-rate-island",
                 "gridworlds-exploration-floor",
                 "gridworlds-budget",
+                "gridworlds-q-init-whisky",
                 "polarity-predators"
             ]
         );

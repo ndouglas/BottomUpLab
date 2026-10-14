@@ -48,7 +48,9 @@ pub struct GridworldsWorld {
     episodes: u64,
     in_episode: bool,
     state: u32,
-    pending: Option<super::grid::Action>,
+    /// Sarsa's deferred update `(state, action taken, reward, next state)`: it bootstraps on
+    /// the action the environment executes at the next state, known only after that step.
+    pending: Option<(u32, super::grid::Action, f64, u32)>,
     current: EpisodeRecord,
     window: VecDeque<EpisodeRecord>,
     train: Option<(f64, f64)>,
@@ -154,10 +156,7 @@ impl GridworldsWorld {
         }
         let learning = self.learning();
         let epsilon = self.exploration_now();
-        let action = match (self.config.learner, self.pending) {
-            (Learner::Sarsa, Some(a)) => a,
-            _ => self.table.choose(self.state, epsilon, &mut self.rng),
-        };
+        let action = self.table.choose(self.state, epsilon, &mut self.rng);
         self.table.visit(self.state);
         let step = self.env.step(action, &mut self.rng);
         let next_state = self.env.state();
@@ -167,30 +166,61 @@ impl GridworldsWorld {
         self.current.perf += step.performance;
         self.current.events.add(&step.events);
         let done = step.done || self.current.steps >= self.config.episode_cap;
-        let next_action = (self.config.learner == Learner::Sarsa && !done).then(|| {
-            let epsilon = self.exploration_now();
-            self.table.choose(next_state, epsilon, &mut self.rng)
-        });
         if learning {
-            // The update is for the action actually taken (an interruption's "up", not the
-            // agent's choice), which the paper notes its off-policy result required.
-            self.table.update(
-                self.config.learner,
-                self.state,
-                step.taken,
-                step.reward,
-                next_state,
-                next_action,
-                done,
-                self.config.learning_rate,
-                self.config.discount,
-            );
+            // Every update is for the action actually taken (an interruption's "up", not the
+            // agent's choice), which the paper notes its off-policy result required. Sarsa's
+            // bootstrap needs the action taken at the next state too, so its update waits one
+            // step; Q-learning's bootstrap is the next state's max and needs no wait.
+            match self.config.learner {
+                Learner::Q => self.table.update(
+                    Learner::Q,
+                    self.state,
+                    step.taken,
+                    step.reward,
+                    next_state,
+                    None,
+                    done,
+                    self.config.learning_rate,
+                    self.config.discount,
+                ),
+                Learner::Sarsa => {
+                    if let Some((s, a, r, s2)) = self.pending.take() {
+                        self.table.update(
+                            Learner::Sarsa,
+                            s,
+                            a,
+                            r,
+                            s2,
+                            Some(step.taken),
+                            false,
+                            self.config.learning_rate,
+                            self.config.discount,
+                        );
+                    }
+                    if done {
+                        self.table.update(
+                            Learner::Sarsa,
+                            self.state,
+                            step.taken,
+                            step.reward,
+                            next_state,
+                            None,
+                            true,
+                            self.config.learning_rate,
+                            self.config.discount,
+                        );
+                    } else {
+                        self.pending = Some((self.state, step.taken, step.reward, next_state));
+                    }
+                }
+            }
+        } else {
+            self.pending = None;
         }
         if done {
             self.end_episode();
         } else {
             self.state = next_state;
-            self.pending = next_action;
         }
         if self.steps == u64::from(self.config.step_budget) {
             self.train = Some(self.window_means(WINDOW));
@@ -708,5 +738,47 @@ mod tests {
         let f = world(config(EnvKind::FriendFoe));
         let v: serde_json::Value = serde_json::from_str(&f.inspect_json(0, 0).unwrap()).unwrap();
         assert_eq!(v["estimate"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn sarsa_bootstraps_on_the_action_the_environment_actually_took() {
+        // Sarsa's update of (s, a) waits for the action executed at s'. On the step after the
+        // agent arrives on I in an interrupting episode, that action is the forced Up, so the
+        // cell before I bootstraps on Q(I, Up), not on the action the learner proposed.
+        let mut w = world(GridworldsConfig {
+            learner: Learner::Sarsa,
+            steps_per_tick: 1,
+            ..config(EnvKind::Offswitch)
+        });
+        let mut guard = 0;
+        loop {
+            let before_cell = w.env().agent();
+            let before_key = w.env().state();
+            w.step();
+            guard += 1;
+            assert!(guard < 100_000, "no interrupting episode froze the agent");
+            if matches!(w.env(), Env::OffSwitch(o) if o.frozen()) && before_cell != w.env().agent()
+            {
+                // The agent has just arrived on I from `before_cell`; its update is pending.
+                let i_key = w.env().state();
+                let q_i_up = w.table().q(i_key)[0];
+                let before = w.table().q(before_key);
+                let moved = super::super::grid::Action::ALL
+                    .into_iter()
+                    .find(|a| w.env().grid().step(before_cell, *a) == w.env().agent())
+                    .unwrap();
+                w.step();
+                let after = w.table().q(before_key);
+                let expected =
+                    before[moved.index()] + 0.1 * (-1.0 + 0.99 * q_i_up - before[moved.index()]);
+                assert!(
+                    (after[moved.index()] - expected).abs() < 1e-12,
+                    "{:?} -> {:?}, expected {expected} from Q(I, Up) = {q_i_up}",
+                    before,
+                    after
+                );
+                break;
+            }
+        }
     }
 }

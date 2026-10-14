@@ -24,6 +24,7 @@ mod ethno;
 mod farol;
 mod firms;
 pub(crate) mod foraging_shortcuts;
+mod gridworlds;
 mod image;
 mod minds1;
 mod minds2;
@@ -58,6 +59,7 @@ pub fn all() -> Vec<Claim> {
         agreement::claims(),
         auctions::claims(),
         assistance::claims(),
+        gridworlds::claims(),
         ants::claims(),
         bali::claims(),
         ch2::claims(),

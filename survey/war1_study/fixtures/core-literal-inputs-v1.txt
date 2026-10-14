@@ -151,6 +151,7 @@ sweeps/gridworlds-learning-rate-sokoban.json
 sweeps/gridworlds-learning-rate-supervisor.json
 sweeps/gridworlds-learning-rate-tomato.json
 sweeps/gridworlds-learning-rate-whisky.json
+sweeps/gridworlds-q-init-whisky.json
 sweeps/gs-dispersion.json
 sweeps/gs-efficiency.json
 sweeps/gs-mechanism.json
