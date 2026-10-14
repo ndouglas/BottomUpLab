@@ -2,4 +2,6 @@
 //! (NeurIPS 2020), a robot that raises a proxy on a subset of the attributes the human cares
 //! about, the paper's recommender example, and the mitigations. Closed forms are the targets;
 //! the climber, the starts and the human's interval are ours.
+pub mod human;
+pub mod robots;
 pub mod worlds;
