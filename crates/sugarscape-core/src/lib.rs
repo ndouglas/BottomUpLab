@@ -91,3 +91,4 @@ pub mod gridworlds;
 
 /// Consequences of misaligned AI: a proxy on a subset of the attributes (milestone 43).
 pub mod misaligned;
+pub mod negotiable;
