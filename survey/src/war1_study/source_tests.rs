@@ -195,3 +195,57 @@ fn key_source_closure_requires_references() {
         );
     }
 }
+
+#[test]
+fn unrelated_paid_notes_evaluation_is_not_read_but_other_source_guards_remain() {
+    let root = std::env::temp_dir()
+        .canonicalize()
+        .unwrap()
+        .join(format!("war1-paid-notes-source-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    let entries =
+        source::inputs::read(std::path::Path::new(source::ROOT), source::MANIFEST_PATH).unwrap();
+    for (path, bytes) in &entries {
+        let target = root.join(path);
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(target, bytes).unwrap();
+    }
+    let excluded =
+        "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json";
+    let target = root.join(excluded);
+    std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+    std::fs::File::create(&target)
+        .unwrap()
+        .set_len((source::inputs::MAX_FILE_BYTES + 1) as u64)
+        .unwrap();
+    assert_eq!(
+        source::inputs::read(&root, source::MANIFEST_PATH).unwrap(),
+        entries
+    );
+    let mut injected = entries.clone();
+    injected.push((excluded.into(), b"unrelated payload".to_vec()));
+    assert!(
+        source::inputs::fingerprint(&injected, source::MANIFEST_PATH)
+            .unwrap_err()
+            .contains("invalid/duplicate")
+    );
+    let neighboring = target.with_file_name("different-reference.json");
+    std::fs::File::create(&neighboring)
+        .unwrap()
+        .set_len((source::inputs::MAX_FILE_BYTES + 1) as u64)
+        .unwrap();
+    assert!(source::inputs::read(&root, source::MANIFEST_PATH)
+        .unwrap_err()
+        .contains("per-file byte limit"));
+    std::fs::remove_file(neighboring).unwrap();
+    #[cfg(unix)]
+    {
+        std::fs::remove_file(&target).unwrap();
+        std::os::unix::fs::symlink(&root, &target).unwrap();
+        assert!(source::inputs::read(&root, source::MANIFEST_PATH)
+            .unwrap_err()
+            .contains("symlink"));
+        std::fs::remove_file(&target).unwrap();
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

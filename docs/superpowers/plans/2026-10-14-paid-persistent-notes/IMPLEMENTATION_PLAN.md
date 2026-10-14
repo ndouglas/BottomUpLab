@@ -12,7 +12,9 @@
 **Goal**: Atomic access, paid information, departure and private supplied routines.
 **Success Criteria**: Complete sealed reference agreement and no unauthorized observations.
 **Tests**: Transaction/privacy/custody/route/tie/ledger/counter/replay tests.
-**Status**: Not Started
+**Status**: In Progress
+
+Task 2 implements the private atomic world and sealed raw transaction witnesses. Task 3 completes view-based routine dispatch and public episode runners; Stage 2 stays In Progress pending its review.
 
 ## Stage 3: Diagnostics and CLI
 **Goal**: Source-bound exact reports, saved validator, summary and bounded commands.

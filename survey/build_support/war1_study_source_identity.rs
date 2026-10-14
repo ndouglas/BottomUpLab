@@ -78,8 +78,13 @@ pub fn literal_paths() -> Result<Vec<&'static str>, String> {
     }
     Ok(paths)
 }
+// This new lab dataset is not a compiled W1-A mechanism or reference input.
+// Its complete bytes belong to the persistent-notes reference identity.
+const UNRELATED_PAID_NOTES_EVALUATION: &str =
+    "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json";
 fn selected(path: &str, manifest: &str) -> bool {
     valid_relative(path)
+        && path != UNRELATED_PAID_NOTES_EVALUATION
         && (path == manifest
             || FILES.contains(&path)
             || LITERAL_INPUTS.lines().any(|p| p == path)
@@ -191,6 +196,13 @@ impl Loader {
         }
         let path = root.join(relative);
         let m = fs::symlink_metadata(&path).map_err(|e| e.to_string())?;
+        if relative == UNRELATED_PAID_NOTES_EVALUATION {
+            return if m.is_file() {
+                Ok(())
+            } else {
+                Err(format!("nonregular unrelated dataset {relative}"))
+            };
+        }
         if m.is_dir() {
             self.directories += 1;
             if self.directories > MAX_ENTRIES {

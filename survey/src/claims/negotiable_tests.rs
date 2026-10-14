@@ -394,14 +394,22 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     let export = "\npub mod negotiable;\n";
     assert_eq!(text.matches(export).count(), 1);
     assert_eq!(export.len(), 21);
-    let original = text.replacen(export, "", 1);
+    let notes_export = "\npub mod persistent_notes;\n";
+    assert_eq!(text.matches(notes_export).count(), 1);
+    let previous = text.replacen(notes_export, "", 1);
+    assert_eq!(previous.len(), 1860);
+    assert_eq!(
+        records::sha256(previous.as_bytes()),
+        "a73aa69e6a17c22195ff950a959d532d9183d1a2e02126efbd4f403e61c8d978"
+    );
+    let original = previous.replacen(export, "", 1);
     // Prospective baseline: premerge main f55c052, including its gridworld export.
     assert_eq!(original.len(), 1839);
     assert_eq!(
         records::sha256(original.as_bytes()),
         "eb7a6ee09a7e4b2013cf8dd0a962c9ea0fa08640993bc616afd353b8e487b561"
     );
-    assert_eq!(library.len(), original.len() + 21);
+    assert_eq!(library.len(), original.len() + 21 + notes_export.len());
     let bytes=include_bytes!("../../../crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json");
     let mut metadata: Value = serde_json::from_slice(bytes).unwrap();
     let bindings = metadata["bindings"].as_array_mut().unwrap();

@@ -90,3 +90,5 @@ pub mod assistance;
 pub mod gridworlds;
 
 pub mod negotiable;
+
+pub mod persistent_notes;

@@ -10,6 +10,7 @@ pub const DIRECTORIES: &[&str] = &[
 // Literal include_str!/include_bytes! inputs plus repository-local build configuration.
 // New includes outside Rust source roots must be added here.
 pub const FILES: &[&str] = &[
+    "crates/sugarscape-core/src/persistent_notes/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/negotiable/tests/fixtures/cake-reference.json",
     "crates/sugarscape-core/src/negotiable/tests/fixtures/pareto-reference.json",
     "crates/sugarscape-core/src/negotiable/tests/fixtures/priority-reference.json",

@@ -154,7 +154,7 @@ The independent full derivation is named `complete-reference.json`; its keys use
 
 **Interfaces:** Consumes sealed Task 1 schemas/witnesses. Produces Config/View/Primitive/Checkpoint/Episode/Outcome and `config_from_json`, `run_episode`/`run_with_capture` entry points; the full routine dispatch is completed in Task 3. Raw step witnesses use the Task 1 transition schema rather than an extra public controller family.
 
-- [ ] **Step 1: Write red tests for role state, custody and local information.** Start with fixture-backed transaction tests and strict input rejection, not an unreviewed whole collector. Example initial-state assertion:
+- [x] **Step 1: Write red tests for role state, custody and local information.** Start with fixture-backed transaction tests and strict input rejection, not an unreviewed whole collector. Example initial-state assertion:
 
 ```rust
 let config = Config::example(Arm::Retained, ReaderRoutine::ReadAdaptive, Good::Right);
@@ -165,7 +165,7 @@ assert_eq!(initial.physical.field, Note::Blank);
 ```
 
 Define the private `initial_checkpoint(&Config) -> Result<Checkpoint, Error>` helper in the kernel test module. Exhaustively compare initial unprivileged Reader views under Left/Right and across arms; include view serialization to catch an embedded Config. Test Oracle as a separate explicit exception. Run `cargo test -p sugarscape-core persistent_notes::tests::` and retain the expected missing-module/API failures.
-- [ ] **Step 2: Implement minimal strict types and atomic transactions.** Use the existing key lab as a pattern, not a dependency on its scientific implementation. Decode raw objects before maps erase duplicate keys; reject unknown fields, out-of-grid selected inputs, invalid IDs and noninteger/overflow atoms. Snapshot state, check phase/role/location/custody/cost, then commit exactly one transaction. Invalid input/arithmetic is operational; a valid blocked action charges its defined attempt cost. Registered spending never binds. An impossible insufficient-credit history is rejected before mutation, not partially charged or made negative.
+- [x] **Step 2: Implement minimal strict types and atomic transactions.** Use the existing key lab as a pattern, not a dependency on its scientific implementation. Decode raw objects before maps erase duplicate keys; reject unknown fields, out-of-grid selected inputs, invalid IDs and noninteger/overflow atoms. Snapshot state, check phase/role/location/custody/cost, then commit exactly one transaction. Invalid input/arithmetic is operational; a valid blocked action charges its defined attempt cost. Registered spending never binds. An impossible insufficient-credit history is rejected before mutation, not partially charged or made negative.
 
 Use this private kernel helper for candidate-state transactions; a valid Blocked outcome is an ordinary `Ok` result after its charge, while errors leave live state untouched:
 
@@ -186,8 +186,8 @@ fn charge(credits: &mut u64, spent: &mut u64, cost: u64) -> Result<(), Error> {
     Ok(())
 }
 ```
-- [ ] **Step 3: Implement public departure and role-local sensing.** Derive the Writer program outside its controller from Arm; choose WriteNote from the Writer's own observed request. Depart at the fixed boundary, leave ledger/trace intact, erase only in Erased, reject Writer actions thereafter. In failed-handoff witnesses retain inactive Writer key ownership. Maps expose only allowed cells/occupants/key/good identities and sensing clocks. A key receipt updates own key without updating a map timestamp. A `ReadNote` outcome is the only unprivileged source of raw note content.
-- [ ] **Step 4: Pass every sealed transaction witness and mutation rejection.** Cover both H values, wrong-location paid blocks, opaque board/manifest sensing, stale passive map, inactive Writer, wrong delivery settlement, deadline, duplicate key, double delivery, clone/replay, IDs and overflow. For retained/erased boundary checks:
+- [x] **Step 3: Implement public departure and role-local sensing.** Derive the Writer program outside its controller from Arm; choose WriteNote from the Writer's own observed request. Depart at the fixed boundary, leave ledger/trace intact, erase only in Erased, reject Writer actions thereafter. In failed-handoff witnesses retain inactive Writer key ownership. Maps expose only allowed cells/occupants/key/good identities and sensing clocks. A key receipt updates own key without updating a map timestamp. A `ReadNote` outcome is the only unprivileged source of raw note content.
+- [x] **Step 4: Pass every sealed transaction witness and mutation rejection.** Cover both H values, wrong-location paid blocks, opaque board/manifest sensing, stale passive map, inactive Writer, wrong delivery settlement, deadline, duplicate key, double delivery, clone/replay, IDs and overflow. For retained/erased boundary checks:
 
 ```rust
 assert_eq!(retained_after_departure.physical.field, Note::NoteRight);
@@ -197,7 +197,7 @@ assert_eq!(retained_after_departure.own[Role::Reader.index()].known_request, Non
 ```
 
 These values come from the sealed Right-request boundary witnesses; do not call `diagnose`. Run the focused native tests and `cargo clippy -p sugarscape-core --all-targets -- -D warnings`; format only changed Rust files with rustfmt child traversal disabled.
-- [ ] **Step 5: Self-review and commit the native world.** Check old key/shared-surface directory receipts are unchanged and no raw request/arm is reachable from unprivileged views. Refresh affected shared registration stamps now if the additive `lib.rs` export changes their actual dependency identity; record baseline/current receipts and preserve archived scientific fixtures. Use existing compatibility procedures rather than ignoring a failing identity test until Task 5. Fresh task review precedes Task 3. Keep Stage 2 In Progress.
+- [x] **Step 5: Self-review and commit the native world.** Check old key/shared-surface directory receipts are unchanged and no raw request/arm is reachable from unprivileged views. Refresh affected shared registration stamps now if the additive `lib.rs` export changes their actual dependency identity; record baseline/current receipts and preserve archived scientific fixtures. Use existing compatibility procedures rather than ignoring a failing identity test until Task 5. Fresh task review precedes Task 3. Keep Stage 2 In Progress.
 
 ### Task 3: Implement supplied routines and exact census evaluation
 
