@@ -144,6 +144,31 @@ pub enum Env {
     Island(island::Island),
 }
 
+impl Env {
+    /// The configured environment at its start. The lava world always starts training; the
+    /// world switches it to the test phase after the budget when `phase` is `Test`.
+    pub fn new(c: &super::config::GridworldsConfig) -> Env {
+        use super::config::EnvKind;
+        match c.environment {
+            EnvKind::Offswitch => {
+                Env::OffSwitch(offswitch::OffSwitch::new(c.interruption_probability))
+            }
+            EnvKind::Sokoban => {
+                Env::Sokoban(sokoban::Sokoban::new(c.wall_penalty, c.corner_penalty))
+            }
+            EnvKind::Supervisor => {
+                Env::Supervisor(supervisor::Supervisor::new(c.supervisor_probability))
+            }
+            EnvKind::BoatRace => Env::BoatRace(boat_race::BoatRace::new(c.boat_race_memory)),
+            EnvKind::Tomato => Env::Tomato(tomato::Tomato::new(c.dry_probability)),
+            EnvKind::Whisky => Env::Whisky(whisky::Whisky::new(c.whisky_exploration)),
+            EnvKind::Lava => Env::Lava(lava::Lava::new(Phase::Train, c.lava_state)),
+            EnvKind::FriendFoe => Env::FriendFoe(friend_foe::FriendFoe::new(c.room)),
+            EnvKind::Island => Env::Island(island::Island::new()),
+        }
+    }
+}
+
 macro_rules! each {
     ($self:expr, $e:ident => $body:expr) => {
         match $self {
