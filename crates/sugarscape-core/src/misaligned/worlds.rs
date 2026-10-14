@@ -213,10 +213,18 @@ mod tests {
     const ABC: Set = [true, true, true, false];
 
     fn recommender() -> Shape {
-        Shape { world: World::Recommender, capacity: 100.0, floor: 0.0 }
+        Shape {
+            world: World::Recommender,
+            capacity: 100.0,
+            floor: 0.0,
+        }
     }
     fn logarithmic() -> Shape {
-        Shape { world: World::Logarithmic, capacity: 40.0, floor: 1.0 }
+        Shape {
+            world: World::Logarithmic,
+            capacity: 40.0,
+            floor: 1.0,
+        }
     }
     fn close(a: &State, b: &State, tol: f64) -> bool {
         a.iter().zip(b).all(|(x, y)| (x - y).abs() < tol)
@@ -231,8 +239,15 @@ mod tests {
         assert_eq!(s.constraint_gradient(&start), [2.0, 2.0, 14.0, 14.0]);
         assert_eq!(s.utility_gradient(&start), [1.0; 4]);
         assert_eq!(s.sensitivities(&start), [0.5, 0.5, 1.0 / 14.0, 1.0 / 14.0]);
-        assert!(s.feasible(&start) && !s.feasible(&[1.0, 1.0, 7.0, 7.1]) && !s.feasible(&[-0.1, 0.0, 0.0, 0.0]));
-        assert!(s.sensitivities(&[0.0; 4])[0].is_finite(), "the floor is clamped at 1e-9");
+        assert!(
+            s.feasible(&start)
+                && !s.feasible(&[1.0, 1.0, 7.0, 7.1])
+                && !s.feasible(&[-0.1, 0.0, 0.0, 0.0])
+        );
+        assert!(
+            s.sensitivities(&[0.0; 4])[0].is_finite(),
+            "the floor is clamped at 1e-9"
+        );
     }
 
     #[test]
@@ -269,18 +284,25 @@ mod tests {
         assert!(close(&s, &[19.0, 19.0, 1.0, 1.0], 1e-12));
         assert!((u - 2.0 * 19f64.ln()).abs() < 1e-12);
         let low = Shape { floor: 0.001, ..l };
-        assert!(low.fixed_proxy_limit(AB).1 < -5.0, "unbounded below as the floor falls");
+        assert!(
+            low.fixed_proxy_limit(AB).1 < -5.0,
+            "unbounded below as the floor falls"
+        );
     }
 
     #[test]
     fn impact_limits_freeze_the_unmentioned_at_the_start() {
         let r = recommender();
         let (s, u) = r.impact_limit(&[1.0, 1.0, 7.0, 7.0], AB);
-        assert!(close(&s, &[1.0, 1.0, 7.0, 7.0], 1e-12) && (u - 16.0).abs() < 1e-12, "no slack: the start");
+        assert!(
+            close(&s, &[1.0, 1.0, 7.0, 7.0], 1e-12) && (u - 16.0).abs() < 1e-12,
+            "no slack: the start"
+        );
         let (s, u) = r.impact_limit(&[1.0, 1.0, 6.0, 6.0], AB);
         assert!(close(&s, &[14f64.sqrt(), 14f64.sqrt(), 6.0, 6.0], 1e-12));
         assert!((u - (12.0 + 2.0 * 14f64.sqrt())).abs() < 1e-12);
-        let (s, _) = logarithmic().impact_limit(&[4.0, 4.0, 16.0, 16.0], [true, false, true, false]);
+        let (s, _) =
+            logarithmic().impact_limit(&[4.0, 4.0, 16.0, 16.0], [true, false, true, false]);
         assert!(close(&s, &[10.0, 4.0, 10.0, 16.0], 1e-12));
     }
 
@@ -288,7 +310,10 @@ mod tests {
     fn proxy_utility_reads_the_proxy_from_the_state_and_the_rest_from_the_reference() {
         let r = recommender();
         let reference = [1.0, 1.0, 7.0, 7.0];
-        assert_eq!(r.proxy_utility(&[3.0, 4.0, 0.0, 0.0], AB, &reference), 3.0 + 4.0 + 7.0 + 7.0);
+        assert_eq!(
+            r.proxy_utility(&[3.0, 4.0, 0.0, 0.0], AB, &reference),
+            3.0 + 4.0 + 7.0 + 7.0
+        );
         assert_eq!(r.proxy_utility(&reference, AB, &reference), 16.0);
     }
 
@@ -298,15 +323,24 @@ mod tests {
         let free = [true; 4];
         let s = r.correct([1.1, 1.1, 7.0, 7.0], free);
         assert!(r.constraint(&s).abs() < 1e-12);
-        assert!((s[0] / s[2] - 1.1 / 7.0).abs() < 1e-12, "radial: ratios are kept");
+        assert!(
+            (s[0] / s[2] - 1.1 / 7.0).abs() < 1e-12,
+            "radial: ratios are kept"
+        );
         let s = r.correct([5.0, 5.0, 5.0, 4.0], [true, true, true, false]);
         assert_eq!(s[3], 4.0, "a frozen attribute does not move");
         assert!(r.constraint(&s).abs() < 1e-12);
         let l = logarithmic();
         let s = l.correct([5.0, 5.0, 16.0, 16.0], free);
-        assert!(close(&s, &[4.5, 4.5, 15.5, 15.5], 1e-12), "equal shares of the overrun");
+        assert!(
+            close(&s, &[4.5, 4.5, 15.5, 15.5], 1e-12),
+            "equal shares of the overrun"
+        );
         let clamped = l.correct([10.0, 10.0, 1.2, 20.0], [true, true, true, false]);
-        assert_eq!(clamped[2], 1.0, "an attribute that would cross the floor stops there and the others pay");
+        assert_eq!(
+            clamped[2], 1.0,
+            "an attribute that would cross the floor stops there and the others pay"
+        );
         assert!(l.constraint(&clamped).abs() < 1e-12 && clamped[3] == 20.0);
     }
 

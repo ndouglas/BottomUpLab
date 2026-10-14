@@ -71,8 +71,15 @@ mod tests {
 
     #[test]
     fn extremes_takes_the_most_and_least_sensitive() {
-        assert_eq!(extremes(&[0.5, 0.5, 0.07, 0.07]), [true, false, true, false]);
+        assert_eq!(
+            extremes(&[0.5, 0.5, 0.07, 0.07]),
+            [true, false, true, false]
+        );
         assert_eq!(extremes(&[0.1, 0.5, 0.07, 0.5]), [false, true, true, false]);
-        assert_eq!(extremes(&[0.1; 4]), [true, true, false, false], "all equal: the first two");
+        assert_eq!(
+            extremes(&[0.1; 4]),
+            [true, true, false, false],
+            "all equal: the first two"
+        );
     }
 }

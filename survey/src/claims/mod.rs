@@ -36,6 +36,7 @@ mod minds7;
 mod minds8;
 pub(crate) mod minds8b;
 pub(crate) mod minds9;
+mod misaligned;
 mod norms;
 mod opinions;
 pub(crate) mod protection;
@@ -60,6 +61,7 @@ pub fn all() -> Vec<Claim> {
         auctions::claims(),
         assistance::claims(),
         gridworlds::claims(),
+        misaligned::claims(),
         ants::claims(),
         bali::claims(),
         ch2::claims(),

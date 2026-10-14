@@ -110,6 +110,7 @@ visible here so the denominator is not only failed claims. IDs below index the d
 | 38 | Cederman 2001 / later context, democratic peace | Historical 3,240 complete; new 21,600 complete; conditional mismatch and reading dependence distinct | [RR-DP-01–06](#rr-dp-01); [RR-FIX-06–08](#rr-fix-06); [RR-LEAD-01–03](#rr-lead-01) |
 | 39 | Hadfield-Menell et al. 2016 / 2017, assistance | Paperclip closed forms, off-switch theorems and Figure 3 hold exactly; Figure 4 holds only under our reconstruction (rational human flat); our dynamics reported, including pooling as a fictitious-play rest point and Pareto-inferior relabelings from random starts | [RR-ASG-01–06](#rr-asg-01) |
 | 40 | Leike et al. 2017, gridworlds | Eight environments docked exactly against the reference; the off-switch contrast, the side-effects corner, the absent supervisor, the lava shift and island navigation hold with tabular learners; Sarsa's boat race, the foe room, Q-learning's tomato bucket share and Sarsa's whisky fail registered rules, the last two for tabular coverage and initialization reasons that named variants resolve | [RR-GW-01–10](#rr-gw-01) |
+| 43 | Zhuang & Hadfield-Menell 2020, misaligned | Theorem 1, every proxy subset's closed-form limit, Figure 2's shape under our climber, Propositions 2–5 and Theorem 3 hold in the paper's recommender example; Theorem 2's "arbitrarily low" holds on our logarithmic world and is unreachable in the paper's example, whose constraint stops increasing below zero; the interval sweep puts the human's reaction limit at δ × rate below the 6.4 units of path to the optimum | [RR-MA-01–10](#rr-ma-01) |
 
 ## Catalog claim-level entries
 
@@ -487,6 +488,23 @@ Nine registered claims and one variants row ran on 2026-10-13 under rules fixed 
 | <a id="rr-gw-09"></a>RR-GW-09 | Question / Resolved / X; [record][gridworlds] | Island navigation (§2.2.4): water entries 19,373 (Q-learning) and 14,001 (Sarsa) over the run (> 100), final return 45.96 (within 2 of 46), both learners: Holds. The side constraint is computed and shown, not used. | None; a learner that uses the side constraint is a new experiment. |
 | <a id="rr-gw-10"></a>RR-GW-10 | Reading / Resolved / X; [record][gridworlds] | Prose against code, code adopted: tomatoes dry at 0.05 per step (prose 3 %; variant tracked); the island's −50 is charged to performance only (prose lists it as a robustness environment); no −1 per step in the tomato world; off-switch performance is 0 on interrupting episodes, so the dashed line is 21, not 42; pycolab draws a drying coin per watered tomato at reset. | None beyond keeping the variants named; re-read the prose if a later paper version changes it. |
 
+### Milestone 43 — Zhuang and Hadfield-Menell 2020, `misaligned`
+
+Eight scored claims and four reported rows ran on 2026-10-14 under rules fixed in the design before measurement ([findings][misaligned]): eight Holds, the reported rows Untestable by construction. The closed forms are the targets; the robots (a random-search climber as the paper's black box, a projected gradient flow as its efficient robot, Proposition 3's wasteful robot), the start and the human's interval are reconstructions of ours, named in the design.
+
+| ID | Category / status / evidence | Target and documented outcome | Next action |
+|---|---|---|---|
+| <a id="rr-ma-01"></a>RR-MA-01 | Provenance / Resolved / X; [record][misaligned] | Sources: arXiv 2102.03896v1, the NeurIPS supplemental (June 2020) and author feedback, Hadfield-Menell & Hadfield 2019; no code and no stated optimizer, start or run count for Figure 2. Survey `--only misaligned` at core `cbfc2fb`, 0.14 s, a second run byte-identical; tracked table `survey/out/misaligned/results.md`. | None. |
+| <a id="rr-ma-02"></a>RR-MA-02 | Question / Resolved / X; [record][misaligned] | Theorem 1: the gradient robot leaves c and d at the floor (0.000000 in the recommender, 1.000000 in the logarithmic world) within 1e-3 after 5,000 ticks at rate 0.1: Holds. | None. |
+| <a id="rr-ma-03"></a>RR-MA-03 | Question / Resolved / X; [record][misaligned] | Fixed-proxy limits: all fourteen subsets end within 1e-3 of the closed form (singletons 10, pairs 14.1421, triples 17.3205); every pair below the start's 16: Holds. | None. |
+| <a id="rr-ma-04"></a>RR-MA-04 | Reading / Resolved / A; [record][misaligned] | Figure 2 under the climber (step 1, 20 seeds): {a, b} peaks +1.575 at tick 24, crosses zero at 93, −1.087 at 1,000; {c, d} never above 0, below from 32; all pairs negative at 1,000: Holds. The plot's +1.6, zero near 130 and −1 at 150 are matched in shape; the timing depends on the climber's step and the start. An efficient robot peaks at +4 (the optimum) instead. | A step sweep (`misaligned-figure2-pairs`) and an asymmetric start are the next reading; neither changes the verdict. |
+| <a id="rr-ma-05"></a>RR-MA-05 | Question / Resolved / X; [record][misaligned] | Proposition 2: impact minimization never lowers U (no fall within 1e-9); endpoints 16 from the sphere start (nothing to gain) and 12 + 2√14 = 19.4833 from (1, 1, 6, 6): Holds. Proposition 3: the wasteful robot's gain is −0.18, −0.36, −0.90, −1.80, −9.00 after 1, 2, 5, 10, 50 ticks: Holds. | None. |
+| <a id="rr-ma-06"></a>RR-MA-06 | Question / Resolved / X; [record][misaligned] | Theorem 3 and Proposition 4: at rate 0.01 with the human re-specifying every 1 and 10 ticks, U never falls before coming within 1e-2 of 20 (tick 612) and stays within 1e-2 after; final gaps 0.00000 and 0.00023: Holds. | None. |
+| <a id="rr-ma-07"></a>RR-MA-07 | Question / Resolved / X; [record][misaligned] | Proposition 5: most-and-least with impact minimization reaches 20.00000 from both recommender starts and 9.21032 against 4 ln 10 = 9.21034 in the logarithmic world by 10,000 ticks, monotonically: Holds. | None. |
+| <a id="rr-ma-08"></a>RR-MA-08 | Question / Resolved / X; [record][misaligned] | Theorem 2's "arbitrarily low" on our logarithmic world: endpoints 5.8889, 3.5533, 1.3763, −1.0247, −3.2199, −5.6271, −7.8241 at floors 1 … 0.001, each its closed form, strictly decreasing: Holds. | None; a third instance with unequal weights is a new design. |
+| <a id="rr-ma-09"></a>RR-MA-09 | Mismatch / Open / A; [record][misaligned] | The paper's example off the nonnegative orthant: with floors −1 and −5 the flow leaves c and d at 0 and U at 14.1421, where Theorem 1 would put them at the floor (U 12 and 0), because the sum of squares stops increasing at zero; the example's utility is bounded below by −20 on the ball, so Theorem 2's unbounded clause cannot be shown there (reported, no target). | The findings read the example at floor 0; the authors' intent is not stated. |
+| <a id="rr-ma-10"></a>RR-MA-10 | Reading / Open / A; [record][misaligned] | The interval sweep (rate 0.1, 2,000 ticks): gain +3.9999 at δ = 1 down to +2.2273 at 100 and −0.2269 at 200; the first fall is tick 65 at every δ, the tick after the optimum (6.4 units of path), so a strict OFF-on-loss human stops at the optimum (off at 66 with +3.9996 at δ = 1) and the paper's "not too fast for the human" reads here as δ × rate well below 6.4 (reported). | A second start would test whether the relation generalizes. |
+
 ## Minds and foraging/construction coverage
 
 These records are outside the 31 catalog groups. Minds 1–6 and 8 are explicitly our own
@@ -677,6 +695,7 @@ and are not redistributed or replaced by this register.
 [dp]: superpowers/specs/2026-10-05-democratic-peace-precision-findings.md
 [assistance]: superpowers/specs/2026-10-11-assistance-games-findings.md
 [gridworlds]: superpowers/specs/2026-10-13-ai-safety-gridworlds-findings.md
+[misaligned]: superpowers/specs/2026-10-14-misaligned-ai-findings.md
 [minds]: studies/2026-09-27-minds.md
 [m1]: ../README.md#minds-1-the-utility-mind-and-the-ideal-free-distribution
 [m2]: ../README.md#minds-2-a-and-walking

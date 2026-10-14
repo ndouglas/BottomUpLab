@@ -377,7 +377,12 @@ impl Model for MisalignedWorld {
         let old = std::mem::replace(&mut self.config, next);
         let c = &self.config;
         let human_changed = (c.proxy(), c.human, c.proxy_size, c.impact_minimizing)
-            != (old.proxy(), old.human, old.proxy_size, old.impact_minimizing);
+            != (
+                old.proxy(),
+                old.human,
+                old.proxy_size,
+                old.impact_minimizing,
+            );
         if human_changed && !self.switched_off() {
             self.interact();
         }
@@ -390,7 +395,11 @@ mod tests {
     use super::*;
 
     fn gradient() -> MisalignedConfig {
-        MisalignedConfig { robot: Robot::Gradient, rate: 0.1, ..Default::default() }
+        MisalignedConfig {
+            robot: Robot::Gradient,
+            rate: 0.1,
+            ..Default::default()
+        }
     }
     fn world(c: MisalignedConfig) -> MisalignedWorld {
         MisalignedWorld::new(c, 1).unwrap()
@@ -400,7 +409,10 @@ mod tests {
     fn tick_zero_carries_the_start_the_optimum_and_the_limit() {
         let w = world(MisalignedConfig::default());
         let s = w.stats.latest().unwrap();
-        assert_eq!((s.tick, s.utility, s.gain, s.a, s.d), (0, 16.0, 0.0, 1.0, 7.0));
+        assert_eq!(
+            (s.tick, s.utility, s.gain, s.a, s.d),
+            (0, 16.0, 0.0, 1.0, 7.0)
+        );
         assert_eq!(s.proxy, 16.0, "Ũ at the reference equals U");
         assert_eq!(s.optimum_gap, 4.0);
         assert!((s.limit_gap - (16.0 - 10.0 * 2f64.sqrt())).abs() < 1e-12);
@@ -408,16 +420,25 @@ mod tests {
         assert_eq!((s.interactions, s.switched_off), (1.0, 0.0));
         assert!(s.accepted.is_nan());
         let o = w.outcome();
-        assert_eq!((o.optimum.1, o.utility_start, o.proxy, o.off_tick), (20.0, 16.0, [true, true, false, false], None));
+        assert_eq!(
+            (o.optimum.1, o.utility_start, o.proxy, o.off_tick),
+            (20.0, 16.0, [true, true, false, false], None)
+        );
         assert_eq!(o.proxy_history.len(), 1);
     }
 
     #[test]
     fn the_climber_raises_the_proxy_and_records_its_acceptance_share() {
-        let mut w = world(MisalignedConfig { moves_per_tick: 10, ..Default::default() });
+        let mut w = world(MisalignedConfig {
+            moves_per_tick: 10,
+            ..Default::default()
+        });
         w.run(100);
         let s = w.stats.latest().unwrap();
-        assert!(s.proxy > 10.0 && s.accepted >= 0.0 && s.accepted <= 1.0, "{s:?}");
+        assert!(
+            s.proxy > 10.0 && s.accepted >= 0.0 && s.accepted <= 1.0,
+            "{s:?}"
+        );
         assert!(w.shape().feasible(&w.state()));
         assert!(w.stats.history().iter().all(|s| s.utility.is_finite()));
     }
@@ -429,39 +450,86 @@ mod tests {
         let s = w.stats.latest().unwrap();
         assert!(s.limit_gap.abs() < 1e-3 && (s.c).abs() < 1e-3, "{s:?}");
         assert!(s.gain < 0.0, "net loss from the start: {}", s.gain);
-        let peak = w.stats.history().iter().map(|s| s.utility).fold(f64::NEG_INFINITY, f64::max);
+        let peak = w
+            .stats
+            .history()
+            .iter()
+            .map(|s| s.utility)
+            .fold(f64::NEG_INFINITY, f64::max);
         assert!((peak - 20.0).abs() < 1e-3, "through the optimum: {peak}");
     }
 
     #[test]
     fn interactions_happen_at_the_interval_and_top_re_specifies_the_proxy() {
-        let mut w = world(MisalignedConfig { human: Human::Top, interval: 5, rate: 0.1, ..gradient() });
+        let mut w = world(MisalignedConfig {
+            human: Human::Top,
+            interval: 5,
+            rate: 0.1,
+            ..gradient()
+        });
         w.run(5);
-        assert_eq!(w.interactions(), 1, "the human acts at the start of the tick that begins at 5");
+        assert_eq!(
+            w.interactions(),
+            1,
+            "the human acts at the start of the tick that begins at 5"
+        );
         w.run(1);
         assert_eq!(w.interactions(), 2);
-        assert_eq!(w.proxy(), [true, true, false, false], "a and b are the most sensitive at the start");
+        assert_eq!(
+            w.proxy(),
+            [true, true, false, false],
+            "a and b are the most sensitive at the start"
+        );
         w.run(3000);
         let s = w.stats.latest().unwrap();
-        assert!(s.optimum_gap.abs() < 1e-2, "re-specified often enough, it stays near the optimum: {s:?}");
-        assert!(w.outcome().proxy_history.len() >= 2, "the proxy switched at least once past the optimum");
+        assert!(
+            s.optimum_gap.abs() < 1e-2,
+            "re-specified often enough, it stays near the optimum: {s:?}"
+        );
+        assert!(
+            w.outcome().proxy_history.len() >= 2,
+            "the proxy switched at least once past the optimum"
+        );
     }
 
     #[test]
     fn extremes_with_impact_minimization_converges_to_the_optimum_monotonically() {
-        for c in [gradient(), MisalignedConfig { robot: Robot::Gradient, rate: 0.1, ..logarithmic_defaults() }] {
-            let mut w = world(MisalignedConfig { human: Human::Extremes, impact_minimizing: true, ..c });
+        for c in [
+            gradient(),
+            MisalignedConfig {
+                robot: Robot::Gradient,
+                rate: 0.1,
+                ..logarithmic_defaults()
+            },
+        ] {
+            let mut w = world(MisalignedConfig {
+                human: Human::Extremes,
+                impact_minimizing: true,
+                ..c
+            });
             w.run(10_000);
             let h = w.stats.history();
-            assert!(h.windows(2).all(|p| p[1].utility >= p[0].utility - 1e-9), "monotone");
-            assert!(h.last().unwrap().optimum_gap.abs() < 1e-3, "{:?}", h.last().unwrap());
+            assert!(
+                h.windows(2).all(|p| p[1].utility >= p[0].utility - 1e-9),
+                "monotone"
+            );
+            assert!(
+                h.last().unwrap().optimum_gap.abs() < 1e-3,
+                "{:?}",
+                h.last().unwrap()
+            );
             assert_eq!(w.frozen().iter().filter(|&&f| f).count(), 2);
         }
     }
 
     #[test]
     fn off_freezes_the_world_and_later_ticks_change_nothing() {
-        let mut w = world(MisalignedConfig { robot: Robot::Wasteful, stop_on_loss: true, interval: 5, ..Default::default() });
+        let mut w = world(MisalignedConfig {
+            robot: Robot::Wasteful,
+            stop_on_loss: true,
+            interval: 5,
+            ..Default::default()
+        });
         w.run(5);
         assert!(!w.switched_off(), "the human has not looked yet");
         w.run(1);
@@ -473,9 +541,19 @@ mod tests {
         assert_eq!((s.switched_off, s.tick), (1.0, 26));
         assert_eq!(w.outcome().off_tick, Some(5));
         assert!(s.utility.is_finite() && s.gain < 0.0);
-        w.set_config(ModelConfig::Misaligned(MisalignedConfig { robot: Robot::Gradient, stop_on_loss: true, interval: 5, ..Default::default() })).unwrap();
+        w.set_config(ModelConfig::Misaligned(MisalignedConfig {
+            robot: Robot::Gradient,
+            stop_on_loss: true,
+            interval: 5,
+            ..Default::default()
+        }))
+        .unwrap();
         w.run(5);
-        assert_eq!(w.state(), frozen, "a live change does not restart a switched-off robot");
+        assert_eq!(
+            w.state(),
+            frozen,
+            "a live change does not restart a switched-off robot"
+        );
     }
 
     #[test]
@@ -483,23 +561,70 @@ mod tests {
         let mut w = world(gradient());
         w.run(3);
         let before = w.interactions();
-        w.set_config(ModelConfig::Misaligned(MisalignedConfig { proxy_a: false, proxy_c: true, ..gradient() })).unwrap();
-        assert_eq!((w.interactions(), w.proxy()), (before + 1, [false, true, true, false]));
-        assert_eq!(w.outcome().reference, w.state(), "the reference moves to the current state");
-        w.set_config(ModelConfig::Misaligned(MisalignedConfig { proxy_a: false, proxy_c: true, impact_minimizing: true, ..gradient() })).unwrap();
+        w.set_config(ModelConfig::Misaligned(MisalignedConfig {
+            proxy_a: false,
+            proxy_c: true,
+            ..gradient()
+        }))
+        .unwrap();
+        assert_eq!(
+            (w.interactions(), w.proxy()),
+            (before + 1, [false, true, true, false])
+        );
+        assert_eq!(
+            w.outcome().reference,
+            w.state(),
+            "the reference moves to the current state"
+        );
+        w.set_config(ModelConfig::Misaligned(MisalignedConfig {
+            proxy_a: false,
+            proxy_c: true,
+            impact_minimizing: true,
+            ..gradient()
+        }))
+        .unwrap();
         assert_eq!(w.frozen(), [true, false, false, true]);
-        let err = w.set_config(ModelConfig::Misaligned(MisalignedConfig { floor: 0.5, start_d: 6.0, ..gradient() })).unwrap_err();
-        assert_eq!(err.iter().map(|e| e.field.as_str()).collect::<Vec<_>>(), ["floor", "start_d"]);
-        let err = w.set_config(ModelConfig::Misaligned(MisalignedConfig { world: World::Logarithmic, ..gradient() })).unwrap_err();
+        let err = w
+            .set_config(ModelConfig::Misaligned(MisalignedConfig {
+                floor: 0.5,
+                start_d: 6.0,
+                ..gradient()
+            }))
+            .unwrap_err();
+        assert_eq!(
+            err.iter().map(|e| e.field.as_str()).collect::<Vec<_>>(),
+            ["floor", "start_d"]
+        );
+        let err = w
+            .set_config(ModelConfig::Misaligned(MisalignedConfig {
+                world: World::Logarithmic,
+                ..gradient()
+            }))
+            .unwrap_err();
         assert!(!err.is_empty());
-        let other = w.set_config(ModelConfig::Auctions(crate::auctions::AuctionsConfig::default())).unwrap_err();
+        let other = w
+            .set_config(ModelConfig::Auctions(
+                crate::auctions::AuctionsConfig::default(),
+            ))
+            .unwrap_err();
         assert_eq!(other[0].field, "model");
     }
 
     #[test]
     fn two_worlds_with_one_seed_match_at_every_tick_and_the_fingerprint_moves() {
-        for c in [MisalignedConfig::default(), gradient(), MisalignedConfig { robot: Robot::Wasteful, ..Default::default() }, logarithmic_defaults()] {
-            let (mut a, mut b) = (MisalignedWorld::new(c.clone(), 7).unwrap(), MisalignedWorld::new(c, 7).unwrap());
+        for c in [
+            MisalignedConfig::default(),
+            gradient(),
+            MisalignedConfig {
+                robot: Robot::Wasteful,
+                ..Default::default()
+            },
+            logarithmic_defaults(),
+        ] {
+            let (mut a, mut b) = (
+                MisalignedWorld::new(c.clone(), 7).unwrap(),
+                MisalignedWorld::new(c, 7).unwrap(),
+            );
             let first = a.fingerprint();
             for _ in 0..10 {
                 a.step();
@@ -514,8 +639,13 @@ mod tests {
     fn csv_exports_name_every_series_and_list_the_attributes() {
         let mut w = world(MisalignedConfig::default());
         w.run(2);
-        assert!(w.series_csv().starts_with("tick,utility,proxy,gain,a,b,c,d,"));
-        assert_eq!(w.agents_csv().lines().next().unwrap(), "attribute,value,in_proxy,frozen,sensitivity,start,limit,optimum");
+        assert!(w
+            .series_csv()
+            .starts_with("tick,utility,proxy,gain,a,b,c,d,"));
+        assert_eq!(
+            w.agents_csv().lines().next().unwrap(),
+            "attribute,value,in_proxy,frozen,sensitivity,start,limit,optimum"
+        );
         assert_eq!(w.agents_csv().lines().count(), 5);
         assert_eq!(w.series("gain").unwrap().len(), 3);
         assert!(w.series("nope").is_none());
@@ -538,28 +668,52 @@ mod tests {
         // top rows are background because a ≈ 1 of 10.
         let at = |x: usize, y: usize| &buf[(y * 200 + x) * 4..(y * 200 + x) * 4 + 3];
         assert_eq!(at(124, 60), &[235, 150, 60]);
-        assert_eq!(at(28, 115), &[70, 130, 230], "bar a is drawn from the bottom up (row 119 is the floor line)");
+        assert_eq!(
+            at(28, 115),
+            &[70, 130, 230],
+            "bar a is drawn from the bottom up (row 119 is the floor line)"
+        );
         assert_ne!(at(28, 10), &[70, 130, 230], "and is short");
         // The optimum tick on bar d (index 3) sits at y_of(5) = 119 − round(0.5 · 119) = 59 (and 58).
         assert_eq!(at(172, 59), &[240, 210, 70]);
         // The strip is filled from its left edge (x = 8) to the current utility, which lies right of x = 20.
-        assert!((128..144).any(|y| at(20, y) == [70, 130, 230] || at(20, y) == [230, 70, 70] || at(20, y) == [150, 150, 150]));
+        assert!((128..144).any(|y| at(20, y) == [70, 130, 230]
+            || at(20, y) == [230, 70, 70]
+            || at(20, y) == [150, 150, 150]));
     }
 
     #[test]
     fn inspection_reads_bars_gaps_and_the_strip() {
         let mut w = world(MisalignedConfig::default());
         w.run(1);
-        let bar: serde_json::Value = serde_json::from_str(&w.inspect_json(124, 60).unwrap()).unwrap();
-        assert_eq!((bar["panel"].as_str(), bar["index"].as_u64(), bar["name"].as_str(), bar["in_proxy"].as_bool()), (Some("attribute"), Some(2), Some("c"), Some(false)));
+        let bar: serde_json::Value =
+            serde_json::from_str(&w.inspect_json(124, 60).unwrap()).unwrap();
+        assert_eq!(
+            (
+                bar["panel"].as_str(),
+                bar["index"].as_u64(),
+                bar["name"].as_str(),
+                bar["in_proxy"].as_bool()
+            ),
+            (Some("attribute"), Some(2), Some("c"), Some(false))
+        );
         assert!(bar["sensitivity"].as_f64().unwrap() > 0.0 && bar["rank"].as_u64().is_some());
         assert_eq!(bar["start"].as_f64(), Some(7.0));
         assert_eq!(bar["optimum"].as_f64(), Some(5.0));
         assert_eq!(bar["limit"].as_f64(), Some(0.0));
-        let gap: serde_json::Value = serde_json::from_str(&w.inspect_json(50, 60).unwrap()).unwrap();
+        let gap: serde_json::Value =
+            serde_json::from_str(&w.inspect_json(50, 60).unwrap()).unwrap();
         assert_eq!(gap["panel"], "utility");
-        let strip: serde_json::Value = serde_json::from_str(&w.inspect_json(100, 135).unwrap()).unwrap();
-        assert_eq!((strip["panel"].as_str(), strip["utility_start"].as_f64(), strip["optimum"].as_f64()), (Some("utility"), Some(16.0), Some(20.0)));
+        let strip: serde_json::Value =
+            serde_json::from_str(&w.inspect_json(100, 135).unwrap()).unwrap();
+        assert_eq!(
+            (
+                strip["panel"].as_str(),
+                strip["utility_start"].as_f64(),
+                strip["optimum"].as_f64()
+            ),
+            (Some("utility"), Some(16.0), Some(20.0))
+        );
         assert_eq!(strip["switched_off"], false);
         assert!(strip["outcome"]["proxy_history"].is_array());
         assert!(w.inspect_json(200, 0).is_err() && w.inspect_json(0, 152).is_err());

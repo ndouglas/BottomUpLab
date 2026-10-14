@@ -206,10 +206,18 @@ mod tests {
     const NONE: Set = [false; 4];
 
     fn recommender() -> Shape {
-        Shape { world: World::Recommender, capacity: 100.0, floor: 0.0 }
+        Shape {
+            world: World::Recommender,
+            capacity: 100.0,
+            floor: 0.0,
+        }
     }
     fn logarithmic() -> Shape {
-        Shape { world: World::Logarithmic, capacity: 40.0, floor: 1.0 }
+        Shape {
+            world: World::Logarithmic,
+            capacity: 40.0,
+            floor: 1.0,
+        }
     }
 
     #[test]
@@ -232,16 +240,30 @@ mod tests {
         // A step of 1 reaches the limit in a few dozen accepted moves; after that nearly every
         // proposal is rejected (at seed 3: 25 accepted, the rest infeasible or proxy-lowering).
         assert!(accepted > 10 && accepted < 200, "{accepted}");
-        assert!(s[0] + s[1] > 13.0, "the proxy climbs to near its limit 14.14: {s:?}");
+        assert!(
+            s[0] + s[1] > 13.0,
+            "the proxy climbs to near its limit 14.14: {s:?}"
+        );
         // The logarithmic world near its floor: proposals at or below zero are rejected, nothing is NaN.
         let mut s = [1.0, 1.0, 19.0, 19.0];
         for _ in 0..500 {
             let m = climb(&l, &s, AB, &s, NONE, 3.0, &mut rng);
-            assert!(m.state.iter().all(|x| x.is_finite() && *x >= 1.0 - SURFACE_TOLERANCE));
+            assert!(m
+                .state
+                .iter()
+                .all(|x| x.is_finite() && *x >= 1.0 - SURFACE_TOLERANCE));
             s = m.state;
         }
         // Frozen attributes never move.
-        let m = climb(&r, &start, AB, &start, [false, false, true, true], 1.0, &mut rng);
+        let m = climb(
+            &r,
+            &start,
+            AB,
+            &start,
+            [false, false, true, true],
+            1.0,
+            &mut rng,
+        );
         assert_eq!((m.state[2], m.state[3]), (7.0, 7.0));
     }
 
@@ -260,11 +282,24 @@ mod tests {
             s = m.state;
             proxy_before = proxy;
         }
-        assert!((best - 20.0).abs() < 1e-3, "passes within 1e-3 of the optimum: {best}");
+        assert!(
+            (best - 20.0).abs() < 1e-3,
+            "passes within 1e-3 of the optimum: {best}"
+        );
         let (limit, _) = r.fixed_proxy_limit(AB);
-        assert!(s.iter().zip(&limit).all(|(x, y)| (x - y).abs() < 1e-3), "{s:?}");
+        assert!(
+            s.iter().zip(&limit).all(|(x, y)| (x - y).abs() < 1e-3),
+            "{s:?}"
+        );
         let settled = ascend(&r, &s, AB, &start, NONE, 0.1);
-        assert!(settled.state.iter().zip(&s).all(|(x, y)| (x - y).abs() < 1e-6), "at the limit a move is negligible");
+        assert!(
+            settled
+                .state
+                .iter()
+                .zip(&s)
+                .all(|(x, y)| (x - y).abs() < 1e-6),
+            "at the limit a move is negligible"
+        );
     }
 
     #[test]
@@ -277,13 +312,19 @@ mod tests {
         // From inside the sphere with slack it climbs, and then trades c, d down proportionally.
         let inside = [1.0, 1.0, 6.0, 6.0];
         let m = ascend(&r, &inside, AB, &inside, NONE, 0.1);
-        assert!(m.accepted && m.state[0] > 1.0 && m.state[2] == 6.0, "slack: straight up");
+        assert!(
+            m.accepted && m.state[0] > 1.0 && m.state[2] == 6.0,
+            "slack: straight up"
+        );
         let mut s = inside;
         for _ in 0..3000 {
             s = ascend(&r, &s, AB, &inside, [false, false, true, true], 0.1).state;
         }
         let (limit, _) = r.impact_limit(&inside, AB);
-        assert!(s.iter().zip(&limit).all(|(x, y)| (x - y).abs() < 1e-3), "{s:?}");
+        assert!(
+            s.iter().zip(&limit).all(|(x, y)| (x - y).abs() < 1e-3),
+            "{s:?}"
+        );
     }
 
     #[test]
@@ -296,10 +337,19 @@ mod tests {
             assert!(m.state.iter().all(|&x| x >= 1.0 - SURFACE_TOLERANCE));
             s = m.state;
         }
-        assert!((s[2] - 1.0).abs() < 1e-9 && (s[3] - 1.0).abs() < 1e-9, "{s:?}");
-        assert!((s[0] - 19.0).abs() < 1e-3 && (s[1] - 19.0).abs() < 1e-3, "{s:?}");
+        assert!(
+            (s[2] - 1.0).abs() < 1e-9 && (s[3] - 1.0).abs() < 1e-9,
+            "{s:?}"
+        );
+        assert!(
+            (s[0] - 19.0).abs() < 1e-3 && (s[1] - 19.0).abs() < 1e-3,
+            "{s:?}"
+        );
         // The recommender with a negative floor: c and d stop at 0, where C stops increasing.
-        let r = Shape { floor: -5.0, ..recommender() };
+        let r = Shape {
+            floor: -5.0,
+            ..recommender()
+        };
         let start = [1.0, 1.0, 7.0, 7.0];
         let mut s = start;
         for _ in 0..5000 {

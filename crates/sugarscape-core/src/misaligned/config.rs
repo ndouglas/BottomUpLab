@@ -244,14 +244,32 @@ mod tests {
     #[test]
     fn defaults_are_the_papers_example_with_the_climber_and_validate() {
         let c = MisalignedConfig::default();
-        assert_eq!((c.world, c.capacity, c.floor), (World::Recommender, 100.0, 0.0));
+        assert_eq!(
+            (c.world, c.capacity, c.floor),
+            (World::Recommender, 100.0, 0.0)
+        );
         assert_eq!(c.start(), [1.0, 1.0, 7.0, 7.0]);
         assert_eq!(c.proxy(), [true, true, false, false]);
-        assert_eq!((c.robot, c.step, c.rate, c.waste, c.moves_per_tick), (Robot::Climber, 1.0, 0.1, 0.1, 1));
-        assert_eq!((c.human, c.proxy_size, c.interval, c.impact_minimizing, c.stop_on_loss), (Human::Fixed, 2, 10, false, false));
+        assert_eq!(
+            (c.robot, c.step, c.rate, c.waste, c.moves_per_tick),
+            (Robot::Climber, 1.0, 0.1, 0.1, 1)
+        );
+        assert_eq!(
+            (
+                c.human,
+                c.proxy_size,
+                c.interval,
+                c.impact_minimizing,
+                c.stop_on_loss
+            ),
+            (Human::Fixed, 2, 10, false, false)
+        );
         assert!(c.validate().is_ok());
         let l = logarithmic_defaults();
-        assert_eq!((l.world, l.capacity, l.floor), (World::Logarithmic, 40.0, 1.0));
+        assert_eq!(
+            (l.world, l.capacity, l.floor),
+            (World::Logarithmic, 40.0, 1.0)
+        );
         assert_eq!(l.start(), [4.0, 4.0, 16.0, 16.0]);
         assert!(l.validate().is_ok());
         assert_eq!(c.shape().optimum().1, 20.0);
@@ -259,32 +277,92 @@ mod tests {
 
     #[test]
     fn out_of_range_and_inconsistent_fields_are_named() {
-        let c = MisalignedConfig { step: 0.0, rate: 20.0, waste: 0.0, moves_per_tick: 0, proxy_size: 4, interval: 0, ..Default::default() };
-        let fields: Vec<String> = c.validate().unwrap_err().into_iter().map(|e| e.field).collect();
-        for f in ["step", "rate", "waste", "moves_per_tick", "proxy_size", "interval"] {
-            assert!(fields.contains(&f.to_string()), "{f} missing from {fields:?}");
+        let c = MisalignedConfig {
+            step: 0.0,
+            rate: 20.0,
+            waste: 0.0,
+            moves_per_tick: 0,
+            proxy_size: 4,
+            interval: 0,
+            ..Default::default()
+        };
+        let fields: Vec<String> = c
+            .validate()
+            .unwrap_err()
+            .into_iter()
+            .map(|e| e.field)
+            .collect();
+        for f in [
+            "step",
+            "rate",
+            "waste",
+            "moves_per_tick",
+            "proxy_size",
+            "interval",
+        ] {
+            assert!(
+                fields.contains(&f.to_string()),
+                "{f} missing from {fields:?}"
+            );
         }
-        let all = MisalignedConfig { proxy_c: true, proxy_d: true, ..Default::default() };
+        let all = MisalignedConfig {
+            proxy_c: true,
+            proxy_d: true,
+            ..Default::default()
+        };
         assert_eq!(all.validate().unwrap_err()[0].field, "proxy_a");
-        let none = MisalignedConfig { proxy_a: false, proxy_b: false, ..Default::default() };
+        let none = MisalignedConfig {
+            proxy_a: false,
+            proxy_b: false,
+            ..Default::default()
+        };
         assert_eq!(none.validate().unwrap_err()[0].field, "proxy_a");
-        let outside = MisalignedConfig { start_c: 7.1, ..Default::default() };
+        let outside = MisalignedConfig {
+            start_c: 7.1,
+            ..Default::default()
+        };
         assert_eq!(outside.validate().unwrap_err()[0].field, "start_a");
-        let below = MisalignedConfig { floor: 2.0, ..Default::default() };
-        assert!(below.validate().unwrap_err().iter().any(|e| e.field == "start_a"));
-        let deep = MisalignedConfig { floor: -6.0, ..Default::default() };
-        assert_eq!(deep.validate().unwrap_err()[0].field, "floor", "3 · 36 > 100");
-        let zero_floor_log = MisalignedConfig { floor: 0.0, ..logarithmic_defaults() };
+        let below = MisalignedConfig {
+            floor: 2.0,
+            ..Default::default()
+        };
+        assert!(below
+            .validate()
+            .unwrap_err()
+            .iter()
+            .any(|e| e.field == "start_a"));
+        let deep = MisalignedConfig {
+            floor: -6.0,
+            ..Default::default()
+        };
+        assert_eq!(
+            deep.validate().unwrap_err()[0].field,
+            "floor",
+            "3 · 36 > 100"
+        );
+        let zero_floor_log = MisalignedConfig {
+            floor: 0.0,
+            ..logarithmic_defaults()
+        };
         assert_eq!(zero_floor_log.validate().unwrap_err()[0].field, "floor");
-        assert!(MisalignedConfig { capacity: f64::NAN, ..Default::default() }.validate().is_err());
+        assert!(MisalignedConfig {
+            capacity: f64::NAN,
+            ..Default::default()
+        }
+        .validate()
+        .is_err());
     }
 
     #[test]
     fn configs_round_trip_through_json_with_snake_case_tags() {
         let json = r#"{"world":"logarithmic","capacity":40,"floor":1,"start_a":4,"start_b":4,"start_c":16,"start_d":16,"robot":"gradient","human":"extremes","impact_minimizing":true}"#;
         let c: MisalignedConfig = serde_json::from_str(json).unwrap();
-        assert_eq!((c.world, c.robot, c.human, c.impact_minimizing), (World::Logarithmic, Robot::Gradient, Human::Extremes, true));
-        let back: MisalignedConfig = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
+        assert_eq!(
+            (c.world, c.robot, c.human, c.impact_minimizing),
+            (World::Logarithmic, Robot::Gradient, Human::Extremes, true)
+        );
+        let back: MisalignedConfig =
+            serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
         assert_eq!(back, c);
         assert!(serde_json::from_str::<MisalignedConfig>(r#"{"nodes":64}"#).is_err());
     }
@@ -292,7 +370,12 @@ mod tests {
     #[test]
     fn reset_fields_are_the_world_and_the_start() {
         let a = MisalignedConfig::default();
-        let b = MisalignedConfig { floor: 0.5, start_d: 6.0, rate: 0.5, ..Default::default() };
+        let b = MisalignedConfig {
+            floor: 0.5,
+            start_d: 6.0,
+            rate: 0.5,
+            ..Default::default()
+        };
         assert_eq!(a.reset_fields_changed(&b), vec!["floor", "start_d"]);
         assert!(a.reset_fields_changed(&a).is_empty());
     }
@@ -300,8 +383,13 @@ mod tests {
     #[test]
     fn schema_round_trips_and_reset_fields_are_refused() {
         use crate::model::{ModelConfig, ModelWorld};
-        for config in [ModelConfig::Misaligned(MisalignedConfig::default()), ModelConfig::Misaligned(logarithmic_defaults())] {
-            crate::schema::check_schema(&schema(), &config, || ModelWorld::new(config.clone(), 1).unwrap());
+        for config in [
+            ModelConfig::Misaligned(MisalignedConfig::default()),
+            ModelConfig::Misaligned(logarithmic_defaults()),
+        ] {
+            crate::schema::check_schema(&schema(), &config, || {
+                ModelWorld::new(config.clone(), 1).unwrap()
+            });
         }
     }
 }

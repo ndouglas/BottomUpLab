@@ -2086,7 +2086,12 @@ fn misaligned_presets_match_the_native_golden_entries() {
         assert_eq!(sim.fingerprint(), expected, "{id}");
         assert_ne!(sim.render("", "sugar").unwrap(), 0);
     }
-    let sim = Sim::new(&preset_json("misaligned-recommender-proxy"), 1, JsValue::NULL).unwrap();
+    let sim = Sim::new(
+        &preset_json("misaligned-recommender-proxy"),
+        1,
+        JsValue::NULL,
+    )
+    .unwrap();
     let view: serde_json::Value = serde_json::from_str(&sim.inspect(124, 60).unwrap()).unwrap();
     assert_eq!(view["name"], "c");
 }

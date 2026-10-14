@@ -80,7 +80,7 @@ lifetimes and populations. That is the gap.
 | 40 | AI Safety Gridworlds, **done 2026-10-13** as milestone 40 `gridworlds` ([findings](../superpowers/specs/2026-10-13-ai-safety-gridworlds-findings.md)) | medium | the eight environments from the reference code, docked step for step; tabular Q-learning and Sarsa in place of the paper's deep agents, with the off-switch and whisky on-policy/off-policy contrasts as the mechanism claims; SafeLife remains the follow-up item |
 | 41 | Negotiable RL and multi-principal assistance games | small | the weight-shift theorem and toy environment; the formal cousin of the caring example |
 | 42 | Hybrid human–machine populations (Booker, Guo, Fernández Domingos; Shirado's model) | medium | the second-species idea, already done on replicator dynamics; our lattice and network games are the next step |
-| 43 | Consequences of misaligned AI (Zhuang and Hadfield-Menell) | small | the proxy-objective result, needed by A3 |
+| 43 | Consequences of misaligned AI (Zhuang and Hadfield-Menell), **done 2026-10-14** as milestone 43 `misaligned` ([findings](../superpowers/specs/2026-10-14-misaligned-ai-findings.md)) | small | the proxy-objective result, needed by A3 |
 | 44 | The AI Economist | large | later; the planner over a Sugarscape-like economy |
 
 Queue items 2 (inspection games) and 26 (sequential social dilemmas) join this program.

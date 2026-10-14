@@ -146,9 +146,10 @@ pub fn inspect(w: &MisalignedWorld, x: u32, y: u32) -> Result<String, String> {
     let outcome = w.outcome();
     if y < BAR_HEIGHT {
         if let Some(i) = bar_at(x) {
-            let rank = 1 + (0..L)
-                .filter(|&j| sens[j] > sens[i] || (sens[j] == sens[i] && j < i))
-                .count();
+            let rank = 1
+                + (0..L)
+                    .filter(|&j| sens[j] > sens[i] || (sens[j] == sens[i] && j < i))
+                    .count();
             return Ok(json!({
                 "panel": "attribute", "index": i, "name": NAMES[i], "x": x, "y": y,
                 "value": state[i], "in_proxy": w.proxy()[i], "frozen": w.frozen()[i],
