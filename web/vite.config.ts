@@ -35,5 +35,6 @@ export default defineConfig({
   // Sweep workers import the wasm-bindgen module, which finds its .wasm with
   // new URL(…, import.meta.url): build workers as ES modules.
   worker: { format: 'es' },
-  test: { environment: 'node', include: ['src/**/*.test.ts'] },
+  // Bound file concurrency for CPU-heavy native/WASM parity checks.
+  test: { environment: 'node', include: ['src/**/*.test.ts'], maxWorkers: 1 },
 });
