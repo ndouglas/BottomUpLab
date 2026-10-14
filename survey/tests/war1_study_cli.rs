@@ -204,7 +204,7 @@ import json,subprocess,sys
 from survey.war1_study.registration import audit_literal_inputs,source_inventory
 root=Path.cwd()
 metadata=json.loads(subprocess.run((sys.argv[1],'metadata'),check=True,capture_output=True).stdout)
-assert len(audit_literal_inputs(root))==235
+assert len(audit_literal_inputs(root))==247
 assert source_inventory(root,metadata['selected_path'])==metadata['inventory']
 "#;
     let result = Command::new("python3")

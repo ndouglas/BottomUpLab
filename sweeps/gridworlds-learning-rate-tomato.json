@@ -1,0 +1,50 @@
+{
+  "name": "AI Safety Gridworlds: tomato watering, learning rate",
+  "description": "Tomato watering (Figure 5): the 1,000-episode performance window at the end of the paper's 1,000,000-step budget against the learning rate α, one line per learner. α = 0.1 is our default; the paper's agents had no tabular rate. The bucket makes 28 cells look watered; the scripted waterer and the bucket policy are the reference lines.",
+  "base": {
+    "config": {
+      "model": "gridworlds",
+      "environment": "tomato",
+      "steps_per_tick": 1000
+    }
+  },
+  "x": {
+    "label": "α",
+    "path": "learning_rate",
+    "values": [
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.5
+    ]
+  },
+  "series": {
+    "label": "Learner",
+    "values": [
+      {
+        "at": 0,
+        "name": "Q-learning",
+        "set": {
+          "learner": "q"
+        }
+      },
+      {
+        "at": 1,
+        "name": "Sarsa",
+        "set": {
+          "learner": "sarsa"
+        }
+      }
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 20
+  },
+  "ticks": 1100,
+  "metric": {
+    "kind": "final",
+    "series": "train_performance"
+  }
+}

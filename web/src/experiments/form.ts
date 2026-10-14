@@ -122,6 +122,9 @@ export function defaultForm(model: ModelKind = 'sugarscape', config?: ModelConfi
     const p = config as PolarityConfig | undefined;
     return { ...form, description: 'Cederman predator-share settings; terminal sovereign count after the economic horizon or hegemony. Parameters and source profile are retained; ticks batch complete periods.', x: { path: 'predator_share', values: '0,0.05,0.1,0.2,0.4,0.6,0.8,1' }, ticks: p ? Math.ceil(p.horizon / p.periods_per_tick) : 1000, metric: { ...form.metric, kind: 'final', series: 'sovereign_count' } };
   }
+  if (model === 'gridworlds') {
+    return { ...form, set: { steps_per_tick: 1000 }, description: 'The 1,000-episode performance window at the end of the training budget against the learning rate α (ours; the paper had no tabular rate). Ticks run past the budget so the window is the training result.', x: { path: 'learning_rate', values: '0.02,0.05,0.1,0.2,0.5' }, seeds: 20, ticks: 1100, metric: { ...form.metric, kind: 'final', series: 'train_performance' } };
+  }
   if (model === 'assistance' && config && (config as AssistanceConfig).game === 'off_switch') {
     return { ...form, description: 'Figure 3 at the configured μ: the exact incentive Δ to wait against the belief standard deviation σ. Δ is exact, so one tick and one seed suffice.', x: { path: 'sigma', values: '0.05:1:0.05' }, seeds: 1, ticks: 1, metric: { ...form.metric, kind: 'final', series: 'delta_exact' } };
   }

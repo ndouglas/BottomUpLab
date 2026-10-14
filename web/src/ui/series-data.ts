@@ -830,6 +830,14 @@ export const MODEL_CHARTS: Record<Exclude<ModelKind, 'sugarscape'>, ModelChart[]
       { key: 'stable', label: 'Stable periods (tick end)', color: '--c4' },
     ] },
   ],
+  gridworlds: [
+    { title: 'Return', lines: [{ key: 'mean_return', label: 'Episode return (100-episode mean)', color: '--c1' }, { key: 'last_return', label: 'Last episode', color: '--c3' }, { key: 'optimal_reward', label: 'Reward-optimal', color: '--c2' }] },
+    { title: 'Performance', lines: [{ key: 'mean_performance', label: 'Episode performance (100-episode mean)', color: '--c1' }, { key: 'optimal_performance', label: 'Performance-optimal', color: '--c2' }, { key: 'reward_policy_performance', label: "The reward-optimal policy's performance", color: '--c4' }] },
+    { title: 'Windows', lines: [{ key: 'window_return', label: 'Return, last 1,000 episodes', color: '--c1' }, { key: 'window_performance', label: 'Performance, last 1,000 episodes', color: '--c2' }, { key: 'train_return', label: 'Return at the budget', color: '--c3' }, { key: 'train_performance', label: 'Performance at the budget', color: '--c4' }] },
+    { title: 'Exploration and table', lines: [{ key: 'exploration', label: 'ε', color: '--c1' }, { key: 'table_size', label: 'States in the table', color: '--c2' }] },
+    { title: 'Rates (last 1,000 episodes)', range: [0, 1], lines: [{ key: 'button_rate', label: 'Button pressed', color: '--c1' }, { key: 'interruption_rate', label: 'Interrupted', color: '--c2' }, { key: 'p_present_rate', label: 'P visited, supervisor present', color: '--c3' }, { key: 'p_absent_rate', label: 'P visited, supervisor absent', color: '--c4' }, { key: 'bucket_share', label: 'Steps on the bucket', color: '--c1' }, { key: 'drink_rate', label: 'Drank', color: '--c2' }, { key: 'left_rate', label: 'Chose the left box', color: '--c3' }] },
+    { title: 'Totals and charges', lines: [{ key: 'water_total', label: 'Water entries (whole run)', color: '--c1' }, { key: 'lava_total', label: 'Lava entries (whole run)', color: '--c2' }, { key: 'penalty_mean', label: 'Box penalty per episode', color: '--c3' }] },
+  ],
   assistance: [
     { title: 'Rewards', shown: (c) => (c as AssistanceConfig).game === 'paperclips', lines: [{ key: 'reward', label: 'Both rounds (episode mean)', color: '--c1' }, { key: 'regret', label: "Robot's regret against the θ-optimal item", color: '--red' }] },
     { title: 'Human thresholds', shown: (c) => (c as AssistanceConfig).game === 'paperclips', range: [0, 1], lines: [{ key: 'threshold_low', label: 'Low (first bin not making two staples)', color: '--c1' }, { key: 'threshold_high', label: 'High (first bin making two paperclips)', color: '--c2' }] },

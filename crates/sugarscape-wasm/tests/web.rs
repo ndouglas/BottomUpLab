@@ -475,6 +475,18 @@ fn builtins_and_series_names_are_listed() {
             "assistance-figure4",
             "assistance-figure4-incentive",
             "assistance-equilibria",
+            "gridworlds-learning-rate-offswitch",
+            "gridworlds-learning-rate-sokoban",
+            "gridworlds-learning-rate-supervisor",
+            "gridworlds-learning-rate-boat-race",
+            "gridworlds-learning-rate-tomato",
+            "gridworlds-learning-rate-whisky",
+            "gridworlds-learning-rate-lava",
+            "gridworlds-learning-rate-friend-foe",
+            "gridworlds-learning-rate-island",
+            "gridworlds-exploration-floor",
+            "gridworlds-budget",
+            "gridworlds-q-init-whisky",
             "polarity-predators"
         ]
     );
@@ -837,6 +849,10 @@ fn presets_list_every_model_with_sugarscape_configs_untagged() {
     assert_eq!(
         model("assistance-paperclips-expert").as_deref(),
         Some("assistance")
+    );
+    assert_eq!(
+        model("gridworlds-offswitch-q").as_deref(),
+        Some("gridworlds")
     );
     let geosim_ids = list
         .iter()
@@ -2012,4 +2028,34 @@ fn assistance_presets_match_the_native_golden_entries() {
     .unwrap();
     let view: serde_json::Value = serde_json::from_str(&sim.inspect(18, 0).unwrap()).unwrap();
     assert_eq!(view["choice"], "act");
+}
+
+#[wasm_bindgen_test]
+fn gridworlds_presets_match_the_native_golden_entries() {
+    // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: integer grids, f64 sums and the shared
+    // RNG only, so WASM repeats the native fingerprints over the table, the window and the draws.
+    for (id, expected) in [
+        ("gridworlds-offswitch-q", "0xb91db712b4f9a0e6"),
+        ("gridworlds-offswitch-sarsa", "0x96be80859d737c3e"),
+        ("gridworlds-sokoban", "0x2a7fd0eaec62a0bb"),
+        ("gridworlds-supervisor", "0x9530f88db352fc96"),
+        ("gridworlds-boat-race", "0x6324cdc20143f89a"),
+        ("gridworlds-tomato", "0x0e88112356095512"),
+        ("gridworlds-whisky-q", "0x4706f7c0353f2a5e"),
+        ("gridworlds-whisky-sarsa", "0x18006dc08532461b"),
+        ("gridworlds-lava-train", "0x8080dac4a61bc7ec"),
+        ("gridworlds-lava-test", "0xe34f4d6976c44df8"),
+        ("gridworlds-friend", "0x26bcf1eb92606cd8"),
+        ("gridworlds-neutral", "0x94a19e44cc984d08"),
+        ("gridworlds-foe", "0xaf2a88579faa5b94"),
+        ("gridworlds-island", "0xb1d46649d58dbcab"),
+    ] {
+        let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
+        sim.step(200);
+        assert_eq!(sim.fingerprint(), expected, "{id}");
+        assert_ne!(sim.render("", "sugar").unwrap(), 0);
+    }
+    let sim = Sim::new(&preset_json("gridworlds-friend"), 1, JsValue::NULL).unwrap();
+    let view: serde_json::Value = serde_json::from_str(&sim.inspect(0, 0).unwrap()).unwrap();
+    assert_eq!(view["environment"], "friend_foe");
 }

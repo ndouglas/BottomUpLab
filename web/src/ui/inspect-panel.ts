@@ -3,13 +3,14 @@ import { geosimRows } from '../geosim';
 import { polarityRows } from '../polarity';
 import { auctionRows } from '../auctions';
 import { assistanceRows } from '../assistance';
+import { gridworldsRows } from '../gridworlds';
 import { citizenRows, shownCitizen } from '../civil';
 import { dpdRows } from '../dpd';
 import type { Engine } from '../engine';
 import { ethnoRows } from '../ethno';
 import { imageRows } from '../image-scoring';
 import { hoardStatusText } from '../hoard';
-import { hasCaches, isDemocraticPeaceView, isGeosimView, isPolarityView, isHoardView, isFirmsView, isCollusionView, isAssistanceView, isAuctionsView, isAgreementView, isAntsView, isBaliView, isLineView, isTippingView, isPunishmentView, isZiView, isRetirementView, isThresholdsView, isFarolView, isCivilView, isClassesView, isCultureView, isDpdView, isEthnoView, isImageView, isNormsView, isOpinionsView, isRingView, isStructureView, isSpatialView, isSugarView, isTagsView, isValleyView } from '../models';
+import { hasCaches, isDemocraticPeaceView, isGeosimView, isPolarityView, isHoardView, isFirmsView, isCollusionView, isAssistanceView, isGridworldsView, isAuctionsView, isAgreementView, isAntsView, isBaliView, isLineView, isTippingView, isPunishmentView, isZiView, isRetirementView, isThresholdsView, isFarolView, isCivilView, isClassesView, isCultureView, isDpdView, isEthnoView, isImageView, isNormsView, isOpinionsView, isRingView, isStructureView, isSpatialView, isSugarView, isTagsView, isValleyView } from '../models';
 import { playerRows } from '../spatial';
 import type {
   AgentView,
@@ -842,6 +843,8 @@ export class InspectPanel {
             ? this.normsRows(view)
           : isAgreementView(view)
             ? this.agreementRows(view)
+          : isGridworldsView(view)
+            ? gridworldsRows(view).map(([k, v]) => h('tr', {}, h('th', {}, k), h('td', {}, v)))
           : isAssistanceView(view)
             ? assistanceRows(view).map(([k, v]) => h('tr', {}, h('th', {}, k), h('td', {}, v)))
           : isAuctionsView(view)

@@ -15,6 +15,7 @@ import type {
   AuctionsConfig,
   AuctionsInspection,
   AssistanceInspection,
+  GridworldsInspection,
   CollusionInspection,
   ZiInspection,
   BaliConfig,
@@ -64,7 +65,7 @@ import type {
   TagsInspection,
 } from './types';
 
-export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'assistance', 'polarity', 'geosim', 'democratic_peace'];
+export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'assistance', 'polarity', 'geosim', 'democratic_peace', 'gridworlds'];
 
 /** The presets menu's group labels. */
 export const MODEL_LABELS: Record<ModelKind, string> = {
@@ -98,6 +99,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
   collusion: 'Algorithmic Collusion',
   auctions: 'Q-learning Auctions',
   assistance: 'Assistance Games',
+  gridworlds: 'AI Safety Gridworlds',
   polarity: 'Emergent Polarity',
   geosim: 'GeoSim: The Size of Wars',
   democratic_peace: 'Democratic Peace as Selection',
@@ -106,7 +108,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
 /** A config without a `model` key (or with `"sugarscape"`) is a sugarscape config. */
 export function modelOf(c: ModelConfig): ModelKind {
   const tag = (c as { model?: unknown }).model;
-  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'assistance' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
+  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'assistance' || tag === 'gridworlds' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
     ? tag
     : 'sugarscape';
 }
@@ -218,6 +220,11 @@ export function isFirmsView(v: AnyInspection): v is FirmsInspection {
 /** An assistance frame: a θ-bin of the paperclip bands or a cell of the off-switch surface. */
 export function isAssistanceView(v: AnyInspection): v is AssistanceInspection {
   return 'game' in v && 'panel' in v && (v.game === 'paperclips' || v.game === 'off_switch');
+}
+
+/** A gridworlds frame: one board cell with its Q values. */
+export function isGridworldsView(v: AnyInspection): v is GridworldsInspection {
+  return 'state_key' in v && 'q' in v && 'greedy' in v;
 }
 
 /** An auction cell carries action values and played-pair occupancy. */
@@ -693,6 +700,7 @@ export const COLOR_MODES: Record<ModelKind, [ColorMode, string][]> = {
   geosim: [['territory', 'Ownership'], ['capacity', 'Resource capacity'], ['technology', 'Technology'], ['alert', 'Alert and campaign'], ['wars', 'War membership']],
   polarity: [['territory', 'Territory'], ['resources', 'Resources'], ['strategy', 'Latent strategy'], ['coalitions', 'Coalitions']],
   assistance: [['bands', 'Rule, map and posterior'], ['surface', 'Δ over σ and β']],
+  gridworlds: [['tiles', 'Tiles'], ['policy', 'Greedy policy'], ['value', 'State value']],
   auctions: [['bids', 'Bids · whole run'], ['late', 'Bids · final 20%'], ['values', 'Values']],
   // Each firm's strategy map: price or how often each state was visited.
   collusion: [
@@ -737,6 +745,7 @@ export const MODEL_OVERLAYS: Record<ModelKind, Overlay[]> = {
   polarity: [],
   auctions: [],
   assistance: [],
+  gridworlds: [],
 };
 
 export function isPolarityView(v: AnyInspection): v is PolarityInspection {

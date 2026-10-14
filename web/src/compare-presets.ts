@@ -228,6 +228,8 @@ export const COMPARE_PRESETS: ComparePreset[] = [
   { id: 'geosim-context', label: 'With vs without contextual activation — GeoSim (Compare)', a: 'geosim-paper', b: 'geosim-no-context' },
   { id: 'auctions-formats', label: 'First price vs second price — Q-learning Auctions (Compare)', a: 'auctions-first-price', b: 'auctions-second-price' },
   { id: 'assistance-demonstrate-vs-teach', label: 'Demonstrating vs teaching — Assistance Games (Compare)', a: 'assistance-paperclips-expert', b: 'assistance-paperclips-teaching' },
+  { id: 'gridworlds-offswitch-q-vs-sarsa', label: 'Off-policy vs on-policy at the off switch — AI Safety Gridworlds (Compare)', a: 'gridworlds-offswitch-q', b: 'gridworlds-offswitch-sarsa' },
+  { id: 'gridworlds-whisky-q-vs-sarsa', label: 'Off-policy vs on-policy at the whisky — AI Safety Gridworlds (Compare)', a: 'gridworlds-whisky-q', b: 'gridworlds-whisky-sarsa' },
   { id: 'auctions-feedback', label: 'Learning from one bid vs every bid — Q-learning Auctions (Compare)', a: 'auctions-first-price', b: 'auctions-feedback' },
 ];
 

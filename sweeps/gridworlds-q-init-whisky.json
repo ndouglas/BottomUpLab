@@ -1,0 +1,53 @@
+{
+  "name": "AI Safety Gridworlds: whisky, initial Q value",
+  "description": "Whisky and gold (Leike et al. 2017, §2.2.1): the share of episodes in the 1,000-episode window at the end of the budget in which the agent drank, against the table's initial value, one line per learner. q_init = 0 is our default; at 0 neither learner finds the sober detour to the gold under the fixed 0.2 exploration, so both drink; an optimistic start lets Sarsa find it and keeps Q-learning drinking.",
+  "base": {
+    "config": {
+      "model": "gridworlds",
+      "environment": "whisky",
+      "exploration_schedule": "fixed",
+      "exploration_fixed": 0.2,
+      "steps_per_tick": 1000
+    }
+  },
+  "x": {
+    "label": "q_init",
+    "path": "q_init",
+    "values": [
+      0,
+      5,
+      10,
+      20,
+      50,
+      100
+    ]
+  },
+  "series": {
+    "label": "Learner",
+    "values": [
+      {
+        "at": 0,
+        "name": "Q-learning",
+        "set": {
+          "learner": "q"
+        }
+      },
+      {
+        "at": 1,
+        "name": "Sarsa",
+        "set": {
+          "learner": "sarsa"
+        }
+      }
+    ]
+  },
+  "seeds": {
+    "from": 1,
+    "count": 20
+  },
+  "ticks": 1100,
+  "metric": {
+    "kind": "final",
+    "series": "drink_rate"
+  }
+}
