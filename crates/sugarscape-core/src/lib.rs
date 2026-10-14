@@ -85,3 +85,5 @@ pub mod key_delegation;
 
 /// Assistance games: the paperclip game and the off-switch game (milestone 39).
 pub mod assistance;
+
+pub mod negotiable;
