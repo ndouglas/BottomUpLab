@@ -264,7 +264,7 @@ export interface Config {
 }
 
 /** The models the playground runs (milestones 9–13). */
-export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace' | 'gridworlds';
+export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace' | 'gridworlds' | 'misaligned';
 
 /** A fraction range (Schelling's preferences). */
 export interface FRange { min: number; max: number }
@@ -683,7 +683,7 @@ export interface AgreementConfig {
   stop_at: number;
 }
 
-export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig | GridworldsConfig;
+export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig | GridworldsConfig | MisalignedConfig;
 
 /**
  * Arthur's El Farol bar and Challet and Zhang's minority game (milestone 23), with Challet, Marsili
@@ -1481,7 +1481,7 @@ export interface AgreementStats {
   stable_at: number;
 }
 
-export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats | GridworldsStats;
+export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats | GridworldsStats | MisalignedStats;
 
 export interface SiteView {
   x: number;
@@ -2222,7 +2222,7 @@ export interface AgreementInspection {
   agent: null;
 }
 
-export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection | GridworldsInspection;
+export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection | GridworldsInspection | MisalignedInspection;
 
 /**
  * A sugarscape color mode, or (Schelling) `color`, `satisfaction`, `preference`, or (the anasazi)
@@ -2234,6 +2234,7 @@ export type AnyInspection = Inspection | SchellingInspection | RingInspection | 
 export type ColorMode =
   | 'bands'
   | 'surface'
+  | 'bars'
   | 'governing_regime'
   | 'latent_regime'
   | 'alliances'
@@ -2438,6 +2439,37 @@ export interface GridworldsInspection {
   estimate?: [number, number]; reward_left?: boolean; interrupting?: boolean; pressed?: boolean; drunk?: boolean;
   layout?: number; watered?: number; box?: [number, number]; present?: boolean;
 }
+
+/** Consequences of misaligned AI (Zhuang & Hadfield-Menell 2020); the world, capacity, floor and start apply at reset. */
+export interface MisalignedConfig {
+  model: 'misaligned'; world: 'recommender' | 'logarithmic'; capacity: number; floor: number;
+  start_a: number; start_b: number; start_c: number; start_d: number;
+  proxy_a: boolean; proxy_b: boolean; proxy_c: boolean; proxy_d: boolean;
+  robot: 'climber' | 'gradient' | 'wasteful'; step: number; rate: number; waste: number; moves_per_tick: number;
+  human: 'fixed' | 'top' | 'extremes'; proxy_size: number; interval: number; impact_minimizing: boolean; stop_on_loss: boolean;
+}
+export interface MisalignedStats {
+  tick: number; utility: number | null; proxy: number | null; gain: number | null; a: number | null; b: number | null; c: number | null; d: number | null;
+  sensitivity_a: number | null; sensitivity_b: number | null; sensitivity_c: number | null; sensitivity_d: number | null;
+  optimum_gap: number | null; limit_gap: number | null; interactions: number | null; switched_off: number | null; accepted: number | null;
+}
+export type MisalignedSet = [boolean, boolean, boolean, boolean];
+export type MisalignedState = [number, number, number, number];
+export interface MisalignedOutcome {
+  config: MisalignedConfig; seed: number; tick: number; state: MisalignedState; start: MisalignedState; utility_start: number; utility: number;
+  optimum: [MisalignedState, number]; limit: [MisalignedState, number]; impact_limit: [MisalignedState, number];
+  proxy: MisalignedSet; frozen: MisalignedSet; reference: MisalignedState; proxy_history: { tick: number; proxy: MisalignedSet }[];
+  interactions: number; off_tick: number | null;
+}
+export interface MisalignedAttributeInspection {
+  panel: 'attribute'; index: number; name: 'a' | 'b' | 'c' | 'd'; x: number; y: number; value: number; in_proxy: boolean; frozen: boolean;
+  sensitivity: number; rank: number; start: number; limit: number; optimum: number; floor: number; tick: number; outcome: MisalignedOutcome; agent: null;
+}
+export interface MisalignedUtilityInspection {
+  panel: 'utility'; x: number; y: number; utility: number; utility_start: number; optimum: number; limit: number; gain: number;
+  interactions: number; switched_off: boolean; tick: number; outcome: MisalignedOutcome; agent: null;
+}
+export type MisalignedInspection = MisalignedAttributeInspection | MisalignedUtilityInspection;
 
 /** Cederman 1994/1997 reconstruction; every control requires reset. */
 export interface PolarityConfig {

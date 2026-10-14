@@ -230,6 +230,8 @@ export const COMPARE_PRESETS: ComparePreset[] = [
   { id: 'assistance-demonstrate-vs-teach', label: 'Demonstrating vs teaching — Assistance Games (Compare)', a: 'assistance-paperclips-expert', b: 'assistance-paperclips-teaching' },
   { id: 'gridworlds-offswitch-q-vs-sarsa', label: 'Off-policy vs on-policy at the off switch — AI Safety Gridworlds (Compare)', a: 'gridworlds-offswitch-q', b: 'gridworlds-offswitch-sarsa' },
   { id: 'gridworlds-whisky-q-vs-sarsa', label: 'Off-policy vs on-policy at the whisky — AI Safety Gridworlds (Compare)', a: 'gridworlds-whisky-q', b: 'gridworlds-whisky-sarsa' },
+  { id: 'misaligned-proxy-vs-interactive', label: 'A fixed proxy against a human who re-specifies it — Misaligned AI (Compare)', a: 'misaligned-recommender-proxy', b: 'misaligned-recommender-interactive' },
+  { id: 'misaligned-gradient-vs-impact', label: 'The efficient robot with and without impact minimization — Misaligned AI (Compare)', a: 'misaligned-recommender-gradient', b: 'misaligned-recommender-impact' },
   { id: 'auctions-feedback', label: 'Learning from one bid vs every bid — Q-learning Auctions (Compare)', a: 'auctions-first-price', b: 'auctions-feedback' },
 ];
 
