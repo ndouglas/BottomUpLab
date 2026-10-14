@@ -85,3 +85,6 @@ pub mod key_delegation;
 
 /// Assistance games: the paperclip game and the off-switch game (milestone 39).
 pub mod assistance;
+
+/// AI Safety Gridworlds: eight environments with hidden performance functions (milestone 40).
+pub mod gridworlds;
