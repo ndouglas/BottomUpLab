@@ -1,9 +1,9 @@
 # Negotiable assistance — exact foundation design
 
-**Date:** 2026-10-14. **Status:** written design for user review; no implementation or measurement has begun.
+**Date:** 2026-10-14. **Status:** user-approved design; finite engineering foundation implemented and required checks passed. Fresh Task 4 and whole-branch reviews remain pending. Scientific first/repeat collection and publication remain uninvoked.
 **Program:** [assistance and alignment](../../studies/2026-10-11-alignment-program.md), reproduction queue item 41. No milestone number is assigned here.
 **Intent:** reproduce how differing beliefs change a jointly owned assistant's priorities, with an exact, inspectable foundation before the paper's sequential gridworld and strategic-reporting follow-up.
-**Approval so far:** the user approved the proposed cake example, priority-update checks and subsequent separately scoped gridworld investigation in chat. This document makes the first slice concrete; written-design review precedes an implementation plan.
+**Approvals:** the user approved this written design and its implementation plan; independent source and numerical v2 reviews and core Tasks 2–3 reviews approved the foundation. The implemented slice contains exact cake, stochastic Pareto and supplied-history checks. Gridworld investigation retains its separate scope and does not begin here.
 
 ## Sources and scope
 
