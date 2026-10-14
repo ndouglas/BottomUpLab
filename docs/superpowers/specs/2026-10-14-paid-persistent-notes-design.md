@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-14
 
-**Status:** proposed written design following the user's approval to design this study. No implementation, independent numerical reference or scientific collection has begun. Written-design review precedes the implementation plan.
+**Status:** written design approved by the user's “LGTM!” on 2026-10-14 after review of commit `e3d48044d7087c243a9044668195be42714b3f2b`. No implementation, independent numerical reference or scientific collection has begun. The implementation plan has its own review handoff.
 
 **Base inspected:** `790b3e647d27c33a207c69f78fc0e575b2e4c539`.
 
