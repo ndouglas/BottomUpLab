@@ -1,0 +1,28 @@
+{
+  "name": "Misaligned AI: how often the human must act",
+  "description": "Theorem 3 and Proposition 4: the efficient robot (steepest ascent, 0.1 per tick) under a human who re-specifies the proxy as the two most sensitive attributes every δ ticks; the utility gained over the start after 2,000 ticks, with and without switching off on a loss. Small δ keeps the robot inside the neighborhood where Theorem 3 guarantees improvement; past the optimum a large δ lets it run to the proxy's limit.",
+  "base": {
+    "config": {
+      "model": "misaligned",
+      "robot": "gradient",
+      "rate": 0.1,
+      "human": "top",
+      "proxy_size": 2
+    }
+  },
+  "x": {
+    "label": "Interval δ (ticks)",
+    "path": "interval",
+    "values": [1, 2, 5, 10, 20, 50, 100, 200]
+  },
+  "series": {
+    "label": "On a loss",
+    "values": [
+      { "at": 0, "name": "Keep going", "set": { "stop_on_loss": false } },
+      { "at": 1, "name": "Switch off", "set": { "stop_on_loss": true } }
+    ]
+  },
+  "seeds": { "from": 1, "count": 1 },
+  "ticks": 2000,
+  "metric": { "kind": "final", "series": "gain" }
+}

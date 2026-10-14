@@ -1,0 +1,30 @@
+{
+  "name": "Misaligned AI: Figure 2, every proxy pair",
+  "description": "Zhuang & Hadfield-Menell 2020, Figure 2 (right): the utility gained over the start after 1,000 ticks of the random-search climber, one line per pair of proxy attributes, against the climber's proposal step. Every pair ends below the start (its limit is 10√2 ≈ 14.14 against 16) however it climbs; the start (1, 1, 7, 7) and the climber are our reconstruction.",
+  "base": {
+    "config": {
+      "model": "misaligned",
+      "robot": "climber",
+      "moves_per_tick": 1
+    }
+  },
+  "x": {
+    "label": "Proposal step σ",
+    "path": "step",
+    "values": [0.25, 0.5, 1, 2]
+  },
+  "series": {
+    "label": "Proxy",
+    "values": [
+      { "at": 0, "name": "a, b", "set": { "proxy_a": true, "proxy_b": true, "proxy_c": false, "proxy_d": false } },
+      { "at": 1, "name": "a, c", "set": { "proxy_a": true, "proxy_b": false, "proxy_c": true, "proxy_d": false } },
+      { "at": 2, "name": "a, d", "set": { "proxy_a": true, "proxy_b": false, "proxy_c": false, "proxy_d": true } },
+      { "at": 3, "name": "b, c", "set": { "proxy_a": false, "proxy_b": true, "proxy_c": true, "proxy_d": false } },
+      { "at": 4, "name": "b, d", "set": { "proxy_a": false, "proxy_b": true, "proxy_c": false, "proxy_d": true } },
+      { "at": 5, "name": "c, d", "set": { "proxy_a": false, "proxy_b": false, "proxy_c": true, "proxy_d": true } }
+    ]
+  },
+  "seeds": { "from": 1, "count": 20 },
+  "ticks": 1000,
+  "metric": { "kind": "final", "series": "gain" }
+}

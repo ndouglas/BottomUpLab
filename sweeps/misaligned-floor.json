@@ -1,0 +1,26 @@
+{
+  "name": "Misaligned AI: the floor under the unmentioned attributes",
+  "description": "Theorem 2: the utility the efficient robot leaves after 5,000 ticks of optimizing the fixed proxy {a, b}, against the floor under every attribute. In our logarithmic world (budget 40, start 4, 4, 16, 16) the limit falls without bound as the floor falls, the theorem's 'arbitrarily low'; in the paper's recommender example the floor below zero does not matter, because the sum of squares stops increasing there, and the limit stays near 14.14.",
+  "base": {
+    "config": {
+      "model": "misaligned",
+      "robot": "gradient",
+      "rate": 0.1
+    }
+  },
+  "x": {
+    "label": "Floor",
+    "path": "floor",
+    "values": [1, 0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
+  },
+  "series": {
+    "label": "World",
+    "values": [
+      { "at": 0, "name": "Logarithmic (ours)", "set": { "world": "logarithmic", "capacity": 40, "start_a": 4, "start_b": 4, "start_c": 16, "start_d": 16 } },
+      { "at": 1, "name": "Recommender (the paper's)", "set": { "world": "recommender", "capacity": 100, "start_a": 1, "start_b": 1, "start_c": 7, "start_d": 7 } }
+    ]
+  },
+  "seeds": { "from": 1, "count": 1 },
+  "ticks": 5000,
+  "metric": { "kind": "final", "series": "utility" }
+}

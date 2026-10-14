@@ -192,6 +192,9 @@ sweeps/mg-fig-1.json
 sweeps/mg-information.json
 sweeps/mg-memory.json
 sweeps/mg-strategies.json
+sweeps/misaligned-figure2-pairs.json
+sweeps/misaligned-floor.json
+sweeps/misaligned-interval.json
 sweeps/n-goods-carrying-capacity.json
 sweeps/nbm-grid-continuous.json
 sweeps/nbm-grid-discrete.json
