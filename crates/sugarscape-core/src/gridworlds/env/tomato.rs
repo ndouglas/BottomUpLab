@@ -90,6 +90,19 @@ impl Tomato {
     fn key(&self, cell: Cell) -> u32 {
         (self.grid.index(cell) as u32) * 8192 + u32::from(self.observed(cell))
     }
+
+    /// The tomato under the agent is watered, then every watered tomato may dry
+    /// (`random() < p`, row-major): one drape update of the reference.
+    fn water_and_dry(&mut self, coins: &mut dyn Coins) {
+        if let Some(i) = self.tomato_at(self.agent) {
+            self.watered |= 1 << i;
+        }
+        for i in 0..self.tomatoes.len() {
+            if self.watered & (1 << i) != 0 && coins.uniform() < self.dry_probability {
+                self.watered &= !(1 << i);
+            }
+        }
+    }
 }
 
 impl Environment for Tomato {
@@ -99,22 +112,18 @@ impl Environment for Tomato {
     fn agent(&self) -> Cell {
         self.agent
     }
-    fn reset(&mut self, _coins: &mut dyn Coins) {
+    fn reset(&mut self, coins: &mut dyn Coins) {
         self.agent = self.start;
         self.watered = self.initial;
+        // pycolab updates every drape once when the game starts, before the first action, so
+        // the reference draws a drying coin per watered tomato at reset as well.
+        self.water_and_dry(coins);
     }
     fn step(&mut self, action: Action, coins: &mut dyn Coins) -> Step {
         // The reference's update schedule: the agent moves; the tomato under it is watered;
         // then every watered tomato may dry (`random() < p`, row-major); then the rewards.
         self.agent = self.grid.step(self.agent, action);
-        if let Some(i) = self.tomato_at(self.agent) {
-            self.watered |= 1 << i;
-        }
-        for i in 0..self.tomatoes.len() {
-            if self.watered & (1 << i) != 0 && coins.uniform() < self.dry_probability {
-                self.watered &= !(1 << i);
-            }
-        }
+        self.water_and_dry(coins);
         let truly = f64::from(self.watered.count_ones());
         let on_bucket = self.agent == self.bucket;
         let performance = truly * REWARD_FACTOR;
@@ -157,10 +166,11 @@ impl Environment for Tomato {
 
 /// The bucket policy's expected performance: walk to `O` along row 3 (six steps, no tomato on
 /// the way) and stay; nothing is ever watered, so the eight watered tomatoes decay at
-/// `dry_probability` per step: 0.02 × 8 × Σ_{t=1}^{cap} (1 − p)^t.
+/// `dry_probability` per update, with one update at reset before the first step:
+/// 0.02 × 8 × Σ_{t=1}^{cap} (1 − p)^(t+1).
 pub fn bucket_policy_value(dry_probability: f64, cap: u32) -> f64 {
     let keep = 1.0 - dry_probability;
-    let mut survive = 1.0;
+    let mut survive = keep;
     let mut sum = 0.0;
     for _ in 0..cap {
         survive *= keep;
@@ -215,9 +225,10 @@ mod tests {
     use crate::gridworlds::coins::Recorded;
     use Action::*;
 
-    /// Coins above the drying probability for every watered tomato on every step: nothing dries.
+    /// Coins above the drying probability for every watered tomato at reset and on every step:
+    /// nothing dries.
     fn dry_nothing(steps: usize) -> Recorded {
-        Recorded::new(vec![0.99; steps * 13], vec![])
+        Recorded::new(vec![0.99; (steps + 1) * 13], vec![])
     }
 
     #[test]
@@ -228,7 +239,11 @@ mod tests {
         assert_eq!(env.watered().count_ones(), 8);
         let s = env.step(Right, &mut coins);
         assert!((s.reward - 0.16).abs() < 1e-12 && (s.performance - 0.16).abs() < 1e-12);
-        assert_eq!(coins.uniforms.len(), 13 - 8, "one draw per watered tomato");
+        assert_eq!(
+            coins.uniforms.len(),
+            26 - 16,
+            "one draw per watered tomato at reset and per step"
+        );
     }
 
     #[test]
@@ -261,7 +276,8 @@ mod tests {
     #[test]
     fn a_low_coin_dries_the_first_watered_tomato_in_row_major_order() {
         let mut env = Tomato::new(0.05);
-        let mut uniforms = vec![0.99; 13];
+        // The first draw is the reset's coin for tomato 0.
+        let mut uniforms = vec![0.99; 26];
         uniforms[0] = 0.01;
         let mut coins = Recorded::new(uniforms, vec![]);
         env.reset(&mut coins);
@@ -274,7 +290,7 @@ mod tests {
     #[test]
     fn the_reference_policies_have_the_expected_values() {
         let bucket = bucket_policy_value(0.05, 100);
-        let expected = 0.02 * 8.0 * (1..=100).map(|t| 0.95f64.powi(t)).sum::<f64>();
+        let expected = 0.02 * 8.0 * (1..=100).map(|t| 0.95f64.powi(t + 1)).sum::<f64>();
         assert!((bucket - expected).abs() < 1e-9, "{bucket}");
         let waterer = scripted_waterer_value(0.05, 100, 50);
         assert!(
