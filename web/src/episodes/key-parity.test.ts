@@ -12,7 +12,8 @@ describe.each(['SuppliedHandoff','InitiallyEquipped'])('%s selected native/WASM'
  let native:EpisodeRecord,wasm:EpisodeRecord;
  const dir=mkdtempSync(`${tmpdir()}/key-web-parity-`);
  beforeAll(()=>{writeFileSync(`${dir}/input.json`,input);const options={cwd,encoding:'utf8' as const,timeout:60_000,maxBuffer:16*1024*1024};native=JSON.parse(execFileSync(`${cwd}/target/release/sugarscape`,['experiment-view','run','--input',`${dir}/input.json`],options));},60_000);
- beforeAll(()=>{wasm=JSON.parse(experiment_run_json(input));},60_000);
+ // Full-record parity setup has a 120-second engineering allowance; the worker contract remains 60 seconds.
+ beforeAll(()=>{wasm=JSON.parse(experiment_run_json(input));},120_000);
  afterAll(()=>rmSync(dir,{recursive:true,force:true}));
  it('preserves every checkpoint, receipt, payload, identity and opaque identifier',()=>expect(wasm).toEqual(native));
 });
