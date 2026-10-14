@@ -523,7 +523,7 @@ def decode_reference(data: bytes, kind: str) -> dict:
 
     try:
         record = json.loads(data.decode("utf-8"), object_pairs_hook=pairs, parse_constant=constant)
-    except (UnicodeError, json.JSONDecodeError, RecursionError) as error:
+    except (ValueError, RecursionError) as error:
         raise ValueError(f"{kind}: invalid reference JSON: {error}") from error
     validate_reference(record, kind)
     return record

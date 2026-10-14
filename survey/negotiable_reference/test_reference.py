@@ -110,6 +110,10 @@ class ReferenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate.*schema"):
             reference.decode_reference(b'{"schema":1,"schema":2}', "cake")
 
+    def test_parser_integer_conversion_error_has_reference_context(self):
+        with self.assertRaisesRegex(ValueError, "cake: invalid reference JSON"):
+            reference.decode_reference(b"9" * 5000, "cake")
+
     def test_duplicate_rows_rejected(self):
         for kind, builder in self.builders():
             record = builder()
