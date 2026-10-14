@@ -416,7 +416,27 @@ def _run_child(command, legacy, directory, limits):
             "rss_method": "ps group RSS every <= nominal 50ms plus wait4 peak (ps latency adds sampling delay)"}
 
 
-def _collect_pair(command, legacy, archives, snapshot, limits):
+def _archive_raw_report(legacy, owned, directory, cap):
+    """Retain only the owned regular inode, even when later checks fail."""
+    fd = os.open(legacy, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        info = os.fstat(fd)
+        if (not stat.S_ISREG(info.st_mode) or
+                (info.st_dev, info.st_ino) != (owned.st_dev, owned.st_ino)):
+            raise ValueError("owned staging inode was replaced")
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            data = stream.read(cap + 1)
+        raw = data[:cap]
+        receipt = {"bytes": len(raw), "staging_bytes": info.st_size,
+                   "truncated": len(data) > cap or info.st_size > cap,
+                   "at_byte_limit": len(raw) == cap}
+        _exclusive(directory / "report.json", raw)
+        return raw, receipt
+    finally:
+        os.close(fd)
+
+
+def _collect_pair(command, legacy, archives, snapshot, limits, *, reviewed):
     """Create-only collector core. A retained failed attempt stops both runs."""
     legacy, archives = Path(legacy), Path(archives)
     lock = legacy.with_name(legacy.name + ".collection-lock")
@@ -427,8 +447,10 @@ def _collect_pair(command, legacy, archives, snapshot, limits):
             raise ValueError(f"symlink destination directory: {parent}")
     if any(os.path.lexists(archives / name) for name in ("first", "repeat")):
         raise FileExistsError("attempt exists; retry prohibited")
-    before = snapshot()
-    encoded_before = reference.canonical_bytes(before)
+    encoded_before = reference.canonical_bytes(reviewed)
+    before = _json(encoded_before)
+    if reference.canonical_bytes(snapshot()) != encoded_before:
+        raise ValueError("reviewed identity changed before campaign")
     if len(encoded_before) > limits.total_bytes // 16:
         raise ValueError("provenance bytes exceed reserved allowance")
     legacy.parent.mkdir(parents=True, exist_ok=True)
@@ -441,7 +463,7 @@ def _collect_pair(command, legacy, archives, snapshot, limits):
             raise FileExistsError("legacy appeared during ownership acquisition")
         for name in ("first", "repeat"):
             current = snapshot()
-            if current != before:
+            if reference.canonical_bytes(current) != encoded_before:
                 raise ValueError("certified identity changed before attempt")
             directory = archives / name
             directory.mkdir(parents=True)
@@ -454,18 +476,17 @@ def _collect_pair(command, legacy, archives, snapshot, limits):
                 staging_info = os.fstat(fd)
                 os.close(fd)
                 status.update(_run_child(command, legacy, directory, limits))
+                raw, status["raw_report"] = _archive_raw_report(
+                    legacy, staging_info, directory, limits.total_bytes // 3)
+                if status["raw_report"]["truncated"]:
+                    status["error"] = "legacy report bytes limit exceeded; retained prefix truncated"
                 after = snapshot()
                 encoded_after = reference.canonical_bytes(after)
                 if len(encoded_after) > limits.total_bytes // 16:
                     raise ValueError("after provenance bytes exceed reserved allowance")
                 _exclusive(directory / "provenance-after.json", encoded_after)
-                if after != before:
+                if reference.canonical_bytes(after) != encoded_before:
                     raise ValueError("source, binary or collector identity changed during child")
-                info = legacy.lstat()
-                if not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) != (staging_info.st_dev, staging_info.st_ino):
-                    raise ValueError("owned staging inode was replaced")
-                raw = _regular(legacy, limits.total_bytes // 3)
-                _exclusive(directory / "report.json", raw)
                 if status["error"]:
                     raise ValueError(status["error"])
                 validation = validate_report(raw, before["source_sha256"])
@@ -522,7 +543,7 @@ def run_first_repeat(certificate_path):
     def snapshot():
         # Preserve independently hashed drift evidence before the core refuses it.
         return certify(_allow_drift=True)
-    return _collect_pair(COMMAND, LEGACY, ARCHIVES, snapshot, _Limits())
+    return _collect_pair(COMMAND, LEGACY, ARCHIVES, snapshot, _Limits(), reviewed=reviewed)
 
 
 def main():
