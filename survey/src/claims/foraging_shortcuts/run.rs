@@ -18,8 +18,7 @@ use std::{
 };
 use sugarscape_core::foraging::construction as core;
 
-#[path = "../../../build_support/f5_source_identity.rs"]
-pub(super) mod source_identity;
+pub(super) use super::super::f5_source_identity as source_identity;
 include!(concat!(env!("OUT_DIR"), "/f5_source_identity.rs"));
 
 pub(super) const MANIFEST_PATH: &str =
