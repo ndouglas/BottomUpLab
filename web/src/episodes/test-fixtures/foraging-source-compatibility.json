@@ -85,25 +85,25 @@
       "path": "crates/sugarscape-core/src/model.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/model.rs.txt",
       "historical_sha256": "f2fdeebd1de5cb53db3e749b6a8329a4514275792fb8ab5b9808be0a19d2df66",
-      "reviewed_sha256": "901cef9d53062b2fdfe9fd81c8f441de6a80880865c07662784c555f59c8a2ab"
+      "reviewed_sha256": "bc39f5c1d5754031424dbdb49b1d5b6017e487f49270141cdbc59d20dfbe3524"
     },
     {
       "path": "crates/sugarscape-core/src/presets.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/presets.rs.txt",
       "historical_sha256": "c3acff9f960c66e3b78807010ccc2188048d5192b8528c974e29e61c8a2205f0",
-      "reviewed_sha256": "f0452473ed2cd84ec4b41c4f5d9fbba1e2a654e1dee1c349cb52447a5611210c"
+      "reviewed_sha256": "fbe03050302d65533381f5d0ce74b2b88a157f036a0668745a96b9912043d3a5"
     },
     {
       "path": "crates/sugarscape-core/src/sweep.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/sweep.rs.txt",
       "historical_sha256": "3d79b0c4037095efb03a135a03a4f710598c0c0a93259319f5781346eeb8cbd3",
-      "reviewed_sha256": "189e0f3ce8cb0a54da9d5d55a354ff900c4ee58b1944aee5ee590af8eae8d2cb"
+      "reviewed_sha256": "ce12abae893be370ba187b49d17be956a398ae6a2588467f6a82e3f39edd346b"
     },
     {
       "path": "crates/sugarscape-core/src/titles.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/titles.rs.txt",
       "historical_sha256": "33d2c9c255df449cfe9d7d6a4d542d03d3951466852fe16eac8865733e56c226",
-      "reviewed_sha256": "b9a5bf29257668b7b8a5030f2559b1e9585be97091ca564f2b6bdf73c46a8c3e"
+      "reviewed_sha256": "c6e12005f9e8942a8047b7afc20f14ab32f4427676167f87e4aad051fe0426d5"
     }
   ]
 }

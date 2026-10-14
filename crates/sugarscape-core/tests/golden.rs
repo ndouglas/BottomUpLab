@@ -455,6 +455,21 @@ const MODEL_GOLDEN: &[(&str, u64)] = &[
     ("assistance-paperclips-learning", 0x42413ef6c7528348),
     ("assistance-offswitch-rational", 0xdbc31fa0498ce350),
     ("assistance-offswitch-toddler", 0xfdc3533dcfda9fa3),
+    // AI Safety Gridworlds: 200 steps, seed 1.
+    ("gridworlds-offswitch-q", 0x99c498ae3b92818c),
+    ("gridworlds-offswitch-sarsa", 0xe9d62b4f4975fea9),
+    ("gridworlds-sokoban", 0x1dd1059398ddd8e1),
+    ("gridworlds-supervisor", 0x5d979d55b68b692c),
+    ("gridworlds-boat-race", 0x4c00394f15392ed4),
+    ("gridworlds-tomato", 0x3a1ae90c5559a1cc),
+    ("gridworlds-whisky-q", 0xfdc71bccd9f9a88a),
+    ("gridworlds-whisky-sarsa", 0x489cf67dff6e6217),
+    ("gridworlds-lava-train", 0x9738354b9054e002),
+    ("gridworlds-lava-test", 0x9d6429a7be1332de),
+    ("gridworlds-friend", 0x536529197407da0e),
+    ("gridworlds-neutral", 0x240ab335d41733d2),
+    ("gridworlds-foe", 0xb3d806986893d66a),
+    ("gridworlds-island", 0x25ae491725b3f075),
 ];
 
 fn fingerprint(id: &str) -> u64 {

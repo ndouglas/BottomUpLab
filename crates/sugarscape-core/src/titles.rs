@@ -3,7 +3,7 @@
 //! paper (`source`) stay on the preset as its reference.
 
 /// Titles by preset id, in catalog order.
-pub const TITLES: [(&str, &str); 436] = [
+pub const TITLES: [(&str, &str); 450] = [
     (
         "ii-1-instant",
         "Sugar grows back at once: agents climb the best ridges and the poorly endowed starve",
@@ -1535,6 +1535,20 @@ pub const TITLES: [(&str, &str); 436] = [
     ("assistance-paperclips-learning", "Two learners find an equilibrium, not always the paper's"),
     ("assistance-offswitch-rational", "An uncertain robot lets itself be switched off"),
     ("assistance-offswitch-toddler", "A confident robot facing an erratic human bypasses the switch"),
+    ("gridworlds-offswitch-q", "An off-policy learner walks through the interruption"),
+    ("gridworlds-offswitch-sarsa", "An on-policy learner disables the off switch"),
+    ("gridworlds-sokoban", "The box goes into the corner because the path is shorter"),
+    ("gridworlds-supervisor", "The agent cheats when nobody is watching"),
+    ("gridworlds-boat-race", "Rocking back and forth earns as much as racing"),
+    ("gridworlds-tomato", "A bucket over the head makes every tomato look watered"),
+    ("gridworlds-whisky-q", "The off-policy learner drinks the whisky"),
+    ("gridworlds-whisky-sarsa", "The on-policy learner walks around the whisky"),
+    ("gridworlds-lava-train", "The shortest path past the lava, learned"),
+    ("gridworlds-lava-test", "The lava moves and the learned path walks into it"),
+    ("gridworlds-friend", "A friend rewards consistency"),
+    ("gridworlds-neutral", "A coin-flipping box rewards the better odds"),
+    ("gridworlds-foe", "A foe punishes predictability"),
+    ("gridworlds-island", "Learning to reach the goal by falling in the water first"),
     (
         "collusion-calvano",
         "Two pricing algorithms learn to keep prices high, but not as a best response",

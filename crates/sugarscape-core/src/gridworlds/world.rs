@@ -664,4 +664,49 @@ mod tests {
         assert!(w.series("nope").is_none());
         assert_eq!(w.population(), 1);
     }
+
+    #[test]
+    fn frames_have_the_board_size_and_every_color_mode_draws() {
+        let mut w = world(config(EnvKind::Offswitch));
+        w.run(2);
+        assert_eq!(w.size(), (8 * 12, 7 * 12));
+        let mut buf = vec![];
+        for mode in ["", "tiles", "policy", "value"] {
+            w.render(mode, "", &mut buf).unwrap();
+            assert_eq!(buf.len(), 8 * 12 * 7 * 12 * 4, "{mode}");
+        }
+        assert!(w.render("bands", "", &mut buf).is_err());
+        // The agent's cell is drawn in the agent color in tile mode.
+        w.render("tiles", "", &mut buf).unwrap();
+        let a = w.env().agent();
+        let at = ((a.row * 12 + 6) * 8 * 12 + a.col * 12 + 6) * 4;
+        assert_eq!(&buf[at..at + 3], &[40, 110, 220]);
+    }
+
+    #[test]
+    fn inspection_reads_every_cell_including_walls_and_unseen_states() {
+        let mut w = world(config(EnvKind::Island));
+        w.run(1);
+        let wall: serde_json::Value = serde_json::from_str(&w.inspect_json(0, 0).unwrap()).unwrap();
+        assert_eq!(
+            (
+                wall["cell"][0].as_u64(),
+                wall["tile"].as_str(),
+                wall["wall"].as_bool()
+            ),
+            (Some(0), Some("W"), Some(false))
+        );
+        let corner: serde_json::Value =
+            serde_json::from_str(&w.inspect_json(2 * 12 + 1, 0).unwrap()).unwrap();
+        assert_eq!(corner["wall"], true);
+        let far: serde_json::Value =
+            serde_json::from_str(&w.inspect_json(3 * 12, 3 * 12).unwrap()).unwrap();
+        assert_eq!(far["q"].as_array().unwrap().len(), 4);
+        assert_eq!(far["greedy"].as_str().map(|s| !s.is_empty()), Some(true));
+        assert!(far["side_constraint"].as_f64().is_some());
+        assert!(w.inspect_json(8 * 12, 0).is_err());
+        let f = world(config(EnvKind::FriendFoe));
+        let v: serde_json::Value = serde_json::from_str(&f.inspect_json(0, 0).unwrap()).unwrap();
+        assert_eq!(v["estimate"].as_array().unwrap().len(), 2);
+    }
 }
