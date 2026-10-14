@@ -123,13 +123,14 @@ def validate_report(data, source):
             raise ValueError("unexpected or duplicate claim ID")
         seen.add(claim)
         kind = claim.split(".")[1]
-        if row["item"] != "negotiable" or row["source"] not in {"Book", "App", "Comment"}:
+        if (row["item"] != "negotiable" or type(row["source"]) is not str or
+                row["source"] not in {"Book", "App", "Comment"}):
             raise ValueError(f"{claim}: invalid metadata")
         if any(type(row[name]) is not str or len(row[name].encode()) > 16384
                for name in ("citation", "text", "detail")):
             raise ValueError(f"{claim}: invalid metadata text")
         seconds = row["seconds"]
-        if type(seconds) not in (float, int) or not math.isfinite(seconds) or not 0 <= seconds <= 120:
+        if type(seconds) not in (float, int) or not 0 <= seconds <= 120 or not math.isfinite(seconds):
             raise ValueError(f"{claim}: invalid seconds")
         verdict = row["verdict"]
         if type(verdict) is not str or verdict not in VERDICTS:
@@ -257,7 +258,7 @@ def certify(*, _allow_drift=False):
                 record = {"settings": None}
         else:
             record = reference.decode_reference(_regular(path), kind)
-        fixtures[kind] = {**identity, "settings_sha256": _sha(reference.canonical_bytes(record.get("settings")))}
+        fixtures[kind] = {**identity, "settings_sha256": _sha(reference.canonical_bytes(record.get("settings") if type(record) is dict else None))}
     pdfs = {}
     for name in ("main", "supplement"):
         identity = _identity(EVIDENCE / f"sources/{name}.pdf")

@@ -104,6 +104,13 @@ class ValidationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 c.validate_report(json.dumps(rows).encode(), SOURCE)
 
+    def test_malformed_metadata_and_huge_timing_are_validation_errors(self):
+        for changes in ({"source": []}, {"seconds": 10**1000}):
+            rows = report()
+            rows[0].update(changes)
+            with self.assertRaises(ValueError):
+                c.validate_report(json.dumps(rows).encode(), SOURCE)
+
     def test_duplicate_json_and_truncated_json_are_rejected(self):
         for data in (b'[{"id":"a","id":"b"}]', b'[{', b'[NaN]'):
             with self.assertRaises(ValueError):
