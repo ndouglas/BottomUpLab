@@ -8,6 +8,7 @@ static STRATEGY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static AUDIT: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static GAME: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static DISCOVERY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
+static KEY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static GATE: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 /// Embedded immutable assets are parsed once; no simulation state is cached.
 pub(super) fn retained(study: &str) -> Result<&'static Value, Vec<FieldError>> {
@@ -95,6 +96,35 @@ fn gate_summary() -> Result<&'static Value, Vec<FieldError>> {
     .as_ref()
     .map_err(Clone::clone)
 }
+/// Accepted retained first-report projection; no live game or integrity replay.
+fn key_summary() -> Result<&'static Value, Vec<FieldError>> {
+    KEY.get_or_init(|| {
+        let text = include_str!("fixtures/key-recorded.json");
+        if text.len() > MAX_ASSET_BYTES {
+            return Err(super::error("fixture", "retained asset exceeds 5 MiB"));
+        }
+        let summary: crate::key_delegation::Summary = serde_json::from_str(text)
+            .map_err(|error| super::error("fixture", error.to_string()))?;
+        if summary.version != "key-delegation-summary-v1"
+            || summary.settings.len() != 36
+            || summary.settings.iter().any(|s| s.controls.len() != 6)
+            || summary.contrasts.len() != 84
+            || summary.source_receipts.len() != 18
+            || summary.reference_receipts.len() != 3
+            || [summary.report_hash.as_str(), summary.source_hash.as_str()]
+                .iter()
+                .any(|hash| hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()))
+        {
+            return Err(super::error(
+                "fixture",
+                "missing measured Key identity or census",
+            ));
+        }
+        lossless_value(&summary)
+    })
+    .as_ref()
+    .map_err(Clone::clone)
+}
 /// Original search campaigns and the complete measured discovery census.
 /// Each keeps its own original report/source identity.
 /// Curves use the declared columns and champion dictionary without dropping points.
@@ -118,6 +148,7 @@ pub fn recorded_results_json() -> Result<String, Vec<FieldError>> {
     }
     studies.insert("surface_discovery".into(), discovery_summary()?.clone());
     studies.insert("gate_assistance".into(), gate_summary()?.clone());
+    studies.insert("key_delegation".into(), key_summary()?.clone());
     record::bounded_json(
         &json!({"kind":"recorded_results","version":1,"studies":studies}),
         MAX_EPISODE_BYTES,

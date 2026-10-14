@@ -234,3 +234,111 @@ fn gate_recorded_summary_retains_all_measured_strata_and_control_classifications
         }
     }
 }
+
+#[test]
+fn key_recorded_summary_matches_every_native_field_losslessly() {
+    let raw: crate::key_delegation::Summary =
+        serde_json::from_str(include_str!("../fixtures/key-recorded.json")).unwrap();
+    let actual: Value = serde_json::from_str(&recorded_results_json().unwrap()).unwrap();
+    assert_eq!(
+        actual["studies"]["key_delegation"]["version"],
+        "key-delegation-summary-v1"
+    );
+    let native: Value =
+        serde_json::from_str(include_str!("../fixtures/key-recorded.json")).unwrap();
+    assert_eq!(serde_json::to_value(&raw).unwrap(), native);
+    // Independent expected projection: never call the production wire codec.
+    fn decimal_strings(value: Value) -> Value {
+        match value {
+            Value::Number(n) => Value::String(n.to_string()),
+            Value::Array(a) => Value::Array(a.into_iter().map(decimal_strings).collect()),
+            Value::Object(o) => Value::Object(
+                o.into_iter()
+                    .map(|(k, v)| (k, decimal_strings(v)))
+                    .collect(),
+            ),
+            value => value,
+        }
+    }
+    assert_eq!(actual["studies"]["key_delegation"], decimal_strings(native));
+}
+
+#[test]
+fn key_recorded_census_preserves_order_ownership_and_all_receipts() {
+    let value: Value = serde_json::from_str(&recorded_results_json().unwrap()).unwrap();
+    let s = &value["studies"]["key_delegation"];
+    assert_eq!(
+        s["report_hash"],
+        "7126a4586087408cbad1845ed716039fb774e66fb300043689ffba015c9d2218"
+    );
+    assert_eq!(
+        s["source_hash"],
+        "93b3d388b5c652d332811456f174615876db114ba48a0bad48b8314b3a4563d7"
+    );
+    assert_eq!(s["source_receipts"].as_array().unwrap().len(), 18);
+    assert_eq!(s["reference_receipts"].as_array().unwrap().len(), 3);
+    assert_eq!(s["checks"].as_array().unwrap().len(), 11);
+    assert_eq!(s["passed"], true);
+    let rows = s["settings"].as_array().unwrap();
+    assert_eq!(rows.len(), 36);
+    let selectors = [
+        "SoloAttempt",
+        "SuppliedHandoff",
+        "TeamOptimal",
+        "NashLex",
+        "NashBestGroup",
+        "InitiallyEquipped",
+    ];
+    let mut i = 0;
+    for e in [false, true] {
+        for t in ["1", "2", "4"] {
+            for b in ["0", "3", "6"] {
+                for d in ["0", "1"] {
+                    let r = &rows[i];
+                    i += 1;
+                    assert_eq!(
+                        r["stratum"],
+                        serde_json::json!({"transfer_enabled":e,"transfer_cost":t,"giver_share":b,"distance":d})
+                    );
+                    assert_eq!(r["stats"]["profiles"], "46656");
+                    let cs = r["controls"].as_array().unwrap();
+                    assert_eq!(cs.len(), 6);
+                    for (c, selector) in cs.iter().zip(selectors) {
+                        assert_eq!(c["selector"], selector);
+                        assert!(c["unavailable"].is_null());
+                        if selector == "InitiallyEquipped" {
+                            assert_eq!(c["classification_scope"], "changed_initial_control");
+                            assert_eq!(c["selection"]["initial_owner"], "Receiver");
+                            assert!(c["selection"]["classification"].is_null());
+                            assert_eq!(c["outcome"]["delivery_round"], "4");
+                        } else {
+                            assert_eq!(c["selection"]["initial_owner"], "Giver");
+                            assert_eq!(c["outcome"], c["selection"]["classification"]["outcome"]);
+                        }
+                    }
+                    assert!(r.get("rows").is_none());
+                    assert!(r.get("episodes").is_none());
+                }
+            }
+        }
+    }
+    let contrasts = s["contrasts"].as_array().unwrap();
+    assert_eq!(contrasts.len(), 84);
+    for (axis, n) in [
+        ("TransferPermission", 18),
+        ("TransferCost", 24),
+        ("GiverShare", 24),
+        ("Distance", 18),
+    ] {
+        assert_eq!(contrasts.iter().filter(|c| c["axis"] == axis).count(), n);
+    }
+    fn no_numbers(v: &Value) {
+        match v {
+            Value::Number(_) => panic!("lossy numeric atom"),
+            Value::Array(a) => a.iter().for_each(no_numbers),
+            Value::Object(o) => o.values().for_each(no_numbers),
+            _ => {}
+        }
+    }
+    no_numbers(s);
+}

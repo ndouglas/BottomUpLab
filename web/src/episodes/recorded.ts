@@ -90,6 +90,54 @@ function renderGateSummary(study: Record<string, Json>): HTMLElement {
     details('Complete measured summary, caps and source receipts', study),
     h('button', { onclick: () => downloadText('gate-assistance-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export Gate census summary'));
 }
+/** Complete accepted Key census. Selection classification and physical outcome are distinct. */
+function renderKeySummary(study: Record<string, Json>): HTMLElement {
+  const settings = list(study.settings);
+  const stratum = (raw: Json | undefined): Record<string, Json> => {
+    const s = obj(raw); return { e: s.transfer_enabled, t: s.transfer_cost, b: s.giver_share, d: s.distance };
+  };
+  const equilibria = settings.map(raw => {
+    const r = obj(raw), eq = obj(r.equilibrium), ranges = obj(eq.ranges), team = obj(r.team);
+    return { ...stratum(r.stratum), pure_count: eq.pure_count, delivering_pure_count: eq.delivering_pure_count,
+      giver_net_range: ranges.giver, receiver_net_range: ranges.receiver, group_net_range: ranges.group,
+      range_status: eq.range_unavailable ?? 'Available', delivery_round_range: eq.delivery_round_range,
+      delivery_status: eq.delivery_unavailable ?? 'Available', team_gap_range: eq.team_gap_range,
+      lex: eq.lex, best_group: eq.best_group, team_profile: team.profile, team_classification: team.classification, solo_best: r.solo_best };
+  });
+  const controls = settings.flatMap(raw => {
+    const r = obj(raw); return list(r.controls).map(rawControl => {
+      const c = obj(rawControl), selection = obj(c.selection), classification = obj(selection.classification), o = obj(c.outcome);
+      return { ...stratum(r.stratum), selector: c.selector, classification_scope: c.classification_scope,
+        initial_owner: selection.initial_owner, profile: selection.profile, availability: c.unavailable ?? 'Available',
+        'Giver regret': classification.giver_regret, 'Receiver regret': classification.receiver_regret,
+        pure: classification.is_pure, team_gap: classification.team_gap, spent: o.spent, reward: o.reward,
+        net: o.net, group_net: o.group_net, delivery: o.delivery_round === null ? 'No delivery' : o.delivery_round,
+        'Giver attempts': o.giver_attempts, 'Giver blocked': o.giver_blocked,
+        'Receiver attempts': o.receiver_attempts, 'Receiver blocked': o.receiver_blocked,
+        receiver_waits: o.receiver_waits, transfer_count: o.transfer_count, approach_spent: o.approach_spent,
+        pass_spent: o.pass_spent, unused_credits: o.unused_credits };
+    });
+  });
+  const sections: [string, Json[]][] = [
+    ['Every stratum and pure-equilibrium payoff range', equilibria],
+    ['All control outcomes and private incentives', controls],
+    ['Registered contrasts (upper minus lower; fixed words and reselected controls)', list(study.contrasts)],
+    ['Compilation accounting', settings.map(raw => { const r = obj(raw); return { ...stratum(r.stratum), ...obj(r.stats) }; })],
+  ];
+  return h('div', { class: 'key-recorded-summary' },
+    h('h4', {}, 'Full census · Key delegation'),
+    h('p', {}, 'All 36 registered strata and 1,679,616 raw schedule pairs. Pure equilibria retain every private-payoff tie and raw suffix. Representatives describe a set; they do not predict equilibrium selection or learned cooperation.'),
+    h('p', {}, 'e is transfer permission, t the paid Pass attempt cost, b the Giver reward share, and d the initial handoff distance. Pairs are Giver, then Receiver. Giver arrays are Wait / Approach / Pass; Receiver arrays are outbound Move / Pickup / return Move / Deliver. Blocked attempts are paid. No delivery is a completed deadline outcome.'),
+    h('p', {}, 'InitiallyEquipped changes starting ownership to Receiver. It is an access/cost ceiling control with unavailable main-game regrets and equilibrium classification, not a matched causal transfer estimate. Fixed-word contrasts remain distinct from reselected controls.'),
+    details('Measurement identity', { report_hash: study.report_hash, source_hash: study.source_hash }, true),
+    ...sections.map(([title, rows]) => {
+      const section = h('details', {}, h('summary', {}, `${title} (${rows.length})`));
+      section.addEventListener('toggle', () => { if (section.open && section.childNodes.length === 1) section.append(table(rows)); });
+      return section;
+    }),
+    details('Complete measured summary, caps and source receipts', study),
+    h('button', { onclick: () => downloadText('key-delegation-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export Key census summary'));
+}
 /** Full retained asset remains available; chart selection never trains or evaluates a policy. */
 export function renderRecorded(recorded: Json): HTMLElement {
   const studies = obj(obj(recorded).studies), selector = h('select', { 'aria-label': 'Recorded study' }, ...Object.keys(studies).map(key => h('option', { value: key }, label(key))));
@@ -97,6 +145,7 @@ export function renderRecorded(recorded: Json): HTMLElement {
   const show = () => {
     const study = obj(studies[selector.value]);
     if (study.version === 'surface-discovery-summary-v1') { content.replaceChildren(renderDiscoverySummary(study)); return; }
+    if (study.version === 'key-delegation-summary-v1') { content.replaceChildren(renderKeySummary(study)); return; }
     if (study.version === 'gate-assistance-summary-v1') { content.replaceChildren(renderGateSummary(study)); return; }
     const runs = list(study.runs);
     const runPicker = h('select', { 'aria-label': 'Recorded search run' }, ...runs.map((raw, i) => { const run = obj(raw); return h('option', { value: i }, `${valueText(run.method)} — seed ${valueText(run.seed)}`); }));

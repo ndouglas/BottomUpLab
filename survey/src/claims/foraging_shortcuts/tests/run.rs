@@ -503,6 +503,7 @@ fn source_identity_includes_all_current_browser_fixture_inputs() {
         "crates/sugarscape-core/src/browser_experiments/fixtures/caching-scenes.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/discovery-recorded.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/gate-recorded.json",
+        "crates/sugarscape-core/src/browser_experiments/fixtures/key-recorded.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/engine-identities.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-identities.json",
         "crates/sugarscape-core/src/browser_experiments/fixtures/spatial-scenes.json",
@@ -661,5 +662,30 @@ fn key_source_closure_selects_references_and_requires_them() {
         assert!(selected(&format!(
             "crates/sugarscape-core/src/key_delegation/{file}"
         )));
+    }
+}
+
+#[test]
+fn source_identity_includes_gridworlds_compiled_sweep_literals() {
+    use super::super::run::source_identity::{fingerprint, selected};
+    for path in [
+        "sweeps/gridworlds-budget.json",
+        "sweeps/gridworlds-exploration-floor.json",
+        "sweeps/gridworlds-learning-rate-boat-race.json",
+        "sweeps/gridworlds-learning-rate-friend-foe.json",
+        "sweeps/gridworlds-learning-rate-island.json",
+        "sweeps/gridworlds-learning-rate-lava.json",
+        "sweeps/gridworlds-learning-rate-offswitch.json",
+        "sweeps/gridworlds-learning-rate-sokoban.json",
+        "sweeps/gridworlds-learning-rate-supervisor.json",
+        "sweeps/gridworlds-learning-rate-tomato.json",
+        "sweeps/gridworlds-learning-rate-whisky.json",
+        "sweeps/gridworlds-q-init-whisky.json",
+    ] {
+        assert!(selected(path), "unbound compiled literal: {path}");
+        assert_ne!(
+            fingerprint(vec![Ok((path.into(), b"original".to_vec()))]).unwrap(),
+            fingerprint(vec![Ok((path.into(), b"changed".to_vec()))]).unwrap()
+        );
     }
 }

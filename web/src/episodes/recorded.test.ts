@@ -77,3 +77,46 @@ it('every measured Gate stratum and control reaches the DOM and complete export 
   descendants(el).find(node => node.tag === 'button' && node.textContent === 'Export Gate census summary')!.listeners.click();
   expect(downloadText).toHaveBeenLastCalledWith('gate-assistance-recorded-summary.json', JSON.stringify(gate), 'application/json');
 });
+
+const keyWire = (value: Json): Json => Array.isArray(value) ? value.map(keyWire) : value !== null && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([k,v])=>[k,keyWire(v)])) : typeof value === 'number' ? String(value) : value;
+const measuredKey = (): Json => keyWire(JSON.parse(readFileSync(fileURLToPath(new URL('../../../crates/sugarscape-core/src/browser_experiments/fixtures/key-recorded.json',import.meta.url)),'utf8')) as Json);
+function openKey(study: Json): Element {
+  vi.stubGlobal('document', { createElement:(tag:string)=>new Element(tag), createElementNS:(_:string,tag:string)=>new Element(tag) });
+  const el=renderRecorded({studies:{key_delegation:study}}) as unknown as Element;
+  for(const node of descendants(el))if(node.tag==='details'){node.open=true;node.listeners.toggle?.();}
+  return el;
+}
+it('retains every measured Key stratum, control, contrast and accounting cell with exact export',()=>{
+  const key=measuredKey(),before=JSON.stringify(key),el=openKey(key),nodes=descendants(el),bodies=nodes.filter(n=>n.tag==='tbody');
+  expect(bodies.map(b=>b.children.length)).toEqual([36,216,84,36]);
+  const settings=obj(key).settings as Json[];
+  settings.forEach((raw,i)=>{
+    const r=obj(raw),st=obj(r.stratum),eq=obj(r.equilibrium),ranges=obj(eq.ranges),team=obj(r.team);
+    const cells=(bodies[0].children[i] as Element).children as Element[];
+    expect(cells.map(c=>c.textContent)).toEqual([st.transfer_enabled,st.transfer_cost,st.giver_share,st.distance,eq.pure_count,eq.delivering_pure_count,ranges.giver,ranges.receiver,ranges.group,eq.range_unavailable??'Available',eq.delivery_round_range,eq.delivery_unavailable??'Available',eq.team_gap_range,eq.lex,eq.best_group,team.profile,team.classification,r.solo_best].map(valueText));
+    (r.controls as Json[]).forEach((rawC,j)=>{
+      const c=obj(rawC),sel=obj(c.selection),cl=obj(sel.classification),o=obj(c.outcome);
+      const cs=(bodies[1].children[i*6+j] as Element).children as Element[];
+      expect(cs.map(x=>x.textContent)).toEqual([st.transfer_enabled,st.transfer_cost,st.giver_share,st.distance,c.selector,c.classification_scope,sel.initial_owner,sel.profile,c.unavailable??'Available',cl.giver_regret,cl.receiver_regret,cl.is_pure,cl.team_gap,o.spent,o.reward,o.net,o.group_net,o.delivery_round===null?'No delivery':o.delivery_round,o.giver_attempts,o.giver_blocked,o.receiver_attempts,o.receiver_blocked,o.receiver_waits,o.transfer_count,o.approach_spent,o.pass_spent,o.unused_credits].map(valueText));
+    });
+    expect(((bodies[3].children[i] as Element).children as Element[]).map(x=>x.textContent)).toEqual([st.transfer_enabled,st.transfer_cost,st.giver_share,st.distance,...Object.values(obj(r.stats))].map(valueText));
+  });
+  (obj(key).contrasts as Json[]).forEach((raw,i)=>expect(((bodies[2].children[i] as Element).children as Element[]).map(x=>x.textContent)).toEqual(Object.values(obj(raw)).map(valueText)));
+  for(const field of ['source_receipts','reference_receipts','limits','checks'])expect(el.textContent).toContain(valueText(obj(key)[field]));
+  expect(el.textContent).toContain('InitiallyEquipped changes starting ownership');
+  expect(el.textContent).not.toContain('Search run');
+  nodes.find(n=>n.tag==='button'&&n.textContent==='Export Key census summary')!.listeners.click();
+  expect(downloadText).toHaveBeenLastCalledWith('key-delegation-recorded-summary.json',before,'application/json');
+  expect(JSON.stringify(key)).toBe(before);
+});
+it('shape-only unavailable Key selector keeps its reason and absent incentives separate from real changed-owner outcome',()=>{
+  const key=structuredClone(measuredKey()),r=obj((obj(key).settings as Json[])[0]),controls=r.controls as Json[];
+  controls[3]={selector:'NashLex',classification_scope:'main',selection:null,outcome:null,unavailable:'engineering_no_pure_equilibrium'};
+  const el=openKey(key),bodies=descendants(el).filter(n=>n.tag==='tbody');
+  const unavailable=(bodies[1].children[3] as Element).children as Element[];
+  expect(unavailable.slice(8,13).map(c=>c.textContent)).toEqual(['engineering_no_pure_equilibrium','Unavailable','Unavailable','Unavailable','Unavailable']);
+  const equipped=(bodies[1].children[5] as Element).children as Element[];
+  expect(equipped.slice(5,7).map(c=>c.textContent)).toEqual(['changed_initial_control','Receiver']);
+  expect(equipped.slice(9,13).map(c=>c.textContent)).toEqual(['Unavailable','Unavailable','Unavailable','Unavailable']);
+  expect(equipped[17].textContent).toBe('4');
+});

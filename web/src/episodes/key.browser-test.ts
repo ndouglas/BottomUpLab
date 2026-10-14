@@ -157,7 +157,7 @@ async function settled(view: EpisodeView): Promise<void> {
   }
 }
 /** Separate acceptance harness: production worker/client and their 60-second deadline are unchanged. */
-export async function keyViewChecks(): Promise<{checks:KeyBrowserCheck[]; packets:{request:WorkerRequest;reply:WorkerReply|null}[]; lifecycle:Record<string,number>; records:EpisodeRecord[]}> {
+export async function keyViewChecks(expectedRecorded?: Json): Promise<{checks:KeyBrowserCheck[]; packets:{request:WorkerRequest;reply:WorkerReply|null}[]; lifecycle:Record<string,number>; records:EpisodeRecord[]}> {
   const checks:KeyBrowserCheck[]=[],packets:{request:WorkerRequest;reply:WorkerReply|null}[]=[],records:EpisodeRecord[]=[];
   const check=(name:string,passed:boolean)=>checks.push({name,passed});
   let live=0,peak=0,created=0,terminated=0;
@@ -170,6 +170,8 @@ export async function keyViewChecks(): Promise<{checks:KeyBrowserCheck[]; packet
   const view=new EpisodeView(client);document.body.append(view.el);
   try {
     await view.ready;
+    const recordedBefore = await client.recorded();
+    if (expectedRecorded) check('actual worker recorded envelope equals complete native wire before live runs', canonical(recordedBefore) === canonical(expectedRecorded));
     const catalog=await client.catalog(),descriptor=catalog.find(d=>d.id==='key_delegation')!;
     checks.push(...keyControlChecks(descriptor));
     view.openInput(descriptor.default_input);check('Key renderer enables Run',!button(view,'Run episode').disabled);
@@ -205,8 +207,43 @@ export async function keyViewChecks(): Promise<{checks:KeyBrowserCheck[]; packet
     await fetch('/__key-delay-next',{method:'POST'});const start=performance.now();button(view,'Run episode').click();await settled(view);const elapsed=performance.now()-start;
     check('unchanged 60-second worker initialization timeout retains both records',elapsed>=60_000&&elapsed<65_000&&beforeCancel.every((r,i)=>r===view.session.records[i])&&view.el.textContent!.includes('60 seconds')&&live===0);
     button(view,'Run episode').click();await settled(view);check('fresh worker succeeds after cancellation and timeout',view.session.shown!==equipped&&view.session.shown?.study==='key_delegation');
+    const recordedAfter = await client.recorded();
+    check('complete recorded envelope unchanged after live runs and replay', canonical(recordedAfter) === canonical(recordedBefore));
+    if (expectedRecorded) check('actual worker recorded envelope equals complete native wire after live runs', canonical(recordedAfter) === canonical(expectedRecorded));
     button(view,'Run episode').click();view.dispose();await new Promise(r=>setTimeout(r,20));check('pending dispose terminates worker and releases records',live===0&&view.session.records.length===0&&view.session.shown===null&&view.replay.record===null);
     check('worker instances never overlap and all are terminated',peak===1&&created===terminated&&live===0);
     return {checks,packets,lifecycle:{peak,created,terminated,live},records};
   } finally {view.dispose();view.el.remove();}
+}
+
+
+import { renderRecorded } from './recorded';
+/** Real DOM acceptance, driven from the complete independently accepted native wire envelope. */
+export function keyRecordedChecks(recorded: Json, expected: Json): KeyBrowserCheck[] {
+  const checks: KeyBrowserCheck[] = [], check = (name: string, passed: boolean) => checks.push({ name, passed });
+  check('complete actual recorded envelope matches native wire', canonical(recorded) === canonical(expected));
+  const before = canonical(recorded), el = renderRecorded(recorded); document.body.append(el);
+  try {
+    const picker = el.querySelector<HTMLSelectElement>('[aria-label="Recorded study"]')!;
+    picker.value = 'key_delegation'; picker.dispatchEvent(new Event('change'));
+    for (const section of el.querySelectorAll('details')) { section.open = true; section.dispatchEvent(new Event('toggle')); }
+    const bodies = [...el.querySelectorAll('tbody')], study = obj(obj(expected).studies).key_delegation, settings = list(obj(study).settings);
+    check('all four complete Key tables are visible', bodies.map(b => b.rows.length).join(',') === '36,216,84,36');
+    let controlsExact = bodies.length === 4;
+    settings.forEach((raw, i) => list(obj(raw).controls).forEach((rawControl, j) => {
+      const r = obj(raw), st = obj(r.stratum), c = obj(rawControl), selection = obj(c.selection), cl = obj(selection.classification), o = obj(c.outcome);
+      const wanted = [st.transfer_enabled,st.transfer_cost,st.giver_share,st.distance,c.selector,c.classification_scope,selection.initial_owner,selection.profile,c.unavailable??'Available',cl.giver_regret,cl.receiver_regret,cl.is_pure,cl.team_gap,o.spent,o.reward,o.net,o.group_net,o.delivery_round===null?'No delivery':o.delivery_round,o.giver_attempts,o.giver_blocked,o.receiver_attempts,o.receiver_blocked,o.receiver_waits,o.transfer_count,o.approach_spent,o.pass_spent,o.unused_credits].map(valueText);
+      const actual = [...(bodies[1]?.rows[i*6+j]?.cells ?? [])].map(c => c.textContent);
+      controlsExact &&= JSON.stringify(actual) === JSON.stringify(wanted);
+    }));
+    check('every actual control cell equals native wire including null changed-owner incentives', controlsExact);
+    check('all nested contrast cells remain complete and exact', list(obj(study).contrasts).every((raw,i) => JSON.stringify([...(bodies[2]?.rows[i]?.cells??[])].map(c=>c.textContent)) === JSON.stringify(Object.values(obj(raw)).map(valueText))));
+    check('changed starting ownership warning visible', el.textContent!.includes('InitiallyEquipped changes starting ownership'));
+    check('full caps and receipt values visible', ['source_receipts','reference_receipts','limits','checks'].every(k=>el.textContent!.includes(valueText(obj(study)[k]))));
+    check('recorded census has no search-run control', !el.querySelector('[aria-label="Recorded search run"]'));
+    check('DOM display leaves exact recorded object unchanged', canonical(recorded) === before);
+    // Retain the mounted real export button for supported-browser download acceptance.
+    el.setAttribute('data-key-recorded-acceptance','complete');
+    return checks;
+  } catch (error) { el.remove(); throw error; }
 }
