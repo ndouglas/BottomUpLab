@@ -12,7 +12,7 @@
 **Goal**: Atomic access, paid information, departure and private supplied routines.
 **Success Criteria**: Complete sealed reference agreement and no unauthorized observations.
 **Tests**: Transaction/privacy/custody/route/tie/ledger/counter/replay tests.
-**Status**: In Progress
+**Status**: Complete
 
 Task 2 implements the private atomic world and sealed raw transaction witnesses. Task 3 now implements view-only routine dispatch, public episode runners, all exact census reducers and frozen deterministic budget accounting. Complete typed reference agreement passed in engineering verification; Final focused, Clippy, format, preservation and affected legacy registration gates passed. Stage 2 stays In Progress pending fresh Task 3 review.
 

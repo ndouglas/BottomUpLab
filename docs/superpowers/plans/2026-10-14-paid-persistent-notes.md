@@ -262,7 +262,7 @@ fn mean_pair(left: i64, right: i64) -> Result<Ratio, Error> {
     })
 }
 ```
-- [ ] **Step 5: Run conformance without a production diagnostic.** Compare the complete evaluator output to sealed references in an explicitly labeled engineering test; record evaluated engineering keys separately from the two future collections. Verify all grid keys, means, signed outcomes and resource witnesses; inject low caps to require a typed ResourceLimit before append rather than a truncated successful array. Pass focused tests/clippy, check legacy receipts, commit, obtain fresh task review and mark Stage 2 Complete.
+- [x] **Step 5: Run conformance without a production diagnostic.** Compare the complete evaluator output to sealed references in an explicitly labeled engineering test; record evaluated engineering keys separately from the two future collections. Verify all grid keys, means, signed outcomes and resource witnesses; inject low caps to require a typed ResourceLimit before append rather than a truncated successful array. Pass focused tests/clippy, check legacy receipts, commit, obtain fresh task review and mark Stage 2 Complete.
 
 ### Task 4: Add source-bound reports, saved validation and CLI
 
