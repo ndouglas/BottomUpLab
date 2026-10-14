@@ -1,5 +1,8 @@
+mod cake;
+mod pareto;
 mod priority;
 mod ratio;
+mod reference;
 
 use super::{history_weights, update_weights, Error, HistoryResult, Observation, Ratio, WireRatio};
 
