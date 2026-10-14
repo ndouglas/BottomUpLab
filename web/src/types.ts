@@ -264,7 +264,7 @@ export interface Config {
 }
 
 /** The models the playground runs (milestones 9–13). */
-export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace';
+export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace' | 'gridworlds';
 
 /** A fraction range (Schelling's preferences). */
 export interface FRange { min: number; max: number }
@@ -683,7 +683,7 @@ export interface AgreementConfig {
   stop_at: number;
 }
 
-export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig;
+export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig | GridworldsConfig;
 
 /**
  * Arthur's El Farol bar and Challet and Zhang's minority game (milestone 23), with Challet, Marsili
@@ -1481,7 +1481,7 @@ export interface AgreementStats {
   stable_at: number;
 }
 
-export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats;
+export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats | GridworldsStats;
 
 export interface SiteView {
   x: number;
@@ -2222,7 +2222,7 @@ export interface AgreementInspection {
   agent: null;
 }
 
-export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection;
+export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection | GridworldsInspection;
 
 /**
  * A sugarscape color mode, or (Schelling) `color`, `satisfaction`, `preference`, or (the anasazi)
@@ -2318,7 +2318,10 @@ export type ColorMode =
   | 'effort'
   | 'income'
   | 'price'
-  | 'visits';
+  | 'visits'
+  | 'tiles'
+  | 'policy'
+  | 'value';
 export type Layer = `resource:${number}` | `capacity:${number}` | `pollution:${number}` | `slice:${number}`;
 
 /** WASM calls throw a JSON string of FieldError[]; anything else becomes one error. */
@@ -2405,6 +2408,36 @@ export interface AssistanceOffSwitchInspection {
   configured_choice: 'act' | 'wait' | 'off'; tick: number; outcome: AssistanceOutcome; agent: null;
 }
 export type AssistanceInspection = AssistancePaperclipsInspection | AssistanceOffSwitchInspection;
+
+/** AI Safety Gridworlds (Leike et al. 2017); the environment, learner, room, phase and state variants apply at reset. */
+export interface GridworldsConfig {
+  model: 'gridworlds';
+  environment: 'offswitch' | 'sokoban' | 'supervisor' | 'boat_race' | 'tomato' | 'whisky' | 'lava' | 'friend_foe' | 'island';
+  learner: 'q' | 'sarsa'; learning_rate: number; discount: number; q_init: number;
+  exploration_schedule: 'linear' | 'fixed'; exploration_start: number; exploration_end: number; anneal_steps: number; exploration_fixed: number;
+  step_budget: number; steps_per_tick: number; episode_cap: number;
+  interruption_probability: number; supervisor_probability: number; wall_penalty: number; corner_penalty: number;
+  dry_probability: number; whisky_exploration: number;
+  room: 'friend' | 'neutral' | 'foe'; phase: 'train' | 'test'; boat_race_memory: 'two_cells' | 'one_cell'; lava_state: 'layout' | 'cell_only';
+}
+export interface GridworldsStats {
+  tick: number; steps: number | null; episodes: number | null; exploration: number | null;
+  last_return: number | null; last_performance: number | null; mean_return: number | null; mean_performance: number | null;
+  window_return: number | null; window_performance: number | null; train_return: number | null; train_performance: number | null;
+  optimal_reward: number | null; optimal_performance: number | null; reward_policy_performance: number | null;
+  button_rate: number | null; interruption_rate: number | null; p_present_rate: number | null; p_absent_rate: number | null;
+  bucket_share: number | null; drink_rate: number | null; water_total: number | null; lava_total: number | null;
+  penalty_mean: number | null; left_rate: number | null; phase: number | null; side_constraint: number | null; table_size: number | null;
+}
+export interface GridworldsOptima { reward_value: number | null; reward_policy_performance: number | null; performance_value: number | null; performance_policy_reward: number | null }
+export interface GridworldsInspection {
+  environment: GridworldsConfig['environment']; cell: [number, number]; x: number; y: number; tile: string; wall: boolean;
+  state_key: number; q: number[]; visits: number; greedy: 'up' | 'down' | 'left' | 'right'; agent_cell: [number, number];
+  episode: number; steps: number; exploration: number; learning: boolean; phase: 'train' | 'test'; side_constraint: number | null;
+  optima: GridworldsOptima; tick: number; agent: null;
+  estimate?: [number, number]; reward_left?: boolean; interrupting?: boolean; pressed?: boolean; drunk?: boolean;
+  layout?: number; watered?: number; box?: [number, number]; present?: boolean;
+}
 
 /** Cederman 1994/1997 reconstruction; every control requires reset. */
 export interface PolarityConfig {

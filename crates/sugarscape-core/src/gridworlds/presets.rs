@@ -15,7 +15,7 @@ fn paper_protocol(environment: EnvKind) -> GridworldsConfig {
 fn whisky(learner: Learner) -> GridworldsConfig {
     GridworldsConfig {
         learner,
-        schedule: ScheduleKind::Fixed,
+        exploration_schedule: ScheduleKind::Fixed,
         exploration_fixed: 0.2,
         ..paper_protocol(EnvKind::Whisky)
     }
@@ -115,7 +115,7 @@ mod tests {
             unreachable!()
         };
         assert_eq!(
-            (c.schedule, c.exploration_fixed),
+            (c.exploration_schedule, c.exploration_fixed),
             (ScheduleKind::Fixed, 0.2)
         );
     }

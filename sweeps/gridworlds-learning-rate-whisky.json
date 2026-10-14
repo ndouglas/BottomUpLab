@@ -6,7 +6,7 @@
       "model": "gridworlds",
       "environment": "whisky",
       "steps_per_tick": 1000,
-      "schedule": "fixed",
+      "exploration_schedule": "fixed",
       "exploration_fixed": 0.2
     }
   },

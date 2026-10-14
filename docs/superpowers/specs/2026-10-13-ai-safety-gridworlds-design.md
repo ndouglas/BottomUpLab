@@ -275,7 +275,7 @@ and action.
   says its result required.
 - **Defaults** (all ours unless marked): α = `learning_rate` = 0.1; γ = `discount` = 0.99 (the paper's
   agents); Q initialized at `q_init` = 0; ties broken by action order up, down, left, right;
-  exploration `schedule: linear` from 1.0 to 0.01 over 900,000 steps then held (the paper's Rainbow
+  exploration `exploration_schedule: linear` from 1.0 to 0.01 over 900,000 steps then held (the paper's Rainbow
   schedule), except whisky, which uses `fixed` 0.2 before drinking and 0.9 after (the paper);
   `step_budget` = 1,000,000 (the paper), after which the learner freezes: no updates, greedy action
   choice (exploration 0), episodes continue so the page keeps animating. A tick runs
@@ -355,7 +355,7 @@ learner: q | sarsa
 learning_rate: 0.1
 discount: 0.99
 q_init: 0.0
-schedule: { kind: linear, start: 1.0, end: 0.01, steps: 900000 } | { kind: fixed, rate: 0.2 }
+exploration_schedule: { kind: linear, start: 1.0, end: 0.01, steps: 900000 } | { kind: fixed, rate: 0.2 }
 step_budget: 1000000
 episode_cap: 100
 interruption_probability: 0.5        # offswitch

@@ -2034,20 +2034,20 @@ fn gridworlds_presets_match_the_native_golden_entries() {
     // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: integer grids, f64 sums and the shared
     // RNG only, so WASM repeats the native fingerprints over the table, the window and the draws.
     for (id, expected) in [
-        ("gridworlds-offswitch-q", "0x99c498ae3b92818c"),
-        ("gridworlds-offswitch-sarsa", "0xe9d62b4f4975fea9"),
-        ("gridworlds-sokoban", "0x1dd1059398ddd8e1"),
-        ("gridworlds-supervisor", "0x5d979d55b68b692c"),
-        ("gridworlds-boat-race", "0x4c00394f15392ed4"),
-        ("gridworlds-tomato", "0x3a1ae90c5559a1cc"),
-        ("gridworlds-whisky-q", "0xfdc71bccd9f9a88a"),
-        ("gridworlds-whisky-sarsa", "0x489cf67dff6e6217"),
-        ("gridworlds-lava-train", "0x9738354b9054e002"),
-        ("gridworlds-lava-test", "0x9d6429a7be1332de"),
-        ("gridworlds-friend", "0x536529197407da0e"),
-        ("gridworlds-neutral", "0x240ab335d41733d2"),
-        ("gridworlds-foe", "0xb3d806986893d66a"),
-        ("gridworlds-island", "0x25ae491725b3f075"),
+        ("gridworlds-offswitch-q", "0xb91db712b4f9a0e6"),
+        ("gridworlds-offswitch-sarsa", "0x9736ed2ac46d5e37"),
+        ("gridworlds-sokoban", "0x2a7fd0eaec62a0bb"),
+        ("gridworlds-supervisor", "0x9530f88db352fc96"),
+        ("gridworlds-boat-race", "0x6324cdc20143f89a"),
+        ("gridworlds-tomato", "0x0e88112356095512"),
+        ("gridworlds-whisky-q", "0x4706f7c0353f2a5e"),
+        ("gridworlds-whisky-sarsa", "0xb5e631844072da59"),
+        ("gridworlds-lava-train", "0x8080dac4a61bc7ec"),
+        ("gridworlds-lava-test", "0xe34f4d6976c44df8"),
+        ("gridworlds-friend", "0x26bcf1eb92606cd8"),
+        ("gridworlds-neutral", "0x94a19e44cc984d08"),
+        ("gridworlds-foe", "0xaf2a88579faa5b94"),
+        ("gridworlds-island", "0xb1d46649d58dbcab"),
     ] {
         let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
         sim.step(200);

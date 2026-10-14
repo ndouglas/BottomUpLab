@@ -73,7 +73,7 @@ pub struct GridworldsConfig {
     pub learning_rate: f64,
     pub discount: f64,
     pub q_init: f64,
-    pub schedule: ScheduleKind,
+    pub exploration_schedule: ScheduleKind,
     pub exploration_start: f64,
     pub exploration_end: f64,
     pub anneal_steps: u32,
@@ -101,7 +101,7 @@ impl Default for GridworldsConfig {
             learning_rate: 0.1,
             discount: 0.99,
             q_init: 0.0,
-            schedule: ScheduleKind::Linear,
+            exploration_schedule: ScheduleKind::Linear,
             exploration_start: 1.0,
             exploration_end: 0.01,
             anneal_steps: 900_000,
@@ -126,7 +126,7 @@ impl Default for GridworldsConfig {
 impl GridworldsConfig {
     pub fn schedule(&self) -> Schedule {
         Schedule {
-            kind: self.schedule,
+            kind: self.exploration_schedule,
             start: self.exploration_start,
             end: self.exploration_end,
             steps: u64::from(self.anneal_steps),
@@ -286,11 +286,11 @@ pub fn schema() -> Vec<Param> {
         Param::number("Learner", "discount", "Discount γ", (0.0, 1.0, 0.01), Live)
             .with_help("The paper's agents used 0.99 as an optimization device; the environment itself is undiscounted."),
         Param::number("Learner", "q_init", "Initial Q", (-100.0, 100.0, 0.5), Reset),
-        Param::choice("Exploration", "schedule", "Schedule", &[("linear", "Linear anneal"), ("fixed", "Fixed")], Live),
-        Param::number("Exploration", "exploration_start", "Start", (0.0, 1.0, 0.01), Live).shown_if("schedule", "linear"),
-        Param::number("Exploration", "exploration_end", "End", (0.0, 1.0, 0.01), Live).shown_if("schedule", "linear"),
-        Param::integer("Exploration", "anneal_steps", "Anneal over steps", (1, 100_000_000), Live).shown_if("schedule", "linear"),
-        Param::number("Exploration", "exploration_fixed", "Rate", (0.0, 1.0, 0.01), Live).shown_if("schedule", "fixed"),
+        Param::choice("Exploration", "exploration_schedule", "Schedule", &[("linear", "Linear anneal"), ("fixed", "Fixed")], Live),
+        Param::number("Exploration", "exploration_start", "Start", (0.0, 1.0, 0.01), Live).shown_if("exploration_schedule", "linear"),
+        Param::number("Exploration", "exploration_end", "End", (0.0, 1.0, 0.01), Live).shown_if("exploration_schedule", "linear"),
+        Param::integer("Exploration", "anneal_steps", "Anneal over steps", (1, 100_000_000), Live).shown_if("exploration_schedule", "linear"),
+        Param::number("Exploration", "exploration_fixed", "Rate", (0.0, 1.0, 0.01), Live).shown_if("exploration_schedule", "fixed"),
         Param::integer("Protocol", "step_budget", "Step budget", (1, 100_000_000), Live)
             .with_help("Learning stops here; play continues greedily (1,000,000 in the paper)."),
         Param::integer("Protocol", "steps_per_tick", "Steps per tick", (1, 1_000_000), Live),
@@ -309,7 +309,7 @@ mod tests {
         assert_eq!((c.learning_rate, c.discount, c.q_init), (0.1, 0.99, 0.0));
         assert_eq!(
             (
-                c.schedule,
+                c.exploration_schedule,
                 c.exploration_start,
                 c.exploration_end,
                 c.anneal_steps,
@@ -390,14 +390,14 @@ mod tests {
 
     #[test]
     fn configs_round_trip_through_json_with_snake_case_tags() {
-        let json = r#"{"environment":"friend_foe","learner":"sarsa","room":"foe","phase":"test","boat_race_memory":"one_cell","lava_state":"cell_only","schedule":"fixed"}"#;
+        let json = r#"{"environment":"friend_foe","learner":"sarsa","room":"foe","phase":"test","boat_race_memory":"one_cell","lava_state":"cell_only","exploration_schedule":"fixed"}"#;
         let c: GridworldsConfig = serde_json::from_str(json).unwrap();
         assert_eq!(
             (c.environment, c.learner, c.room, c.phase),
             (EnvKind::FriendFoe, Learner::Sarsa, Room::Foe, Phase::Test)
         );
         assert_eq!(
-            (c.boat_race_memory, c.lava_state, c.schedule),
+            (c.boat_race_memory, c.lava_state, c.exploration_schedule),
             (
                 BoatRaceMemory::OneCell,
                 LavaState::CellOnly,
