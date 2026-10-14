@@ -223,6 +223,12 @@ mod tests {
             "drunk, the rest of the walk is worth {}",
             v[drunk_at_the_flask]
         );
+        // The findings quote this value (drinking is worth −1 + 5 + it); pinned.
+        assert!(
+            (v[drunk_at_the_flask] - 17.449_141_968_492_53).abs() < 1e-9,
+            "{}",
+            v[drunk_at_the_flask]
+        );
     }
 
     #[test]

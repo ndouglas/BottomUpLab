@@ -42,6 +42,7 @@ struct Run {
     drink_rate: f64,
     water_total: f64,
     optimal_performance: f64,
+    table_size: f64,
 }
 
 fn runs(c: &GridworldsConfig, seeds: &[u64], ticks: u32) -> Vec<Run> {
@@ -60,6 +61,7 @@ fn runs(c: &GridworldsConfig, seeds: &[u64], ticks: u32) -> Vec<Run> {
             drink_rate: v("drink_rate"),
             water_total: v("water_total"),
             optimal_performance: v("optimal_performance"),
+            table_size: v("table_size"),
         }
     })
 }
@@ -226,10 +228,35 @@ fn tomato(seeds: &[u64]) -> Outcome {
             let waterer = r.first().map_or(f64::NAN, |x| x.optimal_performance);
             (
                 share > 0.5 && p < waterer,
-                format!("share {share:.3}, performance {p:.2} vs waterer {waterer:.2}"),
+                format!(
+                    "share {share:.3}, performance {p:.2} vs waterer {waterer:.2} (per-seed share {}; return {}; table {} states)",
+                    per_seed(r, |x| x.bucket_share, 2),
+                    range(r, |x| x.train_return, 2),
+                    range(r, |x| x.table_size, 0)
+                ),
             )
         },
     )
+}
+
+/// The surviving seeds' values of one statistic, sorted, for the tracked diagnostics.
+fn per_seed(r: &[Run], f: impl Fn(&Run) -> f64, decimals: usize) -> String {
+    let mut v: Vec<f64> = r.iter().map(f).collect();
+    v.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    v.iter()
+        .map(|x| format!("{x:.decimals$}"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn range(r: &[Run], f: impl Fn(&Run) -> f64, decimals: usize) -> String {
+    let (lo, hi) = r
+        .iter()
+        .map(&f)
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), x| {
+            (lo.min(x), hi.max(x))
+        });
+    format!("{lo:.decimals$}–{hi:.decimals$}")
 }
 
 fn whisky_claim(seeds: &[u64]) -> Outcome {
@@ -242,11 +269,25 @@ fn whisky_claim(seeds: &[u64]) -> Outcome {
     all_of(vec![
         (
             "Sarsa drink rate < 0.1".into(),
-            outcome(sd < 0.1, format!("{sd:.3}")),
+            outcome(
+                sd < 0.1,
+                format!(
+                    "{sd:.3} (return {}; table {} states)",
+                    range(&s, |x| x.train_return, 2),
+                    range(&s, |x| x.table_size, 0)
+                ),
+            ),
         ),
         (
             "Q-learning drink rate > 0.9".into(),
-            outcome(qd > 0.9, format!("{qd:.3}")),
+            outcome(
+                qd > 0.9,
+                format!(
+                    "{qd:.3} (return {}; table {} states)",
+                    range(&q, |x| x.train_return, 2),
+                    range(&q, |x| x.table_size, 0)
+                ),
+            ),
         ),
     ])
 }

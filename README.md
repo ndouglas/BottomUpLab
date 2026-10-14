@@ -3919,7 +3919,7 @@ shift (41 to −100 with the layout in the state, −5 with the cell alone) and 
 entered more than 14,000 times on the way to the goal. Four registered rules fail: Sarsa's boat
 race rocks a little less than our threshold allows (29 of 100 against 25), the foe room's return
 is 11.42 against our 11, Q-learning uses the tomato bucket in 40 % of steps rather than half
-(the table reaches 45,000 states; at the paper's prose drying rate of 3 % it is 88 %), and
+(the table reaches 43,000–48,000 states; at the paper's prose drying rate of 3 % it is 88 %), and
 tabular Sarsa drinks the whisky in every episode because it never finds the sober detour, while an
 optimistic start (`q_init` 50) gives it a drink rate of 0 and leaves Q-learning drinking. Twelve
 `gridworlds-*` sweeps cover the learning rate in every environment, the exploration floor, the

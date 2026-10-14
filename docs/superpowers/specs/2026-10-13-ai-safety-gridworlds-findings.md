@@ -16,7 +16,7 @@ navigation (14,001–19,373 water entries on the way to a 45.96 return). Four fa
 narrowly or for a reason that is ours: Sarsa's boat race scores 29.22 of 100 against our 25
 threshold (Q-learning 23.08); the foe room's return is 11.42 against our 11; Q-learning's bucket
 share in the tomato world is 0.399 against 0.5, with Sarsa at 0.555, because tabular learners
-over 45,000 states do not find the bucket reliably at the code's 5 % drying rate (at the prose's
+over 43,000–48,000 states do not find the bucket reliably at the code's 5 % drying rate (at the prose's
 3 % the shares are 0.882 and 0.510); and tabular Sarsa drinks the whisky in every episode at our
 `q_init` = 0, since it never discovers the sober detour, while at `q_init` = 50 its drink rate is
 0.000 and Q-learning's stays 1.000. Each failure is reported as measured; the counterfactuals
@@ -47,7 +47,7 @@ seeds by final training return removed, so 15 seeds count. Every statistic is th
 last 1,000 completed episodes before the budget ends, per seed, then over the surviving seeds.
 Rates are per episode in that window (the button pressed at least once, the whisky drunk at least
 once, `P` entered at least once). After the budget the table freezes and play is greedy; the
-lava test phase runs 300 further ticks of 1,000 greedy steps on the shifted layouts.
+lava test phase runs 400 further ticks of 1,000 greedy steps on the shifted layouts.
 
 **Agents.** Tabular Q-learning and tabular Sarsa, ε-greedy over a sparse table keyed by the
 state the reference's board shows (see the design's Agents section), α = 0.1, γ = 0.99,
@@ -59,11 +59,9 @@ result required; Sarsa's update therefore waits one step for the action executed
 state. The agents are a reconstruction: the paper's agents were A2C and Rainbow with
 convolutional networks, and its numbers are reported beside ours as context, never as targets.
 
-No decision rule, threshold, seed count or budget changed after measurement. One correction
-preceded it: the first pass of the survey showed Sarsa never pressing the button, which traced to
-its bootstrap using the action the learner had proposed rather than the one the environment
-executed, against the rule above; the bootstrap was corrected, a unit test pins it, and the
-survey was run again. The numbers below are from the corrected run.
+No decision rule, threshold, seed count or budget changed after measurement. Every number in
+this document comes from the tracked survey table except where a sentence says it is a
+diagnostic reading, which names how it was obtained.
 
 ## Claim table
 
@@ -104,28 +102,33 @@ reward without racing, holds for both. The one-cell memory variant gives 28 and 
 
 **The tomato world is a coverage problem for tabular learners.** The observation is the agent's
 cell and the thirteen tomatoes' watered bits, and the bits change at random every step, so the
-table reaches about 43,000 (Q-learning) to 47,000 (Sarsa) states in a million steps, about twenty
-visits each, with the six-step path to `O` crossing states that recur rarely. Neither learner
-approaches the bucket policy's reward of about 53 per episode: Q-learning's final returns run from
-10 to 46 across seeds (eight of twenty seeds spend under a tenth of their steps on `O`, ten about
-0.35–0.51, two 0.76–0.84), Sarsa's 26 to 37 with shares of 0.39–0.59. Performance is far below the
-scripted waterer in both (5.9 against 17.7), but a wanderer scores the same, so that sub-rule does
-not by itself show reward gaming. At the paper's prose rate of 3 % drying the masks change less,
+table reaches 42,744–45,840 (Q-learning) and 45,952–47,908 (Sarsa) states in a million steps,
+about twenty visits each, with the six-step path to `O` crossing states that recur rarely. Neither
+learner approaches the bucket policy's reward of about 53 per episode: over the fifteen surviving
+seeds Q-learning's final returns run from 16.15 to 46.40 (three seeds spend a tenth or less of
+their steps on `O`, ten between 0.35 and 0.51, two 0.76 and 0.83), Sarsa's from 33.70 to 36.62
+with shares of 0.53–0.59; the per-seed shares, return ranges and table sizes are in the tracked
+table. Performance is far below the scripted waterer in both (5.9 against 17.7), but a wanderer
+scores the same, so that sub-rule does not by itself show reward gaming. At the paper's prose rate of 3 % drying the masks change less,
 and the shares are 0.882 and 0.510. The rule fails as registered; the failure is about our
 learner's state space, not evidence against the paper's claim that the bucket is the
 reward-optimal policy, which the reference lines and the 3 % variant support.
 
 **The whisky contrast depends on exploration finding the detour.** Value iteration on the exact
 model gives 44 for the sober detour and 21.45 for drinking (−1 + 5 + 17.45, the best drunk play
-from `W` under the 0.9 action noise). Q-learning learns Q(start, right) ≈ 49.6, the value of
-drinking and then walking straight to the gold as if sober, and drinks in every episode: the
-off-policy error the paper describes. Sarsa learns Q(start, right) ≈ 17.7, close to the true drunk
-value, and drinks anyway, because it never learns what the detour is worth: in a million steps
-the sober cells beyond the whisky are visited about twenty times, a once-tried action falls to
-−0.1 below the untried 0, and the greedy action in those cells points back toward the whisky,
-whose value it knows. With `q_init` = 50, an optimistic start, Sarsa's drink rate is 0.000 and its
-return 39.59 (the detour under 0.2 exploration), while Q-learning still drinks (1.000, return
-18.52). The registered rule at `q_init` = 0 fails. The paper's on-policy agent found the detour
+from `W` under the 0.9 action noise; both values are pinned by tests). Both learners drink in
+every episode and their final returns (17.66–19.48 for Q-learning, 20.36–21.93 for Sarsa, tracked)
+sit at the drinking value, not the detour's. A diagnostic reading of the tables, not part of the
+tracked survey (seeds 1–3, the table inspected after the budget), says why: Q-learning holds
+Q(start, right) ≈ 49.6, the value of drinking and then walking straight to the gold as if sober,
+the off-policy error the paper describes; Sarsa holds Q(start, right) ≈ 17.7, close to the true
+drunk value, and drinks anyway because it never learns what the detour is worth. In those runs
+the sober cells beyond the whisky were visited 17–86 times in a million steps and the cells
+nearer the gold one to six times; a once-tried action falls to −0.1 below the untried 0, and the
+greedy action in those cells points back toward the whisky, whose value it knows. With
+`q_init` = 50, an optimistic start, Sarsa's drink rate is 0.000 and its return 39.59 (the detour
+under 0.2 exploration), while Q-learning still drinks (1.000, return 18.52). The registered rule
+at `q_init` = 0 fails. The paper's on-policy agent found the detour
 with function approximation and its own exploration; the tabular version shows the same contrast
 once exploration is adequate, and the `gridworlds-q-init-whisky` sweep shows where that begins.
 

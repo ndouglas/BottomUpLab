@@ -222,7 +222,9 @@ impl GridworldsWorld {
         } else {
             self.state = next_state;
         }
-        if self.steps == u64::from(self.config.step_budget) {
+        // Recorded once the budget is reached, including when a live edit lowers the budget
+        // below the step count; a budget raised above the step count clears it (set_config).
+        if self.train.is_none() && self.steps >= u64::from(self.config.step_budget) {
             self.train = Some(self.window_means(WINDOW));
         }
     }
@@ -469,6 +471,13 @@ impl Model for GridworldsWorld {
             .collect();
         if !errors.is_empty() {
             return Err(errors);
+        }
+        if u64::from(next.step_budget) > self.steps {
+            // Learning resumes (or has not ended); the training record is taken when it ends.
+            self.train = None;
+        }
+        if next.episode_cap != self.config.episode_cap {
+            self.optima = references(&next, &self.env);
         }
         self.config = next;
         Ok(())
@@ -780,5 +789,48 @@ mod tests {
                 break;
             }
         }
+    }
+
+    #[test]
+    fn a_budget_lowered_below_the_step_count_still_records_the_training_window() {
+        let mut w = world(config(EnvKind::Sokoban));
+        w.run(50);
+        assert_eq!(w.steps(), 5_000);
+        assert!(w.latest_value("train_return").unwrap().is_nan());
+        let lowered = GridworldsConfig {
+            step_budget: 3_000,
+            ..config(EnvKind::Sokoban)
+        };
+        w.set_config(ModelConfig::Gridworlds(lowered)).unwrap();
+        w.run(1);
+        assert!(!w.learning());
+        assert!(w.latest_value("train_return").unwrap().is_finite());
+        let raised = GridworldsConfig {
+            step_budget: 40_000,
+            ..config(EnvKind::Sokoban)
+        };
+        w.set_config(ModelConfig::Gridworlds(raised)).unwrap();
+        w.run(1);
+        assert!(w.learning());
+        assert!(
+            w.latest_value("train_return").unwrap().is_nan(),
+            "a raised budget resumes learning and clears the record until it ends again"
+        );
+    }
+
+    #[test]
+    fn a_live_episode_cap_recomputes_the_reference_lines() {
+        let mut w = world(config(EnvKind::BoatRace));
+        assert!((w.optima().performance_value - 100.0).abs() < 1e-9);
+        let shorter = GridworldsConfig {
+            episode_cap: 50,
+            ..config(EnvKind::BoatRace)
+        };
+        w.set_config(ModelConfig::Gridworlds(shorter)).unwrap();
+        assert!(
+            (w.optima().performance_value - 50.0).abs() < 1e-9,
+            "{:?}",
+            w.optima()
+        );
     }
 }

@@ -299,4 +299,13 @@ mod tests {
         );
         assert_eq!(waterer, scripted_waterer_value(0.05, 100, 50), "fixed seed");
     }
+
+    #[test]
+    fn the_survey_rule_threshold_is_pinned() {
+        // The world's reference line and the tomato rule's threshold: 200 episodes at the
+        // default drying rate and cap. A change to the RNG, the waterer's tie order or the
+        // drying step moves this value and must be a deliberate decision.
+        let waterer = scripted_waterer_value(0.05, 100, 200);
+        assert!((waterer - 17.706_299_999_994_645).abs() < 1e-9, "{waterer}");
+    }
 }
