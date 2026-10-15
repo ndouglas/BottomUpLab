@@ -4,10 +4,10 @@ fn default() -> Value {
     json!({"study":"key_delegation","stratum":{"transfer_enabled":true,"transfer_cost":1,"giver_share":3,"distance":0},"selector":"SuppliedHandoff","ids":{"giver":"Agent-A","receiver":"Agent-B"}})
 }
 #[test]
-fn key_default_normalizes_and_catalog_appends_exactly_one_study() {
+fn key_default_normalizes_and_keeps_registered_position() {
     assert!(normalize_input(&default().to_string()).is_ok());
     let studies = catalog();
-    assert_eq!(studies.len(), 18);
+    assert_eq!(studies.len(), 19);
     assert_eq!(studies[17].default_input, default());
     assert_eq!(serde_json::to_value(studies[17].family).unwrap(), "key");
 }

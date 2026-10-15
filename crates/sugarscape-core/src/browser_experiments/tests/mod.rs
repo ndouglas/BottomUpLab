@@ -29,3 +29,5 @@ mod discovery;
 mod gate;
 
 mod key;
+
+mod notes;

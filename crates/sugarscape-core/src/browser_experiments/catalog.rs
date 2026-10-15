@@ -13,6 +13,7 @@ pub enum StudyFamily {
     Spatial,
     Gate,
     Key,
+    Notes,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -41,10 +42,12 @@ pub fn catalog() -> Vec<StudyDescriptor> {
     studies.push(super::discovery::descriptor());
     studies.push(super::gate::descriptor());
     studies.push(super::key::descriptor());
+    studies.push(super::notes::descriptor());
     studies
 }
 pub(crate) fn rules_identity(study: StudyId) -> Result<String, Vec<FieldError>> {
     match study {
+        StudyId::PersistentNotes => super::notes::rules_identity(),
         StudyId::KeyDelegation => super::key::rules_identity(),
         StudyId::GateAssistance => {
             super::record::historical::current(study, super::gate::rules_identity()?)

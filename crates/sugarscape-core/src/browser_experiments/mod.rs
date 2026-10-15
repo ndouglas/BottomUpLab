@@ -6,6 +6,7 @@ mod equivalence;
 mod gate;
 mod input;
 mod key;
+mod notes;
 mod record;
 mod recorded;
 pub use recorded::recorded_results_json;
@@ -49,12 +50,14 @@ pub enum StudyId {
     SurfaceDiscovery,
     GateAssistance,
     KeyDelegation,
+    PersistentNotes,
 }
 
 pub fn run(input: &Input) -> Result<EpisodeRecord, Vec<FieldError>> {
     // Revalidate typed inputs too as other adapters acquire bounded selectors.
     let input = normalize_input(&record::bounded_json(input, MAX_INPUT_BYTES, "input")?)?;
     let mut result = match input {
+        Input::PersistentNotes { .. } => notes::run(&input),
         Input::KeyDelegation { .. } => key::run(&input),
         Input::GateAssistance { .. } => gate::run(&input),
         Input::ProtectionRecaching { .. } | Input::DeceptionGestures { .. } => caching::run(&input),

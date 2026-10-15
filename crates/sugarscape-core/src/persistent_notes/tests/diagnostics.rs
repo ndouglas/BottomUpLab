@@ -145,11 +145,20 @@ fn complete_engineering_report_saved_replay_summary_and_tamper_checks() -> Resul
     assert_eq!(full_digest, full_hash.finish());
     assert_ne!(full_digest, report.payload_sha256);
     drop(summary);
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(
-        "../../.superpowers/sdd/2026-10-14-paid-persistent-notes/task-4-engineering-report.json",
-    );
-    let mut output =
-        std::io::BufWriter::with_capacity(65536, std::fs::File::create(&path).unwrap());
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "persistent-notes-roundtrip-{}-{nonce}.json",
+        std::process::id()
+    ));
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+        .unwrap();
+    let mut output = std::io::BufWriter::with_capacity(65536, file);
     let count = write_report(&mut output, &report)?;
     eprintln!("engineering canonical_report_bytes={count}");
     assert!(count < limits.report_bytes);
@@ -165,6 +174,7 @@ fn complete_engineering_report_saved_replay_summary_and_tamper_checks() -> Resul
         write_report(&mut hash2, &report)?
     );
     assert_eq!(hash1.finish(), hash2.finish());
+    std::fs::remove_file(path).unwrap();
     Ok(())
 }
 #[test]

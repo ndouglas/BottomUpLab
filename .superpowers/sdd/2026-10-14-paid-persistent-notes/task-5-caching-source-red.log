@@ -1,0 +1,164 @@
+
+ RUN  v5.0.1 /Users/nathan/.config/superpowers/worktrees/SugarScape/paid-persistent-notes-design-20261014/web
+
+ ❯ src/episodes/caching-parity.test.ts (122 tests | 3 failed | 66 skipped) 777ms
+   ❯ caching source identity integrity (56)
+     × authenticates the exact combined war, discovery, Gate, Key, assistance and gridworlds additions against the frozen historical lib 12ms
+     × protection_recaching authenticates paths, files and canonical digest 34ms
+     × deception_gestures authenticates paths, files and canonical digest 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/episodes/caching-parity.test.ts > caching source identity integrity > authenticates the exact combined war, discovery, Gate, Key, assistance and gridworlds additions against the frozen historical lib
+AssertionError: live lib.rs differs beyond the reviewed discovery/Gate/Key/assistance/gridworlds exports and native W1 gate: expected Uint8Array[ 47, 47, 33, 32, 83, …(1771) ] to deeply equal Uint8Array[ 47, 47, 33, 32, 83, …(1723) ]
+
+- Expected
++ Received
+
+@@ -1836,6 +1836,54 @@
+    108,
+    100,
+    115,
+    59,
+    10,
++   10,
++   112,
++   117,
++   98,
++   32,
++   109,
++   111,
++   100,
++   32,
++   110,
++   101,
++   103,
++   111,
++   116,
++   105,
++   97,
++   98,
++   108,
++   101,
++   59,
++   10,
++   10,
++   112,
++   117,
++   98,
++   32,
++   109,
++   111,
++   100,
++   32,
++   112,
++   101,
++   114,
++   115,
++   105,
++   115,
++   116,
++   101,
++   110,
++   116,
++   95,
++   110,
++   111,
++   116,
++   101,
++   115,
++   59,
++   10,
+  ]
+
+ ❯ historicalSourceBytes src/episodes/test-fixtures/historical-source.ts:29:143
+     27|   const expectedLive = new Uint8Array(historical.length + additionByte…
+     28|   expectedLive.set(historical); expectedLive.set(additionBytes, histor…
+     29|   expect(new Uint8Array(live), 'live lib.rs differs beyond the reviewe…
+       |                                                                                                                                               ^
+     30|   return historical;
+     31| }
+ ❯ src/episodes/caching-parity.test.ts:166:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/episodes/caching-parity.test.ts > caching source identity integrity > protection_recaching authenticates paths, files and canonical digest
+ FAIL  src/episodes/caching-parity.test.ts > caching source identity integrity > deception_gestures authenticates paths, files and canonical digest
+AssertionError: live lib.rs differs beyond the reviewed discovery/Gate/Key/assistance/gridworlds exports and native W1 gate: expected Uint8Array[ 47, 47, 33, 32, 83, …(1771) ] to deeply equal Uint8Array[ 47, 47, 33, 32, 83, …(1723) ]
+
+- Expected
++ Received
+
+@@ -1836,6 +1836,54 @@
+    108,
+    100,
+    115,
+    59,
+    10,
++   10,
++   112,
++   117,
++   98,
++   32,
++   109,
++   111,
++   100,
++   32,
++   110,
++   101,
++   103,
++   111,
++   116,
++   105,
++   97,
++   98,
++   108,
++   101,
++   59,
++   10,
++   10,
++   112,
++   117,
++   98,
++   32,
++   109,
++   111,
++   100,
++   32,
++   112,
++   101,
++   114,
++   115,
++   105,
++   115,
++   116,
++   101,
++   110,
++   116,
++   95,
++   110,
++   111,
++   116,
++   101,
++   115,
++   59,
++   10,
+  ]
+
+ ❯ historicalSourceBytes src/episodes/test-fixtures/historical-source.ts:29:143
+     27|   const expectedLive = new Uint8Array(historical.length + additionByte…
+     28|   expectedLive.set(historical); expectedLive.set(additionBytes, histor…
+     29|   expect(new Uint8Array(live), 'live lib.rs differs beyond the reviewe…
+       |                                                                                                                                               ^
+     30|   return historical;
+     31| }
+ ❯ src/episodes/caching-parity.test.ts:200:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 53 passed | 66 skipped (122)
+   Start at  20:32:11
+   Duration  1.20s (tests 70%, import 23%, transform 7%)
+

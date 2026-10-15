@@ -40,6 +40,7 @@ fn local_blank_tie_and_routes() -> Result<(), Error> {
 
 #[test]
 fn public_inputs_replay_without_hidden_request() -> Result<(), Error> {
+    let mut initial_by_routine = std::collections::BTreeMap::new();
     for arm in [
         Arm::Retained,
         Arm::Erased,
@@ -53,8 +54,48 @@ fn public_inputs_replay_without_hidden_request() -> Result<(), Error> {
         ] {
             let left = run_episode(&Config::example(arm, routine, Good::Left))?;
             let right = run_episode(&Config::example(arm, routine, Good::Right))?;
-            for k in 0..=1 {
-                assert_eq!(left.checkpoints[k].own[1], right.checkpoints[k].own[1]);
+            let initial = initial_by_routine
+                .entry(routine)
+                .or_insert_with(|| left.checkpoints[0].own[1].clone());
+            assert_eq!(
+                initial, &left.checkpoints[0].own[1],
+                "initial arm leak: {arm:?}"
+            );
+            assert_eq!(
+                initial, &right.checkpoints[0].own[1],
+                "initial request leak: {arm:?}"
+            );
+            // Oracle is the labeled supplied-truth exception and is excluded above.
+            // Reward feedback after settlement may reveal success legitimately.
+            for (a, b) in left.checkpoints.iter().zip(&right.checkpoints) {
+                let own = &a.own[1];
+                if own.known_request.is_some()
+                    || own
+                        .note_read
+                        .as_ref()
+                        .is_some_and(|read| read.symbol != Note::Blank)
+                {
+                    break;
+                }
+                let mut own = own.clone();
+                let mut peer_request = b.own[1].clone();
+                if a.public.terminal {
+                    // Only settled reward and reward feedback are permitted to differ.
+                    // A terminal known_request, map or other hidden-truth leak still fails.
+                    own.reward = 0;
+                    peer_request.reward = 0;
+                    for feedback in &mut own.history {
+                        feedback.reward = 0;
+                    }
+                    for feedback in &mut peer_request.history {
+                        feedback.reward = 0;
+                    }
+                }
+                assert_eq!(
+                    own, peer_request,
+                    "{arm:?}/{routine:?}/{}",
+                    a.clock.boundary
+                );
             }
             for episode in [left, right] {
                 for pair in episode.checkpoints.windows(2) {

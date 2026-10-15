@@ -17,7 +17,10 @@ pub(super) fn records_equivalent(
     {
         return false;
     }
-    if matches!(left.study, StudyId::GateAssistance | StudyId::KeyDelegation) {
+    if matches!(
+        left.study,
+        StudyId::GateAssistance | StudyId::KeyDelegation | StudyId::PersistentNotes
+    ) {
         return left.input == right.input
             && left.checkpoints == right.checkpoints
             && left.payload == right.payload;

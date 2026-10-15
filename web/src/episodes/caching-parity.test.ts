@@ -60,7 +60,7 @@ for (const [id, changes] of [
 }
 describe('caching complete native/WASM parity without tolerance', () => {
   it('retains seventeen historical renderers and appends the native Key entry', () => {
-    expect(catalog).toHaveLength(18); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
+    expect(catalog).toHaveLength(19); expect(catalog.filter(d => d.family === 'spatial')).toHaveLength(7);
     for (const d of catalog.slice(0, 17)) expect(rendererAvailable(d)).toBe(true);
     expect(catalog[17].id).toBe('key_delegation');
     // Task 6 enables Key while retaining all seventeen original renderers.
@@ -161,7 +161,7 @@ describe('caching source identity integrity', () => {
     const live = new TextEncoder().encode('unlisted source bytes');
     expect(await cachingIdentityBytes('unlisted-source.rs', live)).toBe(live);
   });
-  it('authenticates the exact combined war, discovery, Gate, Key, assistance and gridworlds additions against the frozen historical lib', async () => {
+  it('authenticates the exact combined war, discovery, Gate, Key, assistance, gridworlds, negotiable and paid-notes additions against the frozen historical lib', async () => {
     const historical = bytes(`${root}/web/src/episodes/test-fixtures/pre-war-core-lib.rs.txt`);
     const authenticated = await cachingIdentityBytes('crates/sugarscape-core/src/lib.rs', bytes(`${root}/crates/sugarscape-core/src/lib.rs`));
     expect(authenticated).toEqual(historical);

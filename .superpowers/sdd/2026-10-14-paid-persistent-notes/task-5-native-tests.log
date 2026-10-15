@@ -1,0 +1,10 @@
+   Compiling sugarscape-core v0.1.0 (/Users/nathan/.config/superpowers/worktrees/SugarScape/paid-persistent-notes-design-20261014/crates/sugarscape-core)
+    Finished `test` profile [optimized + debuginfo] target(s) in 4m 06s
+     Running unittests src/lib.rs (target/debug/deps/sugarscape_core-9daff75c87f05253)
+
+running 2 tests
+test browser_experiments::tests::notes::selected_notes_are_bounded_and_reconstructed ... ok
+test browser_experiments::tests::notes::notes_rejects_duplicate_keys_input_bytes_checkpoint_caps_and_saved_changes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 3578 filtered out; finished in 1.72s
+

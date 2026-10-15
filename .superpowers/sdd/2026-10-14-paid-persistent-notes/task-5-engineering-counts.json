@@ -1,0 +1,87 @@
+{
+  "scope": "paid-notes selected engineering evaluations only; each fresh reconstruction counts; parse-only rejections and builds count zero",
+  "production_evaluations": 0,
+  "collection": false,
+  "phases": [
+    {
+      "phase": "initial native notes green",
+      "native": 4,
+      "wasm": 0
+    },
+    {
+      "phase": "broad browser native notes and catalog default",
+      "native": 5,
+      "wasm": 0
+    },
+    {
+      "phase": "scoped native notes pre-strict",
+      "native": 4,
+      "wasm": 0
+    },
+    {
+      "phase": "privacy every pre-reveal checkpoint",
+      "native": 24,
+      "wasm": 0
+    },
+    {
+      "phase": "privacy cross-arm initial extension",
+      "native": 24,
+      "wasm": 0
+    },
+    {
+      "phase": "pre-strict complete parity",
+      "native": 32,
+      "wasm": 32
+    },
+    {
+      "phase": "pre-strict WASM import/mutation/passive",
+      "native": 0,
+      "wasm": 4
+    },
+    {
+      "phase": "pre-strict cold Node",
+      "native": 0,
+      "wasm": 2
+    },
+    {
+      "phase": "pre-strict actual Chrome",
+      "native": 0,
+      "wasm": 2
+    },
+    {
+      "phase": "strict-shape native green",
+      "native": 4,
+      "wasm": 0
+    },
+    {
+      "phase": "final strict/import native green",
+      "native": 4,
+      "wasm": 0
+    },
+    {
+      "phase": "final complete parity",
+      "native": 32,
+      "wasm": 32
+    },
+    {
+      "phase": "final WASM import/mutation/passive",
+      "native": 0,
+      "wasm": 4
+    },
+    {
+      "phase": "final cold Node",
+      "native": 0,
+      "wasm": 2
+    },
+    {
+      "phase": "final actual Chrome",
+      "native": 0,
+      "wasm": 2
+    }
+  ],
+  "native_total": 133,
+  "wasm_total": 80,
+  "total": 213,
+  "other_study_regressions": "retained test logs; not included in paid-notes selected census",
+  "final_parity_status": "35 tests passed, including exactly32 native/WASM complete record pairs, 45.44 seconds"
+}

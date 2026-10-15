@@ -9,7 +9,7 @@ fn discovery_default_and_complete_48_controls_are_registered() {
     let input =
         normalize_input(&default().to_string()).expect("discovery default must be runnable");
     let studies = catalog();
-    assert_eq!(studies.len(), 18);
+    assert_eq!(studies.len(), 19);
     let descriptor = studies
         .iter()
         .find(|s| s.default_input["study"] == "surface_discovery")

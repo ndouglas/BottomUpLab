@@ -1,0 +1,23 @@
+   Compiling typenum v1.20.1
+   Compiling libc v0.2.190
+    Checking serde_core v1.0.229
+    Checking rand_core v0.6.4
+   Compiling cfg-if v1.0.5
+    Checking zmij v1.0.23
+    Checking itoa v1.0.18
+    Checking memchr v2.8.3
+    Checking sha2-asm v0.6.4
+    Checking libm v0.2.16
+    Checking rand v0.8.8
+    Checking generic-array v0.14.7
+    Checking cpufeatures v0.2.17
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking digest v0.10.7
+    Checking sha2 v0.10.9
+   Compiling survey v0.1.0 (/Users/nathan/.config/superpowers/worktrees/SugarScape/paid-persistent-notes-design-20261014/survey)
+    Checking serde v1.0.229
+    Checking serde_json v1.0.151
+    Checking rand_pcg v0.3.1
+    Checking sugarscape-core v0.1.0 (/Users/nathan/.config/superpowers/worktrees/SugarScape/paid-persistent-notes-design-20261014/crates/sugarscape-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 37.56s

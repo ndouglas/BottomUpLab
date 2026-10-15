@@ -7,6 +7,6 @@ export function projectCheckpoint(record: EpisodeRecord, index: number, perspect
 }
 /** Discovery, Gate and Key evaluator material is Researcher-only, including terminal checkpoints. */
 export function resultPayload(record: EpisodeRecord, index: number, perspective: Perspective): Json {
-  if (['surface_discovery', 'gate_assistance', 'key_delegation'].includes(record.study) && perspective.kind !== 'researcher') return null;
+  if (['surface_discovery', 'gate_assistance', 'key_delegation', 'persistent_notes'].includes(record.study) && perspective.kind !== 'researcher') return null;
   return perspective.kind === 'researcher' || index === record.checkpoints.length - 1 ? record.payload : null;
 }

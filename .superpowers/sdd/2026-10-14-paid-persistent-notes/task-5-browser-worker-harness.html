@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><title>Paid notes worker engineering check</title>
+<h1>Researcher setup · paid notes worker engineering check</h1><p>One selected run and one fresh validation. No collection.</p>
+<button id="run">Run cold worker</button><button id="validate" disabled>Validate in fresh worker</button><pre id="evidence">Not started</pre>
+<script type="module">
+import {createEpisodeClient} from '/src/episodes/client.ts';
+const input={study:'persistent_notes',stratum:{acquisition_cost:1,write_cost:2,note_read_cost:1,manifest_inspection_cost:4,writer_share:3},arm:'Retained',routine:'ReadAdaptive',request:'Right',ids:{writer:'Writer',reader:'Reader'}};
+const evidence={deadline_ms:60000,transport:'actual createEpisodeClient and worker.ts over local HTTP',cases:[]};let record;
+const run=document.querySelector('#run'),validate=document.querySelector('#validate'),output=document.querySelector('#evidence');
+async function request(op,text){const client=createEpisodeClient();const start=performance.now();output.textContent='Running '+op;try{const result=await client.request(op,text);evidence.cases.push({op,elapsed_ms:performance.now()-start,record_bytes:new TextEncoder().encode(JSON.stringify(result)).length,rules_identity:result.rules_identity,checkpoint_count:result.checkpoints.length});record=result;output.textContent=JSON.stringify(evidence,null,2);if(op==='run')validate.disabled=false;}catch(error){evidence.error=String(error);output.textContent=JSON.stringify(evidence,null,2);}finally{client.dispose();}}
+run.onclick=()=>{run.disabled=true;void request('run',JSON.stringify(input));};validate.onclick=()=>{validate.disabled=true;void request('validate',JSON.stringify(record));};
+</script>

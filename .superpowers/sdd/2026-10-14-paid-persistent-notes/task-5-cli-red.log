@@ -1,0 +1,2 @@
+exit 2
+input: unknown variant `persistent_notes`, expected one of `key_delegation`, `gate_assistance`, `protection_recaching`, `deception_gestures`, `burrow_excavation`, `burrow_access`, `foraging_fixed`, `foraging_passage`, `foraging_construction`, `surface_discovery`, `shared_surface`, `active_surface`, `wink`, `testimony`, `strategic_reporting`, `strategy_inference`, `adversarial_audit`, `testimony_game` at line 1 column 27

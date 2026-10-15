@@ -1,0 +1,20 @@
+{
+  "deadline_ms": 60000,
+  "transport": "actual createEpisodeClient and worker.ts over local HTTP",
+  "cases": [
+    {
+      "op": "run",
+      "elapsed_ms": 2026,
+      "record_bytes": 119683,
+      "rules_identity": "persistent-notes:protocol-1:browser-notes-1:native-source-sha256:28b90c51a6f8d126eae517f1292a32518207c888ff95f60abd9c2b45ee3c572e:adapter-source-sha256:7bbb9a297dc1c9b7f33f47b59eb2e70aba1606a68fe779b713e080da2ccf9cce:reviewed-reference-sha256:2227ad21600c94e54245bd2743509b6aa65399f2f8eb86693c1aecd483225788",
+      "checkpoint_count": 12
+    },
+    {
+      "op": "validate",
+      "elapsed_ms": 1930.1000003814697,
+      "record_bytes": 119683,
+      "rules_identity": "persistent-notes:protocol-1:browser-notes-1:native-source-sha256:28b90c51a6f8d126eae517f1292a32518207c888ff95f60abd9c2b45ee3c572e:adapter-source-sha256:7bbb9a297dc1c9b7f33f47b59eb2e70aba1606a68fe779b713e080da2ccf9cce:reviewed-reference-sha256:2227ad21600c94e54245bd2743509b6aa65399f2f8eb86693c1aecd483225788",
+      "checkpoint_count": 12
+    }
+  ]
+}

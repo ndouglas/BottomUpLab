@@ -75,6 +75,7 @@ pub(crate) fn rules_identity() -> Result<String> {
         source!("config.rs"),
         source!("lib.rs"),
         source!("browser_experiments/gate/duplicate.rs"),
+        source!("browser_experiments/notes/duplicate.rs"),
         source!("browser_experiments/fixtures/key-registration-compatibility.json"),
     ]))?;
     let references = checked(g::reference_identity())?;

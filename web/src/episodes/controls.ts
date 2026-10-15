@@ -1,3 +1,4 @@
+import { NotesControls } from './notes-controls';
 import { KeyControls } from './key-controls';
 import { gateSelectorLabels } from './gate-comparison';
 import { CachingControls } from './caching-controls';
@@ -29,11 +30,11 @@ export class EpisodeControls {
   private sequenceEdited = false;
   private gateFields: { role: 'holder' | 'retriever'; el: HTMLInputElement; edited: boolean }[] = [];
   private gateIds: { role: string; el: HTMLInputElement; edited: boolean }[] = [];
-  private key: KeyControls | null = null;
+  private key: KeyControls | NotesControls | null = null;
   private spatial: SpatialControls | null = null;
   constructor(private descriptor: StudyDescriptor, input: Json = descriptor.default_input, private changed: (input: Json) => void = () => {}) {
     this.draft = structuredClone(obj(input));
-    if (descriptor.family === 'key') { this.key = new KeyControls(descriptor, input, changed); this.el.append(this.key.el); } else if (descriptor.family === 'spatial') { this.spatial = new (['protection_recaching','deception_gestures'].includes(descriptor.id)?CachingControls:SpatialControls)(descriptor, input, changed); this.el.append(this.spatial.el); } else this.render();
+    if (descriptor.family === 'notes') { this.key = new NotesControls(descriptor, input, changed); this.el.append(this.key.el); } else if (descriptor.family === 'key') { this.key = new KeyControls(descriptor, input, changed); this.el.append(this.key.el); } else if (descriptor.family === 'spatial') { this.spatial = new (['protection_recaching','deception_gestures'].includes(descriptor.id)?CachingControls:SpatialControls)(descriptor, input, changed); this.el.append(this.spatial.el); } else this.render();
   }
   input(): Json {
     if (this.key) return this.key.input();

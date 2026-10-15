@@ -102,6 +102,12 @@ pub(crate) fn check_bounds(record: &EpisodeRecord) -> Result<(), Vec<FieldError>
             "episode exceeds 4096 checkpoints",
         ));
     }
+    if record.study == StudyId::PersistentNotes && record.checkpoints.len() > 16 {
+        return Err(super::error(
+            "checkpoints",
+            "notes episode exceeds 16 checkpoints",
+        ));
+    }
     serialized_size(&record.input, MAX_INPUT_BYTES, "input")?;
     serialized_size(record, MAX_EPISODE_BYTES, "episode")?;
     Ok(())
@@ -116,6 +122,7 @@ pub fn validate_episode(json: &str) -> Result<EpisodeRecord, Vec<FieldError>> {
     }
     super::gate::duplicate::check(json, "episode")?;
     super::key::duplicate::check(json, "episode")?;
+    super::notes::duplicate::check(json, "episode")?;
     let saved: EpisodeRecord =
         serde_json::from_str(json).map_err(|e| super::error("episode", e.to_string()))?;
     if saved.version != EPISODE_VERSION {
@@ -124,6 +131,7 @@ pub fn validate_episode(json: &str) -> Result<EpisodeRecord, Vec<FieldError>> {
             "unsupported episode format version",
         ));
     }
+    check_bounds(&saved)?;
     let expected_identity = catalog::rules_identity(saved.study)?;
     let historical_identity = saved.rules_identity != expected_identity
         && historical::accepts(saved.study, &saved.rules_identity)?;
@@ -272,6 +280,7 @@ pub(super) mod historical {
                 source!("browser_experiments/key/mod.rs"),
                 source!("browser_experiments/key/projection.rs"),
                 source!("browser_experiments/key/duplicate.rs"),
+                source!("browser_experiments/notes/duplicate.rs"),
             ]))?,
         )?;
         append_unique(

@@ -39,6 +39,13 @@ pub enum WinkMode {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "study", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
+    PersistentNotes {
+        stratum: crate::persistent_notes::Stratum,
+        arm: crate::persistent_notes::Arm,
+        routine: crate::persistent_notes::ReaderRoutine,
+        request: crate::persistent_notes::Good,
+        ids: crate::persistent_notes::Ids,
+    },
     KeyDelegation {
         stratum: crate::key_delegation::Stratum,
         #[serde(
@@ -165,6 +172,7 @@ pub enum Input {
 impl Input {
     pub fn study(&self) -> StudyId {
         match self {
+            Self::PersistentNotes { .. } => StudyId::PersistentNotes,
             Self::KeyDelegation { .. } => StudyId::KeyDelegation,
             Self::GateAssistance { .. } => StudyId::GateAssistance,
             Self::ProtectionRecaching { .. } => StudyId::ProtectionRecaching,
@@ -193,12 +201,14 @@ pub fn normalize_input(json: &str) -> Result<Input, Vec<FieldError>> {
     }
     super::gate::duplicate::check(json, "input")?;
     super::key::duplicate::check(json, "input")?;
+    super::notes::duplicate::check(json, "input")?;
     let input: Input =
         serde_json::from_str(json).map_err(|e| super::error("input", e.to_string()))?;
     record::serialized_size(&input, MAX_INPUT_BYTES, "input")?;
     match &input {
         Input::GateAssistance { .. } => super::gate::validate_input(&input)?,
         Input::KeyDelegation { .. } => super::key::validate_input(&input)?,
+        Input::PersistentNotes { .. } => super::notes::validate_input(&input)?,
         Input::ProtectionRecaching { .. } | Input::DeceptionGestures { .. } => {
             super::caching::validate_input(&input)?
         }
