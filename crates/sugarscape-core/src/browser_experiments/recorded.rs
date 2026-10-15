@@ -125,6 +125,74 @@ fn key_summary() -> Result<&'static Value, Vec<FieldError>> {
     .as_ref()
     .map_err(Clone::clone)
 }
+/// Complete Notes reductions; a delivery-only dictionary retains every exact row.
+fn notes_summary() -> Result<&'static Value, Vec<FieldError>> {
+    static NOTES: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
+    NOTES
+        .get_or_init(|| {
+            let text = include_str!("fixtures/notes-recorded.json");
+            // Notes has more registered reductions; other assets retain their 5 MiB bound.
+            if text.len() > MAX_EPISODE_BYTES {
+                return Err(super::error(
+                    "fixture",
+                    "Notes summary exceeds transport bound",
+                ));
+            }
+            let mut summary: Value =
+                serde_json::from_str(text).map_err(|e| super::error("fixture", e.to_string()))?;
+            let source = crate::persistent_notes::source_identity()
+                .map_err(|e| super::error("fixture", e.to_string()))?;
+            let reference = crate::persistent_notes::reference_identity()
+                .map_err(|e| super::error("fixture", e.to_string()))?;
+            if summary["version"] != "persistent-notes-summary-v1"
+                || summary["protocol_version"] != 1
+                || summary["source"]["sha256"] != source
+                || summary["reference"]["sha256"] != reference
+                || summary["report_sha256"]
+                    != "376ed7f1d99a6095f958f5a7de9b0622b40b01a536ea411e51c9e75ea833a717"
+            {
+                return Err(super::error(
+                    "fixture",
+                    "invalid frozen Notes summary identity",
+                ));
+            }
+            for (field, count) in [
+                ("means", 2304),
+                ("request_contrasts", 4608),
+                ("contrasts", 2304),
+                ("envelopes", 576),
+            ] {
+                if summary[field]
+                    .as_array()
+                    .is_none_or(|rows| rows.len() != count)
+                {
+                    return Err(super::error("fixture", "incomplete Notes summary"));
+                }
+            }
+            let mut dictionary = Vec::new();
+            let mut indices = std::collections::BTreeMap::new();
+            for field in ["means", "request_contrasts", "contrasts"] {
+                for row in summary[field].as_array_mut().expect("checked array") {
+                    let metrics = row
+                        .get_mut("metrics")
+                        .ok_or_else(|| super::error("fixture", "missing Notes metrics"))?;
+                    let key = serde_json::to_string(metrics)
+                        .map_err(|e| super::error("fixture", e.to_string()))?;
+                    let index = *indices.entry(key).or_insert_with(|| {
+                        let index = dictionary.len();
+                        dictionary.push(metrics.clone());
+                        index
+                    });
+                    *metrics = json!(index);
+                }
+            }
+            summary["metrics_dictionary"] = Value::Array(dictionary);
+            summary["wire_encoding"] = json!("persistent-notes-metrics-dictionary-v1");
+            lossless_value(&summary)
+        })
+        .as_ref()
+        .map_err(Clone::clone)
+}
 /// Original search campaigns and the complete measured discovery census.
 /// Each keeps its own original report/source identity.
 /// Curves use the declared columns and champion dictionary without dropping points.
@@ -149,6 +217,7 @@ pub fn recorded_results_json() -> Result<String, Vec<FieldError>> {
     studies.insert("surface_discovery".into(), discovery_summary()?.clone());
     studies.insert("gate_assistance".into(), gate_summary()?.clone());
     studies.insert("key_delegation".into(), key_summary()?.clone());
+    studies.insert("persistent_notes".into(), notes_summary()?.clone());
     record::bounded_json(
         &json!({"kind":"recorded_results","version":1,"studies":studies}),
         MAX_EPISODE_BYTES,

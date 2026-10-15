@@ -727,3 +727,13 @@ Original bounded construction under the [registered protocol](superpowers/protoc
 | <a id="key-1"></a>KEY-1 | Supported within registered mechanics: every row/control history agrees with sealed references; unique possession, carrier-only crossing, paid blocks and receipt chronology retained. | Supplied physical access delegation works under these rules. Protocol security, incident fidelity and general mechanism necessity remain untested. |
 | <a id="key-2"></a>KEY-2 | Qualified finite-word incentives: ten of 36 strata admit delivering pure schedules; all-Wait remains pure everywhere. All private ties, regrets, suffixes and indifference retained. | Useful handoff can be privately adverse or indifferent. Adaptive strategies, learning and equilibrium selection remain unmeasured. |
 | <a id="key-3"></a>KEY-3 | Qualified coordination: enabled team maxima 3–7; efficient delivering pure equilibria coexist with all-Wait in ten strata; eight enabled strata retain only all-Wait. Controls share execution information. | Access alone does not eliminate incentive gaps or multiplicity. Broader robustness and selection dynamics require separate registration. |
+
+## Paid persistent notes — October 2026
+
+The [local finite-model account](persistent-notes.md), dated **2026-10-15**, records exactly two frozen collections and a separate complete source-blind saved-data check. The supplied roles, routines and note encoding define this model; this entry does not evaluate a published paper or establish real-incident fidelity.
+
+| Stable ID | Outcome and evidence | Interpretation and unresolved work |
+|---|---|---|
+| <a id="notes-1"></a>NOTES-1 | Resolved within registered computation: 4,608 typed episodes per report, all reductions/counters/ties and byte-identical first/repeat independently verified. | Supports this finite supplied model and saved provenance; broader mechanisms and robustness remain unmeasured. |
+| <a id="notes-2"></a>NOTES-2 | Qualified Reader benefit: fixed ReadAdaptive Retained–Erased expected Reader net +2–6 in all 144 strata; other fixed routines have zero retention contrast. Offline Reader-envelope gain is 0–5, with all ties retained. | Correctness, fixed-routine gains and offline selection are distinct claims; no equilibrium or volunteering result. |
+| <a id="notes-3"></a>NOTES-3 | Qualified production incentives: Retained ReadAdaptive original Writer expected net negative in 132/144 strata; group net negative in 90/144. Whole cost includes acquisition/writing and Reader reading, plus physical actions. | Reader savings do not establish beneficial or voluntary production. Adaptive incentives and external validity require separate authorization/design. |

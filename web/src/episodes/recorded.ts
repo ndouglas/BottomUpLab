@@ -139,12 +139,55 @@ function renderKeySummary(study: Record<string, Json>): HTMLElement {
     h('button', { onclick: () => downloadText('key-delegation-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export Key census summary'));
 }
 /** Full retained asset remains available; chart selection never trains or evaluates a policy. */
+function decodeNotesSummary(wire: Record<string, Json>): Record<string, Json> {
+  if (wire.wire_encoding === undefined) return wire;
+  if (wire.wire_encoding !== 'persistent-notes-metrics-dictionary-v1') throw new Error('Unknown Notes wire encoding');
+  if (!Array.isArray(wire.metrics_dictionary)) throw new Error('Invalid Notes metrics dictionary');
+  const dictionary = wire.metrics_dictionary;
+  const decoded = { ...wire };
+  for (const field of ['means', 'request_contrasts', 'contrasts']) {
+    if (!Array.isArray(wire[field])) throw new Error('Invalid Notes row array');
+    decoded[field] = wire[field].map(raw => {
+      const row = obj(raw), text = row.metrics;
+      if (typeof text !== 'string' || !/^(0|[1-9][0-9]*)$/.test(text)) throw new Error('Invalid Notes metrics dictionary index');
+      const index = Number(text);
+      if (!Number.isSafeInteger(index) || index >= dictionary.length) throw new Error('Invalid Notes metrics dictionary index');
+      return { ...row, metrics: dictionary[index] };
+    });
+  }
+  delete decoded.metrics_dictionary;
+  delete decoded.wire_encoding;
+  return decoded;
+}
+/** Complete saved Notes reductions; opening this view never evaluates a policy. */
+function renderNotesSummary(wire: Record<string, Json>): HTMLElement {
+  const study = decodeNotesSummary(wire);
+  const sections: [string, Json[]][] = [
+    ['Every request-mean outcome and whole production cost', list(study.means)],
+    ['Fixed-routine request contrasts', list(study.request_contrasts)],
+    ['Fixed-routine mean contrasts', list(study.contrasts)],
+    ['Offline selected-routine envelope and all ties', list(study.envelopes)],
+  ];
+  return h('div', { class: 'notes-recorded-summary' },
+    h('h4', {}, 'Paid persistent notes · complete retained census'),
+    h('p', {}, 'Exactly two frozen collections. These are supplied roles, routines and note encodings. Fixed-routine contrasts differ from the offline envelope, which selects on expected outcomes before the hidden request. All negative and wrong outcomes and all ties remain included.'),
+    h('p', {}, 'Costs include acquisition, writing, reading, inspection, movement, handoff, pickup, delivery and waits. Reader read savings are separate from whole information-production cost and from the original departed Writer’s private net outcome. No equilibrium, volunteering, emergent communication, novelty or real-incident fidelity is established.'),
+    details('Frozen measurement identity', { report_sha256: study.report_sha256, source: study.source, reference: study.reference }, true),
+    ...sections.map(([title, rows]) => {
+      const section = h('details', {}, h('summary', {}, `${title} (${rows.length})`));
+      section.addEventListener('toggle', () => { if (section.open && section.childNodes.length === 1) section.append(table(rows)); });
+      return section;
+    }),
+    details('Complete resource counters', study.counters),
+    h('button', { onclick: () => downloadText('persistent-notes-recorded-summary.json', JSON.stringify(study), 'application/json') }, 'Export complete Notes summary'));
+}
 export function renderRecorded(recorded: Json): HTMLElement {
   const studies = obj(obj(recorded).studies), selector = h('select', { 'aria-label': 'Recorded study' }, ...Object.keys(studies).map(key => h('option', { value: key }, label(key))));
   const content = h('div');
   const show = () => {
     const study = obj(studies[selector.value]);
     if (study.version === 'surface-discovery-summary-v1') { content.replaceChildren(renderDiscoverySummary(study)); return; }
+    if (study.version === 'persistent-notes-summary-v1') { content.replaceChildren(renderNotesSummary(study)); return; }
     if (study.version === 'key-delegation-summary-v1') { content.replaceChildren(renderKeySummary(study)); return; }
     if (study.version === 'gate-assistance-summary-v1') { content.replaceChildren(renderGateSummary(study)); return; }
     const runs = list(study.runs);

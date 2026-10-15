@@ -34,4 +34,6 @@ Task 6 implements the native projected Flump map, local ledgers, six-panel SVG/H
 **Goal**: One first/repeat census, complete saved verification and preserved local delivery.
 **Success Criteria**: Byte identity, independent verification, all outcomes and artifact hashes retained.
 **Tests**: 4,608 complete keys per collection, all aggregates/contrasts/ties, source/executable receipts.
-**Status**: Not Started
+**Status**: In Progress
+
+Task 7: exact first/repeat collected 2026-10-15 within caps and byte-identical; native saved validation/summary and independent full saved checks passed. Complete recorded-summary delivery, affected gates, final review and preservation remain in progress. Native source/reference/executable and reports remain frozen.

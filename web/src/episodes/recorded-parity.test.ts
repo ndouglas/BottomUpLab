@@ -18,7 +18,7 @@ it('actual WASM and native recorded exports retain the complete first-report sum
   const options = { cwd: root, encoding: 'utf8' as const, maxBuffer: 16 * 1024 * 1024, timeout: 60_000 };
   const native = execFileSync(`${root}/target/release/sugarscape`, ['experiment-view', 'recorded'], options).trimEnd();
   expect(actual).toBe(native);
-});
+}, 60_000);
 it('actual WASM recorded export includes the measured Gate census with every stratum and contrast', () => {
   const gate = JSON.parse(experiment_recorded_json()).studies.gate_assistance;
   expect(gate?.version).toBe('gate-assistance-summary-v1');
@@ -63,4 +63,16 @@ describe.each(keyCases)('%s recorded export preservation', (_name, input) => {
     expect(wasmAfter).toBe(wasmBefore);
     expect(nativeAfter).toBe(wasmBefore);
   });
+});
+
+it('actual WASM Notes recorded dictionary retains the complete saved summary within the unchanged cap', () => {
+  const text = experiment_recorded_json();
+  expect(new TextEncoder().encode(text).length).toBeLessThanOrEqual(16 * 1024 * 1024);
+  const notes = JSON.parse(text).studies.persistent_notes;
+  expect(notes.wire_encoding).toBe('persistent-notes-metrics-dictionary-v1');
+  const dictionary = notes.metrics_dictionary;
+  for (const field of ['means', 'request_contrasts', 'contrasts']) for (const row of notes[field]) row.metrics = dictionary[Number(row.metrics)];
+  delete notes.metrics_dictionary; delete notes.wire_encoding;
+  const measured = JSON.parse(readFileSync(`${root}/crates/sugarscape-core/src/browser_experiments/fixtures/notes-recorded.json`, 'utf8')) as Json;
+  expect(notes).toEqual(wire(measured));
 });

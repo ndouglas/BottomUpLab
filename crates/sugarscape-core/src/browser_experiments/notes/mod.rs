@@ -54,6 +54,8 @@ pub(crate) fn rules_identity() -> Result<String> {
     }
     let adapter = checked(crate::key_delegation::compiled_bytes_identity(&[
         source!("browser_experiments/notes/mod.rs"),
+        source!("browser_experiments/recorded.rs"),
+        source!("browser_experiments/fixtures/notes-recorded.json"),
         source!("browser_experiments/notes/projection.rs"),
         source!("browser_experiments/notes/duplicate.rs"),
         source!("browser_experiments/mod.rs"),

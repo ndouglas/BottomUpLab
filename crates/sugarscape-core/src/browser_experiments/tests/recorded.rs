@@ -342,3 +342,51 @@ fn key_recorded_census_preserves_order_ownership_and_all_receipts() {
     }
     no_numbers(s);
 }
+
+#[test]
+fn paid_notes_recorded_summary_keeps_every_registered_aggregate_and_identity() {
+    let value: Value = serde_json::from_str(&recorded_results_json().unwrap()).unwrap();
+    let summary = &value["studies"]["persistent_notes"];
+    assert_eq!(summary["version"], "persistent-notes-summary-v1");
+    for (field, count) in [
+        ("means", 2304),
+        ("request_contrasts", 4608),
+        ("contrasts", 2304),
+        ("envelopes", 576),
+    ] {
+        assert_eq!(summary[field].as_array().unwrap().len(), count);
+    }
+    assert_eq!(
+        summary["source"]["sha256"],
+        "28b90c51a6f8d126eae517f1292a32518207c888ff95f60abd9c2b45ee3c572e"
+    );
+    assert_eq!(
+        summary["reference"]["sha256"],
+        "2227ad21600c94e54245bd2743509b6aa65399f2f8eb86693c1aecd483225788"
+    );
+    assert_eq!(summary["report_sha256"].as_str().unwrap().len(), 64);
+}
+
+#[test]
+fn notes_dictionary_reconstructs_complete_lossless_summary_within_unchanged_transport_cap() {
+    let raw = recorded_results_json().unwrap();
+    assert!(raw.len() <= MAX_EPISODE_BYTES);
+    println!("Combined recorded transport: {} bytes", raw.len());
+    let mut all: Value = serde_json::from_str(&raw).unwrap();
+    let summary = all["studies"]["persistent_notes"].as_object_mut().unwrap();
+    assert_eq!(
+        summary.remove("wire_encoding").unwrap(),
+        "persistent-notes-metrics-dictionary-v1"
+    );
+    let dictionary = summary.remove("metrics_dictionary").unwrap();
+    for field in ["means", "request_contrasts", "contrasts"] {
+        for row in summary.get_mut(field).unwrap().as_array_mut().unwrap() {
+            let index: usize = row["metrics"].as_str().unwrap().parse().unwrap();
+            row["metrics"] = dictionary[index].clone();
+        }
+    }
+    let original: Value =
+        serde_json::from_str(include_str!("../fixtures/notes-recorded.json")).unwrap();
+    let expected = super::super::wire::lossless_value(&original).unwrap();
+    assert_eq!(Value::Object(summary.clone()), expected);
+}

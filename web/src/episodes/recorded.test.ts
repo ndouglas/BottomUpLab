@@ -120,3 +120,45 @@ it('shape-only unavailable Key selector keeps its reason and absent incentives s
   expect(equipped.slice(9,13).map(c=>c.textContent)).toEqual(['Unavailable','Unavailable','Unavailable','Unavailable']);
   expect(equipped[17].textContent).toBe('4');
 });
+
+it('keeps the complete paid-notes arrays, costs and ties available without running an episode', () => {
+  vi.stubGlobal('document', { createElement: (tag: string) => new Element(tag), createElementNS: (_: string, tag: string) => new Element(tag) });
+  const notes = { version: 'persistent-notes-summary-v1', report_sha256: 'measured-first', source: { sha256: 'frozen-native' }, reference: { sha256: 'sealed-reference' },
+    means: [{ key: 'all-rows', metrics: { spent: [ratio('9'), ratio('4')], net: [ratio('-9'), ratio('8')] } }],
+    request_contrasts: [{ difference: ratio('-3') }], contrasts: [{ difference: ratio('0') }], envelopes: [{ routines: ['InspectFirst', 'ReadAdaptive'] }], counters: { episode_rows: '4608' } };
+  const before = JSON.stringify(notes);
+  const el = renderRecorded({ studies: { persistent_notes: notes } } as Json) as unknown as Element;
+  for (const node of descendants(el)) if (node.tag === 'details') { node.open = true; node.listeners.toggle?.(); }
+  expect(el.textContent).toContain('Paid persistent notes');
+  expect(el.textContent).toContain('Fixed-routine');
+  expect(el.textContent).toContain('Offline selected-routine');
+  expect(el.textContent).toContain('measured-first');
+  expect(el.textContent).toContain('InspectFirst');
+  expect(el.textContent).toContain('ReadAdaptive');
+  expect(el.textContent).not.toContain('Search run');
+  const exportButton = descendants(el).find(node => node.tag === 'button' && node.textContent === 'Export complete Notes summary')!;
+  exportButton.listeners.click();
+  expect(downloadText).toHaveBeenLastCalledWith('persistent-notes-recorded-summary.json', before, 'application/json');
+  expect(JSON.stringify(notes)).toBe(before);
+});
+
+it('reconstructs every exact Notes row from its versioned metrics dictionary and rejects malformed indices', async () => {
+  vi.stubGlobal('document', { createElement: (tag: string) => new Element(tag), createElementNS: (_: string, tag: string) => new Element(tag) });
+  const original = JSON.parse(readFileSync(fileURLToPath(new URL('../../../crates/sugarscape-core/src/browser_experiments/fixtures/notes-recorded.json', import.meta.url)), 'utf8')) as Record<string, Json>;
+  const encoded = JSON.parse(JSON.stringify(original)) as Record<string, Json>;
+  const dictionary: Json[] = []; const lookup = new Map<string, number>();
+  for (const field of ['means', 'request_contrasts', 'contrasts']) for (const raw of encoded[field] as Record<string, Json>[]) {
+    const text = JSON.stringify(raw.metrics);
+    if (!lookup.has(text)) { lookup.set(text, dictionary.length); dictionary.push(raw.metrics); }
+    raw.metrics = String(lookup.get(text));
+  }
+  encoded.metrics_dictionary = dictionary; encoded.wire_encoding = 'persistent-notes-metrics-dictionary-v1';
+  const el = renderRecorded({ studies: { persistent_notes: encoded } } as Json) as unknown as Element;
+  descendants(el).find(node => node.tag === 'button' && node.textContent === 'Export complete Notes summary')!.listeners.click();
+  const digest = async (value: unknown) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value))))).join(',');
+  expect(await digest(JSON.parse(vi.mocked(downloadText).mock.lastCall![1]))).toBe(await digest(original));
+  const bad = JSON.parse(JSON.stringify(encoded)); bad.means[0].metrics = '999999';
+  expect(() => renderRecorded({ studies: { persistent_notes: bad } } as Json)).toThrow('Invalid Notes metrics dictionary index');
+  bad.means[0].metrics = '0'; bad.wire_encoding = 'unknown';
+  expect(() => renderRecorded({ studies: { persistent_notes: bad } } as Json)).toThrow('Unknown Notes wire encoding');
+});
