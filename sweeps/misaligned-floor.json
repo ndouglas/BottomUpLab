@@ -1,6 +1,6 @@
 {
   "name": "Misaligned AI: the floor under the unmentioned attributes",
-  "description": "Theorem 2: the utility the efficient robot leaves after 5,000 ticks of optimizing the fixed proxy {a, b}, against the floor under every attribute. In our logarithmic world (budget 40, start 4, 4, 16, 16) the limit falls without bound as the floor falls, the theorem's 'arbitrarily low'; in the paper's recommender example the floor below zero does not matter, because the sum of squares stops increasing there, and the limit stays near 14.14.",
+  "description": "Theorem 2: the utility the efficient robot leaves after 5,000 ticks of optimizing the fixed proxy {a, b}, against the floor under every attribute, from 1 down to 0.001. In our logarithmic world (budget 40, start 4, 4, 16, 16) the limit falls without bound as the floor falls, the theorem's 'arbitrarily low'; in the paper's recommender example it falls only toward 10√2 ≈ 14.14 from above (16.00 at floor 1, 14.34 at 0.1, 14.14 at 0.001), because the floor enters the limit as 2√((100 − 2f²)/2) + 2f. A floor below zero changes nothing there, since the sum of squares stops increasing at zero; that result is the survey's reported row misaligned.recommender-floor-flat, not a point of this sweep.",
   "base": {
     "config": {
       "model": "misaligned",

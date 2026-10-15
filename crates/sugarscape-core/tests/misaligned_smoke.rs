@@ -56,3 +56,19 @@ fn the_builtin_sweeps_parse_and_name_real_paths() {
         assert!(s.ticks >= 1000, "{id}");
     }
 }
+
+#[test]
+fn the_floor_sweep_describes_the_curve_its_range_can_show() {
+    // Its floors are 1 … 0.001, all positive: the recommender's limit falls toward 10√2 from
+    // above, and the negative-floor result lives in the survey's reported row, not here.
+    let s = sweep::builtin("misaligned-floor").unwrap();
+    let text = s.description.clone().unwrap_or_default();
+    let floors: Vec<f64> = s.x.values.iter().map(|v| v.at).collect();
+    assert!(floors.iter().all(|f| *f > 0.0), "{floors:?}");
+    assert!(
+        !text.contains("floor below zero does not matter"),
+        "the sweep never visits a negative floor: {text}"
+    );
+    assert!(text.contains("from above"), "{text}");
+    assert!(text.contains("recommender-floor-flat"), "{text}");
+}
