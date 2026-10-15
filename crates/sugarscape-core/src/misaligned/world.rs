@@ -88,7 +88,7 @@ impl MisalignedWorld {
             history: vec![],
             accepted: f64::NAN,
         };
-        w.interact();
+        w.specify();
         let initial = w.snapshot();
         w.stats.push(initial);
         Ok(w)
@@ -119,14 +119,24 @@ impl MisalignedWorld {
         self.start
     }
 
-    /// One interaction: OFF if utility fell since the last one (when asked), else the proxy is
-    /// chosen, the reference values taken from the current state and the frozen set rebuilt.
-    fn interact(&mut self) {
+    /// A scheduled interaction: under `stop_on_loss` the human looks first and sends OFF if
+    /// utility fell since the previous interaction (that look counts as one); otherwise the
+    /// human re-specifies.
+    fn look(&mut self) {
         let u = self.shape.utility(&self.state);
         if self.config.stop_on_loss && self.interactions > 0 && u < self.last_utility - 1e-12 {
             self.off_tick = Some(self.tick);
+            self.interactions += 1;
             return;
         }
+        self.specify();
+    }
+
+    /// One re-specification: the proxy is chosen, the reference values taken from the current
+    /// state, the frozen set rebuilt and the utility remembered for the next loss check. A live
+    /// change from the page comes here directly: it is the human acting, never the loss check.
+    fn specify(&mut self) {
+        let u = self.shape.utility(&self.state);
         let sensitivities = self.shape.sensitivities(&self.state);
         let proxy = match self.config.human {
             Human::Fixed => self.config.proxy(),
@@ -186,7 +196,7 @@ impl MisalignedWorld {
             && self.tick > 0
             && self.tick.is_multiple_of(u64::from(self.config.interval))
         {
-            self.interact();
+            self.look();
         }
         if !self.switched_off() {
             let n = self.config.moves_per_tick;
@@ -384,7 +394,7 @@ impl Model for MisalignedWorld {
                 old.impact_minimizing,
             );
         if human_changed && !self.switched_off() {
-            self.interact();
+            self.specify();
         }
         Ok(())
     }
@@ -540,6 +550,11 @@ mod tests {
         let s = w.stats.latest().unwrap();
         assert_eq!((s.switched_off, s.tick), (1.0, 26));
         assert_eq!(w.outcome().off_tick, Some(5));
+        assert_eq!(
+            (w.interactions(), s.interactions),
+            (2, 2.0),
+            "the look that switched the robot off is an interaction"
+        );
         assert!(s.utility.is_finite() && s.gain < 0.0);
         w.set_config(ModelConfig::Misaligned(MisalignedConfig {
             robot: Robot::Gradient,
@@ -554,6 +569,47 @@ mod tests {
             frozen,
             "a live change does not restart a switched-off robot"
         );
+    }
+
+    #[test]
+    fn a_live_change_re_specifies_without_switching_off() {
+        let base = MisalignedConfig {
+            robot: Robot::Wasteful,
+            stop_on_loss: true,
+            interval: 5,
+            ..Default::default()
+        };
+        let mut w = world(base.clone());
+        w.run(3);
+        assert!(
+            w.outcome().utility < w.outcome().utility_start,
+            "U has fallen"
+        );
+        w.set_config(ModelConfig::Misaligned(MisalignedConfig {
+            proxy_a: false,
+            proxy_c: true,
+            ..base.clone()
+        }))
+        .unwrap();
+        assert!(
+            !w.switched_off(),
+            "a change from the page is not the human's loss check"
+        );
+        assert_eq!(
+            (w.interactions(), w.proxy()),
+            (2, [false, true, true, false])
+        );
+        assert_eq!(w.outcome().proxy_history.last().unwrap().tick, 3);
+        let u_live = w.outcome().utility;
+        w.run(2);
+        assert!(!w.switched_off(), "no look before tick 5");
+        w.run(1);
+        assert!(
+            w.switched_off(),
+            "the scheduled look at tick 5 finds U below the live change's"
+        );
+        assert_eq!(w.outcome().off_tick, Some(5));
+        assert!(w.outcome().utility < u_live);
     }
 
     #[test]
@@ -701,6 +757,28 @@ mod tests {
         assert_eq!(bar["start"].as_f64(), Some(7.0));
         assert_eq!(bar["optimum"].as_f64(), Some(5.0));
         assert_eq!(bar["limit"].as_f64(), Some(0.0));
+        let bars: Vec<serde_json::Value> = (0..4)
+            .map(|i| serde_json::from_str(&w.inspect_json(28 + 48 * i, 60).unwrap()).unwrap())
+            .collect();
+        assert_eq!(
+            bars.iter()
+                .map(|b| b["name"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            ["a", "b", "c", "d"]
+        );
+        assert_eq!(
+            bars.iter()
+                .map(|b| b["in_proxy"].as_bool().unwrap())
+                .collect::<Vec<_>>(),
+            [true, true, false, false]
+        );
+        let mut ranks: Vec<u64> = bars.iter().map(|b| b["rank"].as_u64().unwrap()).collect();
+        ranks.sort_unstable();
+        assert_eq!(ranks, [1, 2, 3, 4], "ranks are a permutation of 1..=4");
+        for b in &bars[..2] {
+            assert!((b["limit"].as_f64().unwrap() - 50f64.sqrt()).abs() < 1e-9);
+            assert_eq!(b["start"].as_f64(), Some(1.0));
+        }
         let gap: serde_json::Value =
             serde_json::from_str(&w.inspect_json(50, 60).unwrap()).unwrap();
         assert_eq!(gap["panel"], "utility");

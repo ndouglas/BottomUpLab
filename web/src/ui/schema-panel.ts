@@ -1,10 +1,11 @@
 import { DEMOCRATIC_PEACE_RULES, democraticPeaceParams } from '../democratic-peace';
 import { GEOSIM_RULES, geosimParams } from '../geosim';
+import { misalignedParams } from '../misaligned';
 import { scheduleLines } from '../civil';
 import type { Engine } from '../engine';
 import { errorsFor } from '../paths';
-import { describedBy, groupParams, paramEdit, paramInput, paramShown, paramSlider, schemaControlLabel, type ParamInput } from '../schema-form';
-import type { CivilConfig, FieldError, ModelKind, Param } from '../types';
+import { describedBy, groupParams, paramEdit, paramInput, paramShown, paramSlider, schemaControlLabel, schemaVariant, type ParamInput } from '../schema-form';
+import type { CivilConfig, FieldError, MisalignedConfig, ModelKind, Param } from '../types';
 import { h } from './dom';
 
 /**
@@ -44,6 +45,7 @@ function note(params: Param[]): string {
 export class SchemaPanel {
   readonly el = h('div', { class: 'schema' });
   private model: ModelKind | null = null;
+  private variant = '';
   private syncers: (() => void)[] = [];
   /** Each field's error slot, and the inputs its help and errors describe. */
   private slots: { path: string; el: HTMLElement; inputs: HTMLElement[]; ids: { help: string | null; error: string } }[] = [];
@@ -53,20 +55,22 @@ export class SchemaPanel {
 
   constructor(private readonly engine: Engine) {}
 
-  /** Shows the engine's model's fields (rebuilt when the model changes) with the live config's values. */
+  /** Shows the engine's model's fields (rebuilt when the model or its variant changes) with the live config's values. */
   sync(): void {
     const model = this.engine.model;
-    if (model !== this.model) this.build(model);
+    const variant = schemaVariant(model, this.engine.config);
+    if (model !== this.model || variant !== this.variant) this.build(model, variant);
     this.syncers.forEach((s) => s());
   }
 
-  private build(model: ModelKind): void {
+  private build(model: ModelKind, variant: string): void {
     this.model = model;
+    this.variant = variant;
     this.syncers = [];
     this.slots = [];
     this.errors = [];
     const params = this.engine.schemas[model] ?? [];
-    const sections = groupParams(model === 'democratic_peace' ? democraticPeaceParams(params) : model === 'geosim' ? geosimParams(params) : params).map(({ group, params }) => {
+    const sections = groupParams(model === 'democratic_peace' ? democraticPeaceParams(params) : model === 'geosim' ? geosimParams(params) : model === 'misaligned' ? misalignedParams(params, this.engine.config as MisalignedConfig) : params).map(({ group, params }) => {
       const section = h('section', { class: 'group' }, h('h3', {}, group), h('p', { class: 'hint' }, note(params)), ...params.map((p) => this.control(p)));
       if (params.every((p) => p.show_if)) this.syncers.push(() => (section.hidden = !params.some((p) => paramShown(p, this.engine.config))));
       return section;

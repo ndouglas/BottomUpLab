@@ -196,7 +196,7 @@ survey claims module, and the war-study literal inventory fixture and counts. No
 | `proxy_size` | 2 | `top`: the number of most sensitive attributes in the proxy; 1–3 |
 | `interval` | 10 | ticks between interactions; 1–100,000 |
 | `impact_minimizing` | false | unmentioned attributes are frozen between interactions |
-| `stop_on_loss` | false | at an interaction, OFF if U fell since the previous one |
+| `stop_on_loss` | false | at a scheduled interaction, OFF if U fell since the previous one; the look counts as an interaction; a live change re-specifies without the check |
 
 The logarithmic world's own defaults (capacity 40, floor 1, start 4, 4, 16, 16) are set by its
 presets; a `world` change on the page leaves the other fields as typed, and validation rejects an
@@ -208,8 +208,11 @@ infeasible start or a floor at or below zero in that world.
 multiple of `interval`, the human acts (the human also acts once when the world is created, at tick 0): under `top` or `extremes` J is recomputed from the
 current sensitivities (ties toward the lower index), the frozen set becomes K under
 `impact_minimizing`, the proxy's reference values s_K are taken from the current state, and under
-`stop_on_loss` the human sends OFF if U is below its value at the previous interaction. Then the
-robot makes `moves_per_tick` moves. A snapshot follows every tick; the snapshot at tick 0 carries
+`stop_on_loss` the human first sends OFF if U is below its value at the previous interaction (that
+look counts as an interaction and nothing is re-specified). A live change to the human's fields from
+the page is a re-specification by the person at the controls: it counts as an interaction, moves
+the reference values and the remembered U, and never switches the robot off. Then the robot makes
+`moves_per_tick` moves. A snapshot follows every tick; the snapshot at tick 0 carries
 the start.
 
 **Climber.** A proposal s′ = s + N(0, step²) on every attribute not frozen (polar Box–Muller, two
@@ -294,8 +297,8 @@ assistance and gridworlds.
 - Robot tests: the gradient robot's path on the sphere from (1, 1, 7, 7) with proxy {a, b} passes
   within 1e-3 of (5, 5, 5, 5); the climber never accepts an infeasible, floor-violating or
   proxy-lowering move; the wasteful robot stops at the floor.
-- Human tests: `top` and `extremes` selection including ties; OFF freezes the world; a live proxy
-  change counts as an interaction.
+- Human tests: `top` and `extremes` selection including ties; OFF freezes the world and its look
+  counts as an interaction; a live proxy change counts as an interaction and never switches off.
 - World tests: two worlds with one seed match at every tick; `set_config` refuses reset-only
   fields; the fingerprint moves.
 - Golden fingerprints for all eight presets at 200 ticks, seed 1, in `tests/golden.rs`; the WASM

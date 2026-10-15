@@ -262,6 +262,14 @@ describe('sweeps over other models', () => {
       ticks: 2000,
       metric: { kind: 'window_mean', series: 'cooperative', from: 1001, to: null },
     });
+    expect(defaultForm('misaligned')).toMatchObject({
+      set: { robot: 'gradient', rate: 0.1, human: 'top', proxy_size: 2 },
+      x: { path: 'interval', values: '1,2,5,10,20,50,100,200' },
+      seeds: 1,
+      ticks: 2000,
+      metric: { kind: 'final', series: 'gain' },
+    });
+    expect(defaultForm('misaligned').description).toContain('The gradient robot is deterministic, so one seed suffices; the random-search climber would need more.');
   });
 
   it('suggest a Schelling config’s own paths, never its model tag', () => {

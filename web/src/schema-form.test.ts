@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describedBy, groupParams, paramEdit, paramInput, paramShown, paramSlider, schemaControlLabel } from './schema-form';
+import { describedBy, groupParams, paramEdit, paramInput, paramShown, paramSlider, schemaControlLabel, schemaVariant } from './schema-form';
 import type { AnasaziConfig, DpdConfig, EthnoConfig, ImageConfig, ModelConfig, Param, RingConfig, SchellingConfig } from './types';
 
 const ring = (): RingConfig => ({
@@ -14,6 +14,13 @@ const ring = (): RingConfig => ({
 const param = (p: Partial<Param> & Pick<Param, 'path' | 'kind'>): Param => ({ label: p.path, apply: 'reset', group: 'Setup', ...p });
 
 describe('the schema form', () => {
+  it('rebuilds the misaligned panel per world, and no other panel per config', () => {
+    const recommender = { model: 'misaligned', world: 'recommender' } as unknown as ModelConfig;
+    const logarithmic = { model: 'misaligned', world: 'logarithmic' } as unknown as ModelConfig;
+    expect([schemaVariant('misaligned', recommender), schemaVariant('misaligned', logarithmic)]).toEqual(['recommender', 'logarithmic']);
+    expect([schemaVariant('ring', ring()), schemaVariant('geosim', { model: 'geosim' } as unknown as ModelConfig)]).toEqual(['', '']);
+  });
+
   it('names a GeoSim choice and distinguishes its numeric slider from its number field', () => {
     expect(schemaControlLabel('Defender threshold')).toBe('Defender threshold');
     expect([schemaControlLabel('Shock shift', 'slider'), schemaControlLabel('Shock shift', 'number')]).toEqual([

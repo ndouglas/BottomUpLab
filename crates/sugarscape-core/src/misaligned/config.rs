@@ -233,7 +233,7 @@ pub fn schema() -> Vec<Param> {
         Param::bool("Human", "impact_minimizing", "Impact minimizing", Live)
             .with_help("Unmentioned attributes are frozen between interactions (Proposition 2; with `extremes`, Proposition 5)."),
         Param::bool("Human", "stop_on_loss", "Switch off on loss", Live)
-            .with_help("At an interaction, OFF if utility fell since the previous one."),
+            .with_help("At a scheduled interaction, OFF if utility fell since the previous one; that look counts as an interaction. A change made here re-specifies the proxy and never switches off."),
     ]
 }
 

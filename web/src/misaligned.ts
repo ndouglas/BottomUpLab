@@ -1,4 +1,4 @@
-import type { ColorMode, MisalignedConfig, MisalignedInspection, MisalignedSet } from './types';
+import type { ColorMode, MisalignedConfig, MisalignedInspection, MisalignedSet, Param } from './types';
 import type { LegendItem } from './ui/legend';
 
 const fmt = (v: number | null, digits = 3): string => (v === null || Number.isNaN(v) ? '—' : v.toFixed(digits).replace('-', '−'));
@@ -42,4 +42,18 @@ export function misalignedLegend(config: MisalignedConfig, _mode: ColorMode): { 
       { label: 'Start · hollow bracket', mark: { kind: 'swatch', color: '#141414' } },
     ],
   };
+}
+
+/**
+ * The Rules panel's fields for the current world. The core's one schema spans both worlds, so its
+ * floor and start sliders reach −10; in the logarithmic world (ln s needs s > 0, and the core
+ * refuses a floor under 0.0001 or at a quarter of the capacity) the sliders start at 0.01 instead.
+ */
+export function misalignedParams(params: Param[], config: MisalignedConfig): Param[] {
+  if (config.world !== 'logarithmic') return params;
+  return params.map((p) => {
+    if (p.path === 'floor') return { ...p, min: 0.01, help: 'The lower bound on every attribute: above 0 in the logarithmic world (ln needs it) and below a quarter of the capacity.' };
+    if (/^start_[abcd]$/.test(p.path)) return { ...p, min: 0.01 };
+    return p;
+  });
 }
