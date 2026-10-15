@@ -85,7 +85,7 @@
       "path": "crates/sugarscape-core/src/model.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/model.rs.txt",
       "historical_sha256": "f2fdeebd1de5cb53db3e749b6a8329a4514275792fb8ab5b9808be0a19d2df66",
-      "reviewed_sha256": "d3c590e0635364c2de7336df4d93d7d30483cfeb70b323f934b9e77f27ba94b2"
+      "reviewed_sha256": "c9c924bdde678603812687f0aff11cd06988e39a2d17b8fe18baeb6ea72531f4"
     },
     {
       "path": "crates/sugarscape-core/src/presets.rs",
