@@ -4,6 +4,7 @@ use std::{collections::BTreeSet, fs, path::Path};
 
 pub const DIRECTORIES: &[&str] = &["crates/sugarscape-core/src", "survey/src/war1"];
 pub const FILES: &[&str] = &[
+    "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md",
     "crates/sugarscape-core/build.rs",
     "crates/sugarscape-core/build_support/surface_discovery.rs",
     "Cargo.toml",

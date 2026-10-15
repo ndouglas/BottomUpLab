@@ -4,3 +4,7 @@ mod evaluation;
 mod kernel;
 mod observation;
 mod validation;
+
+mod canonical;
+
+mod diagnostics;

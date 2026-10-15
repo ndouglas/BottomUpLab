@@ -138,9 +138,13 @@ pub(super) fn parse<T: DeserializeOwned + Serialize>(text: &str) -> Result<T, Er
     decode::<T, serde_json::Error>(raw.0).map_err(|e| Error::InvalidInput(e.to_string()))
 }
 pub fn config_from_json(text: &str) -> Result<Config, Error> {
-    let config: Config = parse(text)?;
+    let config = config_wire_from_json(text)?;
     config.validate()?;
     Ok(config)
+}
+/// Decode the exact wire language; callers must validate registered scientific settings.
+pub fn config_wire_from_json(text: &str) -> Result<Config, Error> {
+    parse(text)
 }
 impl Config {
     pub fn validate(&self) -> Result<(), Error> {

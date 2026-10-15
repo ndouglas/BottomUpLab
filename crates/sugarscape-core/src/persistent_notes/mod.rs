@@ -4,7 +4,7 @@ mod observation;
 mod types;
 mod validation;
 pub use types::*;
-pub use validation::{config_from_json, primitive_from_json};
+pub use validation::{config_from_json, config_wire_from_json, primitive_from_json};
 mod controller;
 #[cfg(test)]
 mod tests;
@@ -17,3 +17,16 @@ pub use evaluation::{evaluate, registered_strata, Evaluation};
 pub use metrics::{
     Contrast, Envelope, MeanContrast, MeanCosts, MeanMetrics, MeanRow, RequestContrast,
 };
+
+mod canonical;
+mod sha256;
+
+mod diagnostics;
+mod protocol;
+mod references;
+mod source_inputs;
+pub use diagnostics::{
+    diagnose, report_from_reader, summary_json, validate_report, write_episode, write_report,
+    Report, Summary,
+};
+pub use source_inputs::{reference_identity, source_identity, Receipt, SourceIdentity};

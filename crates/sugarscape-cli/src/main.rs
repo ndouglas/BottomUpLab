@@ -9,6 +9,7 @@ mod deduction;
 mod experiment_view;
 mod gate_assistance;
 mod key_delegation;
+mod persistent_notes;
 mod shared_surface;
 mod surface_discovery;
 
@@ -35,6 +36,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Run and validate the registered paid persistent-notes mechanism.
+    PersistentNotes(persistent_notes::PersistentNotesArgs),
     /// Run the registered exhaustive carrier-only key delegation diagnostic.
     KeyDelegation(key_delegation::KeyDelegationArgs),
     /// Run the registered exhaustive paid gate assistance diagnostic.
@@ -197,6 +200,7 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<(), Failure> {
     match cli.command {
+        Command::PersistentNotes(args) => persistent_notes::run(args),
         Command::GateAssistance(args) => gate_assistance::run(args),
         Command::KeyDelegation(args) => key_delegation::run(args),
         Command::ExperimentView(args) => experiment_view::run(args),

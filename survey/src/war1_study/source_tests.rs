@@ -249,3 +249,23 @@ fn unrelated_paid_notes_evaluation_is_not_read_but_other_source_guards_remain() 
     }
     std::fs::remove_dir_all(root).unwrap();
 }
+#[test]
+fn persistent_notes_protocol_is_bound_with_frozen_source_caps() {
+    let path = "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md";
+    assert!(source::inputs::FILES.contains(&path));
+    assert_eq!(source::inputs::MAX_FILE_BYTES, 16 * 1024 * 1024);
+    assert_eq!(source::inputs::MAX_SOURCE_BYTES, 64 * 1024 * 1024);
+    let root = std::path::Path::new(source::ROOT);
+    let original = source::inputs::read(root, source::MANIFEST_PATH).unwrap();
+    let mut changed = original.clone();
+    changed
+        .iter_mut()
+        .find(|(p, _)| p == path)
+        .unwrap()
+        .1
+        .push(b' ');
+    assert_ne!(
+        source::inputs::fingerprint(&original, source::MANIFEST_PATH).unwrap(),
+        source::inputs::fingerprint(&changed, source::MANIFEST_PATH).unwrap()
+    );
+}

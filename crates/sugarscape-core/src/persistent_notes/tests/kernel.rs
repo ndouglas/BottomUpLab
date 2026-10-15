@@ -14,7 +14,7 @@ fn initial_role_custody_and_information() {
 #[test]
 fn every_sealed_raw_transaction_matches() {
     let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/kernel-reference.json")).unwrap();
+        serde_json::from_slice(super::super::source_inputs::REFERENCE_INPUTS[1].1).unwrap();
     for w in fixture["payload"]["witnesses"].as_array().unwrap() {
         let config: Config = serde_json::from_value(w["config"].clone()).unwrap();
         let mut world = World::new_private(&config).unwrap();
@@ -222,7 +222,7 @@ fn unlocked_public_cell_moves_are_real_and_invalid_moves_are_atomic() {
 #[test]
 fn wrong_delivery_remains_a_completed_zero_reward_outcome() {
     let f: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/kernel-reference.json")).unwrap();
+        serde_json::from_slice(super::super::source_inputs::REFERENCE_INPUTS[1].1).unwrap();
     let witness = f["payload"]["witnesses"]
         .as_array()
         .unwrap()

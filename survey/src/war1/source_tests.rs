@@ -178,3 +178,18 @@ fn key_source_closure_requires_references() {
         assert!(fingerprint(inputs).is_err(), "missing {path}");
     }
 }
+#[test]
+fn persistent_notes_protocol_is_a_bound_current_dependency() {
+    let path = "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md";
+    assert!(FILES.contains(&path));
+    let original = entries();
+    let stamp = fingerprint(original.clone().into_iter().map(Ok)).unwrap();
+    let mut changed = original;
+    changed
+        .iter_mut()
+        .find(|(p, _)| p == path)
+        .unwrap()
+        .1
+        .push(b' ');
+    assert_ne!(stamp, fingerprint(changed.into_iter().map(Ok)).unwrap());
+}

@@ -114,7 +114,7 @@ fn engineering_census_agrees_with_every_sealed_row_and_reducer() -> Result<(), E
         .unwrap();
     decoder.end().unwrap();
     let limits: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/limits-reference.json")).unwrap();
+        serde_json::from_slice(super::super::source_inputs::REFERENCE_INPUTS[2].1).unwrap();
     let counters: Counters = serde_json::from_value(limits["payload"]["counters"].clone()).unwrap();
     assert_eq!(evaluation.counters, counters);
     let frozen: Limits = serde_json::from_value(limits["payload"]["limits"].clone()).unwrap();

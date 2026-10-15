@@ -691,9 +691,10 @@ fn source_identity_includes_gridworlds_compiled_sweep_literals() {
 }
 
 #[test]
-fn source_identity_includes_paid_notes_reference_fixtures() {
+fn source_identity_includes_paid_notes_reference_fixtures_and_protocol() {
     use super::super::run::source_identity::{fingerprint, selected};
     for path in [
+        "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md",
         "crates/sugarscape-core/src/persistent_notes/tests/fixtures/kernel-reference.json",
         "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json",
         "crates/sugarscape-core/src/persistent_notes/tests/fixtures/limits-reference.json",
