@@ -1,9 +1,0 @@
-
- RUN  v5.0.1 /Users/nathan/.config/superpowers/worktrees/SugarScape/paid-persistent-notes-design-20261014/web
-
-
- Test Files  1 passed (1)
-      Tests  56 passed | 66 skipped (122)
-   Start at  20:33:28
-   Duration  1.17s (tests 70%, import 23%, transform 7%)
-
