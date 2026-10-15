@@ -26,9 +26,9 @@ Task 2 implements the private atomic world and sealed raw transaction witnesses.
 **Goal**: Bounded native/WASM episodes and source-derived private map/comic rendering.
 **Success Criteria**: Actual parity, historical compatibility, private exports and browser acceptance.
 **Tests**: All checkpoint masks, passive receipt, comparison, import, keyboard/mobile/cancellation.
-**Status**: In Progress
+**Status**: Complete
 
-Task 6 implements the native projected Flump map, local ledgers, six-panel SVG/HTML exports and arm/routine comparisons. Actual Chrome all-frame/privacy/export gates and isolated desktop/mobile/keyboard/reduced-motion/import/cancellation acceptance passed. Final split workspace verification, all-target core Clippy, release, both WASM builds and existing engine budget passed. Fresh Task 6/whole-branch reviews remain pending; Stage 4 stays In Progress until controller review. No production collection was run.
+Task 6 implements the native projected Flump map, local ledgers, six-panel SVG/HTML exports and arm/routine comparisons. Actual Chrome all-frame/privacy/export gates and isolated desktop/mobile/keyboard/reduced-motion/import/cancellation acceptance passed. Final split workspace verification, all-target core Clippy, release, both WASM builds and existing engine budget passed. Fresh Task 6 review approved at 1e0b7af; the independent whole-branch prefreeze review approved Tasks 1–6 for the Task 7 readiness handoff. Stage 4 is Complete. No production collection was run.
 
 ## Stage 5: Frozen collection and verification
 **Goal**: One first/repeat census, complete saved verification and preserved local delivery.
