@@ -165,6 +165,7 @@ fn runnable_catalog_and_five_legacy_spatial_defaults() {
             core::StudyId::SurfaceDiscovery,
             core::StudyId::GateAssistance,
             core::StudyId::KeyDelegation,
+            core::StudyId::PersistentNotes,
         ]
     );
     assert_eq!(spatial_defaults().len(), 5);

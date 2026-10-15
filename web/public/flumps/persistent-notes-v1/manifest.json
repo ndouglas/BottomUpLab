@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "boundary": "Decorative Studio art only; tools do not add native inventory, costs or physics. No gallery case or outcome is reused.",
+  "scale": 0.65,
+  "assets": {
+    "flump-a-empty.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/flump-a-empty.png",
+      "bytes": 160209,
+      "sha256": "3afa0f7580c88523357b2a781db573e0b64a94da74e191b15a810d54ff5f2df8"
+    },
+    "flump-a-pencil.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/flump-a-pencil.png",
+      "bytes": 182100,
+      "sha256": "503c3d2e4e93bf214a18bcf2962eb344c78c87dd514b521cd139155369663ba4"
+    },
+    "flump-a-magnifier.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/flump-a-magnifier.png",
+      "bytes": 187741,
+      "sha256": "2e90339f83c046b75dc068e92e3ce3246cf116e296dcb0e2a53f4f8c49c2af2e"
+    },
+    "flump-b-empty.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/flump-b-empty.png",
+      "bytes": 91541,
+      "sha256": "1e2ad7aafa7563b1a68dcf7ae55300979463b0d66505b1dde23c8eed852a3003"
+    },
+    "flump-b-magnifier.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/flump-b-magnifier.png",
+      "bytes": 188418,
+      "sha256": "e5a9c625f8865b409c775d3fa718a2f3e757d3e2f1d50f9c9739e7728305517d"
+    },
+    "shared-board-blank.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/03-messages/shared-board-blank.png",
+      "bytes": 158437,
+      "sha256": "2ef44890da00d9c7a30ee6de972e3ce283e6e7b45eb181c89fde333a61d34bff"
+    },
+    "flump-giver-key.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/02-key/flump-giver-key.png",
+      "bytes": 147775,
+      "sha256": "0081d6dc0a93851ea105a34386d8b5811b33dd423a3720fa472f34eefbf05779"
+    },
+    "flump-receiver-key.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/02-key/flump-receiver-key.png",
+      "bytes": 148537,
+      "sha256": "8998fc4e92b3e7f4685fa0ae8e83144f20597d6bc2b2e98c5f0c0526539b0018"
+    },
+    "flump-receiver-key-coin.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/02-key/flump-receiver-key-coin.png",
+      "bytes": 156273,
+      "sha256": "df9c94229211c370a49a2b3da8c1dab4b124d749b5d1f24f56a6d04f1ae9c8de"
+    },
+    "gate-closed.png": {
+      "source": "studio/out/collective-agency-comics-20261014/chapters/02-key/gate-closed.png",
+      "bytes": 106283,
+      "sha256": "f89c70ea4b53b4871734c629a75f09ddd1b7edb72284eca4c9dc16e051546eb8"
+    }
+  },
+  "source_receipts": {
+    "03-messages/provenance.json": {
+      "bytes": 58525,
+      "sha256": "4c11706c4122c20dd635ce5bf7441bf952f0376c7ae70cc49d0f20d709eb977e"
+    },
+    "03-messages/tool-render-settings.json": {
+      "bytes": 998,
+      "sha256": "46137e6aa9897bf1fe1a6eee87608004720158b7a086bffedefef775ac24110f"
+    },
+    "03-messages/render_tools.py": {
+      "bytes": 4041,
+      "sha256": "82a68710b4259f4029b77e2a6bddfc596536155dc6e512234f36b9c14c5fd9da"
+    },
+    "02-key/provenance.json": {
+      "bytes": 8959,
+      "sha256": "73565251c11f4cf93aaa5a7828f9330a6a7699dffa082782f53a8a0650a40310"
+    },
+    "02-key/pose-render-settings.json": {
+      "bytes": 373,
+      "sha256": "b767c4fa4d46239ad1e6b9aefee89fc516b17417534569142fc904d0b43f5ec0"
+    },
+    "02-key/render_poses.py": {
+      "bytes": 3857,
+      "sha256": "f885817d2324cdc6d4d05778e04e8fa9aa850f38431bfd2c182499591c6919ad"
+    }
+  },
+  "03-messages_settings": {
+    "blender_version": "5.2.2 LTS",
+    "engine": "CYCLES",
+    "samples": 24,
+    "resolution": [
+      720,
+      400
+    ],
+    "transparent_background": true,
+    "camera_scale": 1.8,
+    "camera_location": [
+      0.0,
+      -3.0,
+      1.0499999523162842
+    ],
+    "camera_target": [
+      0.0,
+      0.0,
+      0.3400000035762787
+    ],
+    "foot_pixel": [
+      360.0,
+      337.3188257217407
+    ],
+    "sprite_scale": 0.208,
+    "poses": [
+      "a-pencil",
+      "b-magnifier",
+      "b-pencil",
+      "a-magnifier"
+    ],
+    "invocation_count": 2,
+    "render_count": 8,
+    "final_render_count": 4,
+    "initial_clipping_failure": "Initial 480px horizontal framing clipped held tools; archived initial outputs, widened final frame to 720px, preserving pixels per world unit.",
+    "boundary": "Held tools are artistic action indicators only. Pencil denotes writing; open round magnifier denotes reading. No simulator tool inventory, cost, optics or mechanism. Actual Studio Flump builder and yarn/lighting materials; clear faces and one side grip."
+  },
+  "02-key_settings": {
+    "blender_version": "5.2.2 LTS",
+    "engine": "CYCLES",
+    "samples": 24,
+    "resolution": [
+      480,
+      400
+    ],
+    "transparent_background": true,
+    "camera_scale": 1.2,
+    "poses": [
+      "giver-key",
+      "receiver-key",
+      "receiver-key-coin"
+    ],
+    "boundary": "Illustrative ownership grip only; no native handoff kinematics. Key on left, coin on right, clear face."
+  },
+  "studio_builders": {
+    "studio/blender/flump.py": "b8c85bc09528509b1988c2f9e96922336b4fe0fdd4c935857761de7840aabada",
+    "studio/blender/materials.py": "33daaf9746b2aa6f35180af46d5b5261929f684773ff7fc991a4cf0dea18c741"
+  },
+  "tool_boundary": "Held pencil/magnifier are artistic action indicators only; no native tool inventory, tool costs, optics or simulator mechanism.",
+  "display_geometry": {
+    "foot_ground": 250,
+    "scale_multiplier": 0.65,
+    "tool": {
+      "dimensions": [
+        720,
+        400
+      ],
+      "foot_anchor": [
+        360,
+        337.3188257217407
+      ],
+      "base_scale": 0.208
+    },
+    "key_poses": {
+      "dimensions": [
+        480,
+        400
+      ],
+      "foot_anchor": [
+        212,
+        337
+      ],
+      "base_scale": 0.208
+    },
+    "empty_a": {
+      "dimensions": [
+        480,
+        400
+      ],
+      "foot_anchor": [
+        240,
+        357
+      ],
+      "base_scale": 0.181
+    },
+    "empty_b": {
+      "dimensions": [
+        360,
+        288
+      ],
+      "foot_anchor": [
+        179,
+        273
+      ],
+      "base_scale": 0.208
+    }
+  }
+}

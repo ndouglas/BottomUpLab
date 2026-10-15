@@ -418,3 +418,17 @@ dialog.keep .row { display: flex; gap: 8px; justify-content: flex-end; }
 .gate-history li { margin-block: .7rem; }
 .gate-history p { margin: .2rem; }
 @media (max-width: 540px) { .gate-cell { padding: .35rem; font-size: .85rem; } .gate-edge { font-size: .7rem; } .gate-agent + .gate-agent { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); } }
+
+/* Paid notes uses the existing study shell, with quiet teal ground and yarn actors. */
+.notes-view { display:grid; gap:1rem; min-width:0; }
+.notes-map { min-width:0; overflow:auto; background:#edf5f5; border:1px solid #8aacae; border-radius:12px; }
+.notes-map svg { display:block; width:100%; min-width:640px; height:auto; }
+.notes-ledger { border-left:4px solid #87bcc4; padding:0 1rem; overflow-wrap:anywhere; min-width:0; }
+.notes-caption { font-weight:600; overflow-wrap:anywhere; }
+.notes-oracle { padding:.6rem; border:2px solid #345a61; }
+.notes-controls { display:flex; flex-wrap:wrap; gap:.75rem; }
+.notes-controls label { display:flex; flex-direction:column; max-width:100%; }
+.notes-controls .hint { flex-basis:100%; }
+.notes-exports { flex-wrap:wrap; }
+.notes-view :focus-visible, .notes-controls :focus-visible, .notes-exports :focus-visible { outline:3px solid #345a61; outline-offset:3px; }
+@media(prefers-reduced-motion:reduce) { .notes-view * { animation:none; transition:none; } }
