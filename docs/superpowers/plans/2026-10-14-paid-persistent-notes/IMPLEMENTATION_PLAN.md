@@ -20,13 +20,13 @@ Task 2 implements the private atomic world and sealed raw transaction witnesses.
 **Goal**: Source-bound exact reports, saved validator, summary and bounded commands.
 **Success Criteria**: Complete fresh integrity; strict wire/resource/I/O handling.
 **Tests**: Tampered payloads/receipts/caps, duplicates, invalid inputs and write/flush failures.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 4: Browser and Flump playback
 **Goal**: Bounded native/WASM episodes and source-derived private map/comic rendering.
 **Success Criteria**: Actual parity, historical compatibility, private exports and browser acceptance.
 **Tests**: All checkpoint masks, passive receipt, comparison, import, keyboard/mobile/cancellation.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 5: Frozen collection and verification
 **Goal**: One first/repeat census, complete saved verification and preserved local delivery.
