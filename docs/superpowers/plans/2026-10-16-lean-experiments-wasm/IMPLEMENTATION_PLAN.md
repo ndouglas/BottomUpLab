@@ -10,10 +10,10 @@
 **Goal**: Compact verified receipts and on-demand complete recorded data.
 **Success Criteria**: Native validation/parity preserved; experiments WASM at most8,000,000bytes.
 **Tests**: Receipt/asset/fresh-import/parity tests and actual release build.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 3: Budget enforcement and final verification
 **Goal**: Hard regression gates and actual browser evidence, reviewed local delivery.
 **Success Criteria**: Both budgets enforce; full data/export and old evidence preserved.
 **Tests**: Budget negatives, actual worker/network checks, source/fixture hashes and independent reviews.
-**Status**: Not Started
+**Status**: In Progress
