@@ -33,12 +33,38 @@ fn negotiable_registration_is_exact_and_unique() {
 
 #[test]
 fn negotiable_legacy_catalog_metadata_is_byte_identical() {
-    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
     rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+    assert_eq!(rows.len(), 817);
     assert_eq!(
         format!("{:x}", Sha256::digest(serde_json::to_vec(&rows).unwrap())),
         "597de12a85e03be52672bc6d28e12fae8a7eccb197a21006c924906421dad05c"
     );
+}
+
+#[test]
+fn negotiable_merge_preserves_preintegration_main_catalog_metadata() {
+    // Literal constructors from preintegration main eb1555b; never execute their checks.
+    for (prefix, count, expected) in [
+        (
+            "gridworlds.",
+            10,
+            "96ab7daca04892aa31ea5563609c66318e0a4b71c9b63d68d8c8508664cc208f",
+        ),
+        (
+            "misaligned.",
+            12,
+            "2d029ac03a2ae3ca8266403c38e1babbdf12f0142daffaf37d3447c9690f6b0c",
+        ),
+    ] {
+        let mut rows: Vec<_> = super::all().into_iter().filter(|c| c.id.starts_with(prefix)).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+        rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+        assert_eq!(rows.len(), count);
+        assert_eq!(
+            format!("{:x}", Sha256::digest(serde_json::to_vec(&rows).unwrap())),
+            expected
+        );
+    }
 }
 
 #[test]
@@ -382,10 +408,11 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     assert_eq!(text.matches(export).count(), 1);
     assert_eq!(export.len(), 21);
     let original = text.replacen(export, "", 1);
-    assert_eq!(original.len(), 1723);
+    // Exact eb1555b library, including both pre-existing model registrations.
+    assert_eq!(original.len(), 1949);
     assert_eq!(
         records::sha256(original.as_bytes()),
-        "56b3814e3d9d570b68ac905a154180134e888b982861fd05f80784216cae5439"
+        "260322051e3e1a94834471168a64414a385bb99dfe32f0b65fc5eb5e41a1e3cc"
     );
     assert_eq!(library.len(), original.len() + 21);
     let bytes=include_bytes!("../../../crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json");
@@ -409,7 +436,7 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     // including historical identity, native source and reference identities.
     assert_eq!(
         records::sha256(&serde_json::to_vec(&metadata).unwrap()),
-        "8407af7a154b7a3ee9f3494d2e8e0d9647602218090568d95197ed331d36c3ae"
+        "c8670a73f608dd3db6d9a951bdf9ff1081bab4e9a408ae6dad9c0ea98ae0ea19"
     );
 }
 
