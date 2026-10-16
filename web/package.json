@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "pretest": "npm run recorded:assets",
+    "pretest": "npm run recorded:assets && npm run test:budgets",
     "test": "vitest run",
     "wasm:engine": "wasm-pack build ../crates/sugarscape-wasm --target web --release --out-dir ../../web/src/wasm-pkg --out-name sugarscape",
     "wasm:experiments": "wasm-pack build ../crates/sugarscape-experiments-wasm --target web --release --out-dir ../../web/src/experiments-pkg --out-name experiments",
@@ -15,7 +15,10 @@
     "dev": "npm run wasm:dev && npm run recorded:assets && vite",
     "build": "npm run wasm && npm run recorded:assets && tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "recorded:assets": "node scripts/recorded-assets.mjs"
+    "recorded:assets": "node scripts/recorded-assets.mjs",
+    "postwasm:engine": "node scripts/wasm-budget.mjs --only engine",
+    "postwasm:experiments": "node scripts/wasm-budget.mjs --only experiments",
+    "test:budgets": "node --test scripts/wasm-budget.test.mjs"
   },
   "keywords": [],
   "author": "",
