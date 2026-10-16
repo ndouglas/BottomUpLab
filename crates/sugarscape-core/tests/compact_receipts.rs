@@ -17,7 +17,47 @@ fn selected_projections_preserve_every_consumed_field_exactly() {
     let out = std::env::temp_dir().join(format!("selected-receipts-{}", std::process::id()));
     std::fs::create_dir_all(&out).unwrap();
     compact_receipts::generate(&root.canonicalize().unwrap(), &out).unwrap();
-    for name in ["strategic", "strategy", "audit"] {
+    for (name, required) in [
+        (
+            "strategic",
+            &[
+                "transformation_version",
+                "identity",
+                "provenance",
+                "versions",
+                "environments",
+                "policies",
+            ][..],
+        ),
+        (
+            "strategy",
+            &[
+                "transformation_version",
+                "identity",
+                "provenance",
+                "version",
+                "environments",
+                "catalogs",
+            ][..],
+        ),
+        (
+            "audit",
+            &[
+                "transformation_version",
+                "identity",
+                "provenance",
+                "version",
+                "environments",
+                "policy_provenance",
+                "controller_snapshots",
+                "targeted_audits",
+                "control_evaluations",
+                "nominal_evaluations",
+                "cross_target_evaluations",
+                "bound_checks",
+            ][..],
+        ),
+    ] {
         let full: serde_json::Value = serde_json::from_slice(
             &std::fs::read(root.join(format!(
                 "crates/sugarscape-core/src/browser_experiments/fixtures/{name}-recorded.json"
@@ -29,6 +69,17 @@ fn selected_projections_preserve_every_consumed_field_exactly() {
             &std::fs::read(out.join(format!("{name}-selected.json"))).unwrap(),
         )
         .unwrap();
+        let actual_keys: std::collections::BTreeSet<_> = selected
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            actual_keys,
+            required.iter().copied().collect(),
+            "{name} required fields"
+        );
         for (field, value) in selected.as_object().unwrap() {
             assert_eq!(value, &full[field], "{name}/{field}");
         }

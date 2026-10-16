@@ -1,6 +1,8 @@
 //! Deterministic raw receipts for the shared Gate input inventory.
 #[path = "build_support/compact_receipts.rs"]
 mod compact_receipts;
+#[path = "src/identity_bytes.rs"]
+mod identity_bytes;
 #[path = "src/gate_assistance/source_inputs.rs"]
 mod source_inputs;
 #[path = "build_support/surface_discovery.rs"]

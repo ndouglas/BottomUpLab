@@ -67,10 +67,7 @@ pub(super) fn sources() -> Vec<ArtifactReceipt> {
     macro_rules! source {
         ($path:literal) => {{
             let path = concat!("crates/sugarscape-core/src/", $path);
-            #[cfg(not(target_arch = "wasm32"))]
-            let raw = include_bytes!(concat!("../../", $path)).as_slice();
-            #[cfg(target_arch = "wasm32")]
-            let raw = b"".as_slice();
+            let raw = crate::identity_bytes::identity_bytes!(concat!("../../", $path));
             let (bytes, sha256) =
                 crate::compact_receipts::raw(path, raw).expect("compiled source receipt");
             ArtifactReceipt {
@@ -81,6 +78,7 @@ pub(super) fn sources() -> Vec<ArtifactReceipt> {
         }};
     }
     let mut sources = vec![
+        source!("identity_bytes.rs"),
         source!("compact_receipts.rs"),
         source!("gate_assistance/source_inputs.rs"),
         source!("surface_discovery/mod.rs"),

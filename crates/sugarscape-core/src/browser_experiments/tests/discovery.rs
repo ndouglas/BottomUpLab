@@ -198,7 +198,7 @@ fn discovery_complete_independent_witness_payloads_and_paid_chronology_match() {
 #[test]
 fn discovery_compiled_source_identity_is_distinct_and_complete() {
     let (sources, digest) = d::compiled_source_identity().unwrap();
-    assert_eq!(sources.len(), 26);
+    assert_eq!(sources.len(), 27);
     assert_eq!(
         sources
             .iter()

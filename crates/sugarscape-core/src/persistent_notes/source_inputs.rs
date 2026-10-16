@@ -1,16 +1,5 @@
 //! Explicit raw input binding. Receipts never embed their generated digest.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
+use crate::identity_bytes::identity_bytes;
 // Static tables preserve one raw allocation across code-generation units and consumers.
 use super::{canonical, sha256, Error};
 use serde::{Deserialize, Serialize};
@@ -38,6 +27,10 @@ macro_rules! input {
     };
 }
 pub(crate) static SOURCE_INPUTS: &[(&str, &[u8])] = &[
+    (
+        "crates/sugarscape-core/src/identity_bytes.rs",
+        identity_bytes!("../identity_bytes.rs"),
+    ),
     (
         "crates/sugarscape-core/src/surface_discovery/mod.rs",
         identity_bytes!("../surface_discovery/mod.rs"),

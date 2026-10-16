@@ -39,13 +39,13 @@ fn report_transport_rejects_duplicates_unknowns_and_noninteger_atoms() {
 fn source_closure_is_ordered_and_complete() {
     let s = source_receipts().unwrap();
     let r = reference_receipts().unwrap();
-    assert_eq!(s.len(), 24);
+    assert_eq!(s.len(), 25);
     assert_eq!(r.len(), 3);
     assert_eq!(
-        s[13].path,
+        s[14].path,
         "crates/sugarscape-core/src/key_delegation/sha256.rs"
     );
-    assert_eq!(s[23].path, "Cargo.lock");
+    assert_eq!(s[24].path, "Cargo.lock");
     assert_ne!(source_identity().unwrap(), s[0].sha256);
 }
 #[test]

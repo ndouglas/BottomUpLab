@@ -1,16 +1,5 @@
 //! Bounded single episodes from the native surface-discovery controller.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
+use crate::identity_bytes::identity_bytes;
 mod projection;
 use super::{
     error, record, wire::lossless_value, EpisodeKind, EpisodeRecord, FieldError, Input, Semantics,

@@ -39,6 +39,7 @@ pub fn generate(root: &Path, out: &Path) -> Result<(), String> {
         "crates/sugarscape-core/Cargo.toml",
         "crates/sugarscape-core/build.rs",
         "crates/sugarscape-core/build_support",
+        "crates/sugarscape-core/src/identity_bytes.rs",
         "crates/sugarscape-core/src/compact_receipts.rs",
         "crates/sugarscape-core/src/lib.rs",
         "crates/sugarscape-core/src/config.rs",

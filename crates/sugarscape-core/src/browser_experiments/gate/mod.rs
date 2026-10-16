@@ -1,16 +1,5 @@
 //! One selected native Gate episode, with a public-stratum compile per request.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
+use crate::identity_bytes::identity_bytes;
 pub(crate) mod duplicate;
 mod projection;
 use super::{

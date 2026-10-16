@@ -1,17 +1,10 @@
 /// Explicit compiled dependency order for gate source receipts.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
+use crate::identity_bytes::identity_bytes;
 pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
+    (
+        "crates/sugarscape-core/src/identity_bytes.rs",
+        identity_bytes!("../identity_bytes.rs"),
+    ),
     (
         "crates/sugarscape-core/build_support/compact_receipts.rs",
         identity_bytes!("../../build_support/compact_receipts.rs"),

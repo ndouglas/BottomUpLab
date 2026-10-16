@@ -1,19 +1,12 @@
 //! Raw embedded source and reference receipts; no generated self receipt.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
 use super::*;
+use crate::identity_bytes::identity_bytes;
 wire_object!(Receipt {pub path:String,pub bytes:u64,pub sha256:String});
 pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
+    (
+        "crates/sugarscape-core/src/identity_bytes.rs",
+        identity_bytes!("../identity_bytes.rs"),
+    ),
     (
         "crates/sugarscape-core/src/surface_discovery/mod.rs",
         identity_bytes!("../surface_discovery/mod.rs"),

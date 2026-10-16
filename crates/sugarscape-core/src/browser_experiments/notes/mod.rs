@@ -1,16 +1,5 @@
 //! One selected native paid-notes episode; no exhaustive collector or evaluation.
-macro_rules! identity_bytes {
-    ($p:expr) => {{
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            include_bytes!($p).as_slice()
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            b"".as_slice()
-        }
-    }};
-}
+use crate::identity_bytes::identity_bytes;
 pub(crate) mod duplicate;
 mod projection;
 use super::{

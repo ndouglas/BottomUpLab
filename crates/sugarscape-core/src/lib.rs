@@ -30,6 +30,7 @@ pub mod frames;
 pub mod geometry;
 pub mod graph;
 pub mod hoard;
+mod identity_bytes;
 pub mod image;
 pub mod landscape;
 mod legacy;
