@@ -19,3 +19,6 @@ serde_json = { workspace = true, features = ["float_roundtrip"] }
 
 [dev-dependencies]
 proptest.workspace = true
+
+[build-dependencies]
+serde_json = { workspace = true, features = ["float_roundtrip"] }

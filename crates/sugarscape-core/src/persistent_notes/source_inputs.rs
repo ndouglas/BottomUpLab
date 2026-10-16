@@ -1,5 +1,17 @@
 //! Explicit raw input binding. Receipts never embed their generated digest.
-//! Static tables preserve one raw allocation across code-generation units and consumers.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
+// Static tables preserve one raw allocation across code-generation units and consumers.
 use super::{canonical, sha256, Error};
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
@@ -21,16 +33,40 @@ macro_rules! input {
     ($p:literal) => {
         (
             concat!("crates/sugarscape-core/src/persistent_notes/", $p),
-            include_bytes!($p).as_slice(),
+            identity_bytes!($p),
         )
     };
 }
 pub(crate) static SOURCE_INPUTS: &[(&str, &[u8])] = &[
-    ("Cargo.lock", include_bytes!("../../../../Cargo.lock")),
-    ("Cargo.toml", include_bytes!("../../../../Cargo.toml")),
+    (
+        "crates/sugarscape-core/src/surface_discovery/mod.rs",
+        identity_bytes!("../surface_discovery/mod.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build_support/compact_receipts.rs",
+        identity_bytes!("../../build_support/compact_receipts.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/compact_receipts.rs",
+        identity_bytes!("../../src/compact_receipts.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build.rs",
+        identity_bytes!("../../build.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+        identity_bytes!("../../build_support/surface_discovery.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/surface_discovery/diagnostics/hash.rs",
+        identity_bytes!("../../src/surface_discovery/diagnostics/hash.rs"),
+    ),
+    ("Cargo.lock", identity_bytes!("../../../../Cargo.lock")),
+    ("Cargo.toml", identity_bytes!("../../../../Cargo.toml")),
     (
         "crates/sugarscape-core/Cargo.toml",
-        include_bytes!("../../Cargo.toml"),
+        identity_bytes!("../../Cargo.toml"),
     ),
     input!("budget.rs"),
     input!("canonical.rs"),
@@ -60,12 +96,16 @@ pub(crate) static REFERENCE_INPUTS: &[(&str, &[u8])] = &[
 fn identity(domain: &str, inputs: &[(&str, &[u8])]) -> Result<SourceIdentity, Error> {
     let mut receipts: Vec<_> = inputs
         .iter()
-        .map(|(path, bytes)| Receipt {
-            path: (*path).into(),
-            bytes: bytes.len() as u64,
-            sha256: sha256::digest(bytes),
+        .map(|(path, bytes)| {
+            let (bytes, sha256) =
+                crate::compact_receipts::raw(path, bytes).map_err(Error::InvalidReport)?;
+            Ok(Receipt {
+                path: (*path).into(),
+                bytes,
+                sha256,
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>, Error>>()?;
     receipts.sort_by(|a, b| a.path.cmp(&b.path));
     #[derive(Serialize)]
     struct Payload<'a> {

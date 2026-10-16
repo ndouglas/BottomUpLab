@@ -1,4 +1,16 @@
 //! One selected native Gate episode, with a public-stratum compile per request.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 pub(crate) mod duplicate;
 mod projection;
 use super::{
@@ -45,18 +57,18 @@ pub(crate) fn descriptor() -> StudyDescriptor {
     StudyDescriptor {id:StudyId::GateAssistance,family:StudyFamily::Gate,title:"Paid gate assistance".into(),supplied:"Two supplied roles and schedules, a three-cell graph, six rounds and 32 credits per Agent.".into(),question:"When is paid assistance team-beneficial, and when is it privately stable?".into(),default_input:json!({"study":"gate_assistance","stratum":{"holding_cost":1,"holder_share":3,"distance":0},"selector":"SuppliedHelp","ids":{"holder":"Agent-A","retriever":"Agent-B"}}),controls:json!({"holding_cost":[1,2,4],"holder_share":[0,3,6],"distance":[0,1],"selectors":["SoloAttempt","SuppliedHelp","TeamOptimal","NashLex","NashBestGroup"],"default_label":"Supplied minimal assistance","profile":{"holder":{"min":0,"max":728},"retriever":{"min":0,"max":63}}})}
 }
 pub(crate) fn rules_identity() -> Result<String> {
-    let native = checked(crate::surface_discovery::compiled_bytes_identity(
+    let native = checked(crate::surface_discovery::compiled_file_identity(
         g::SOURCE_INPUTS,
     ))?;
     macro_rules! source {
         ($path:literal) => {
             (
                 concat!("crates/sugarscape-core/src/", $path),
-                include_bytes!(concat!("../../", $path)).as_slice(),
+                identity_bytes!(concat!("../../", $path)),
             )
         };
     }
-    let adapter = checked(crate::surface_discovery::compiled_bytes_identity(&[
+    let adapter = checked(crate::surface_discovery::compiled_file_identity(&[
         source!("browser_experiments/gate/mod.rs"),
         source!("browser_experiments/gate/projection.rs"),
         source!("browser_experiments/gate/duplicate.rs"),
@@ -69,7 +81,7 @@ pub(crate) fn rules_identity() -> Result<String> {
         source!("config.rs"),
         source!("lib.rs"),
     ]))?;
-    let references = checked(crate::surface_discovery::compiled_bytes_identity(
+    let references = checked(crate::surface_discovery::compiled_file_identity(
         g::REFERENCE_INPUTS,
     ))?;
     Ok(format!("gate-assistance:protocol-1:browser-gate-1:native-source-sha256:{native}:adapter-source-sha256:{adapter}:reviewed-reference-sha256:{references}"))

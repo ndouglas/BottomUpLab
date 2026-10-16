@@ -21,5 +21,5 @@ pub fn experiment_validate_json(record_json: &str) -> Result<String, JsValue> {
 }
 #[wasm_bindgen]
 pub fn experiment_recorded_json() -> Result<String, JsValue> {
-    core::recorded_results_json().map_err(crate::field_errors)
+    Err(crate::field_errors(vec![core::FieldError::new("recorded", "Load complete recorded results through the lazy recorded asset")]))
 }

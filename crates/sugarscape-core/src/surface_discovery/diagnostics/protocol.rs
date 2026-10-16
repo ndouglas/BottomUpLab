@@ -65,15 +65,24 @@ pub(super) fn compilations(
 /// Fixed source path order and SHA-256 of the exact compiled dependency bytes.
 pub(super) fn sources() -> Vec<ArtifactReceipt> {
     macro_rules! source {
-        ($path:literal) => {
+        ($path:literal) => {{
+            let path = concat!("crates/sugarscape-core/src/", $path);
+            #[cfg(not(target_arch = "wasm32"))]
+            let raw = include_bytes!(concat!("../../", $path)).as_slice();
+            #[cfg(target_arch = "wasm32")]
+            let raw = b"".as_slice();
+            let (bytes, sha256) =
+                crate::compact_receipts::raw(path, raw).expect("compiled source receipt");
             ArtifactReceipt {
-                path: concat!("crates/sugarscape-core/src/", $path).into(),
-                bytes: include_bytes!(concat!("../../", $path)).len() as u64,
-                sha256: hash::sha256(include_bytes!(concat!("../../", $path))),
+                path: path.into(),
+                bytes,
+                sha256,
             }
-        };
+        }};
     }
-    vec![
+    let mut sources = vec![
+        source!("compact_receipts.rs"),
+        source!("gate_assistance/source_inputs.rs"),
         source!("surface_discovery/mod.rs"),
         source!("surface_discovery/types.rs"),
         source!("surface_discovery/kernel.rs"),
@@ -95,5 +104,20 @@ pub(super) fn sources() -> Vec<ArtifactReceipt> {
         source!("shared_surface/protocol.rs"),
         source!("shared_surface/controller.rs"),
         source!("shared_surface/world.rs"),
-    ]
+    ];
+    sources.extend(
+        crate::gate_assistance::SOURCE_INPUTS
+            .iter()
+            .filter(|(p, _)| p.contains("/build"))
+            .map(|(p, b)| {
+                let (bytes, sha256) =
+                    crate::compact_receipts::raw(p, b).expect("compiled build receipt");
+                ArtifactReceipt {
+                    path: (*p).into(),
+                    bytes,
+                    sha256,
+                }
+            }),
+    );
+    sources
 }

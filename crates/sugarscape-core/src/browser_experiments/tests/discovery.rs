@@ -198,7 +198,15 @@ fn discovery_complete_independent_witness_payloads_and_paid_chronology_match() {
 #[test]
 fn discovery_compiled_source_identity_is_distinct_and_complete() {
     let (sources, digest) = d::compiled_source_identity().unwrap();
-    assert_eq!(sources.len(), 21);
+    assert_eq!(sources.len(), 26);
+    assert_eq!(
+        sources
+            .iter()
+            .map(|s| &s.path)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        sources.len()
+    );
     assert!(sources.iter().all(|s| s.bytes > 0 && s.sha256.len() == 64));
     assert!(!sources
         .iter()

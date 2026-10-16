@@ -79,5 +79,9 @@ survey/out/collusion-memory1-native-history-20261012/
 # Local full-coverage saved-controller pricing panel
 survey/out/collusion-memory1-full-panel-20261012/
 
+# Generated exact native recorded wire assets and trusted manifest
+web/public/recorded-assets/
+web/src/episodes/recorded-manifest.json
+
 # Unpacked from evaluation-reference.json.xz by `xz -dk`; GitHub refuses the 253 MB original
 crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json

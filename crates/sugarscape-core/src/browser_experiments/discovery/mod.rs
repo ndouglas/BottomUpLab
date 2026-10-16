@@ -1,4 +1,16 @@
 //! Bounded single episodes from the native surface-discovery controller.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 mod projection;
 use super::{
     error, record, wire::lossless_value, EpisodeKind, EpisodeRecord, FieldError, Input, Semantics,
@@ -48,11 +60,11 @@ pub fn rules_identity() -> Result<String> {
         ($path:literal) => {
             (
                 concat!("crates/sugarscape-core/src/", $path),
-                include_bytes!(concat!("../../", $path)).as_slice(),
+                identity_bytes!(concat!("../../", $path)),
             )
         };
     }
-    let adapter = checked(d::compiled_bytes_identity(&[
+    let adapter = checked(d::compiled_file_identity(&[
         source!("browser_experiments/discovery/mod.rs"),
         source!("browser_experiments/discovery/projection.rs"),
         source!("browser_experiments/mod.rs"),
@@ -62,7 +74,7 @@ pub fn rules_identity() -> Result<String> {
         source!("browser_experiments/wire.rs"),
         source!("browser_experiments/equivalence.rs"),
     ]))?;
-    let references = checked(d::compiled_bytes_identity(&[
+    let references = checked(d::compiled_file_identity(&[
         source!("surface_discovery/tests/fixtures/planning-reference.json"),
         source!("surface_discovery/tests/fixtures/evaluation-reference.json"),
         source!("surface_discovery/tests/fixtures/limits-reference.json"),

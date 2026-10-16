@@ -3,14 +3,16 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { initSync, experiment_recorded_json, experiment_run_json } from '../experiments-pkg/experiments.js';
+import { initSync, experiment_run_json } from '../experiments-pkg/experiments.js';
+import manifest from './recorded-manifest.json';
+const experiment_recorded_json = () => readFileSync(fileURLToPath(new URL(`../../public/${manifest.path}`, import.meta.url)), 'utf8').trimEnd();
 import type { Json } from './types';
 
 initSync({ module: readFileSync(new URL('../experiments-pkg/experiments_bg.wasm', import.meta.url)) });
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const summary = JSON.parse(readFileSync(`${root}/crates/sugarscape-core/src/browser_experiments/fixtures/discovery-recorded.json`, 'utf8')) as Json;
 const wire = (value: Json): Json => Array.isArray(value) ? value.map(wire) : value !== null && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, wire(item)])) : typeof value === 'number' && Number.isInteger(value) ? String(value) : value;
-it('actual WASM and native recorded exports retain the complete first-report summary losslessly', () => {
+it('lazy asset and native recorded export retain the complete first-report summary losslessly', () => {
   const actual = experiment_recorded_json();
   const recorded = JSON.parse(actual).studies.surface_discovery;
   expect(recorded?.version).toBe('surface-discovery-summary-v1');
@@ -19,7 +21,7 @@ it('actual WASM and native recorded exports retain the complete first-report sum
   const native = execFileSync(`${root}/target/release/sugarscape`, ['experiment-view', 'recorded'], options).trimEnd();
   expect(actual).toBe(native);
 }, 60_000);
-it('actual WASM recorded export includes the measured Gate census with every stratum and contrast', () => {
+it('lazy recorded asset includes the measured Gate census with every stratum and contrast', () => {
   const gate = JSON.parse(experiment_recorded_json()).studies.gate_assistance;
   expect(gate?.version).toBe('gate-assistance-summary-v1');
   expect(gate?.settings).toHaveLength(18);
@@ -75,4 +77,18 @@ it('actual WASM Notes recorded dictionary retains the complete saved summary wit
   delete notes.metrics_dictionary; delete notes.wire_encoding;
   const measured = JSON.parse(readFileSync(`${root}/crates/sugarscape-core/src/browser_experiments/fixtures/notes-recorded.json`, 'utf8')) as Json;
   expect(notes).toEqual(wire(measured));
+});
+
+it('the complete generated asset passes the browser verifier byte-for-byte against native output', async () => {
+  const { loadRecordedAsset } = await import('./recorded-assets');
+  const bytes = readFileSync(new URL(`../../public/${manifest.path}`, import.meta.url));
+  const actual = await loadRecordedAsset(manifest as import('./recorded-assets').RecordedAssetManifest, new URL('https://example.test/app/'), async () => new Response(bytes));
+  const options = {cwd:root,encoding:'utf8' as const,maxBuffer:16*1024*1024,timeout:60000};
+  const native = execFileSync(`${root}/target/release/sugarscape`, ['experiment-view','recorded'], options);
+  expect(new TextDecoder().decode(bytes)).toBe(native);
+  expect(actual).toEqual(JSON.parse(native));
+}, 60000);
+it('the old WASM recorded export fails explicitly with lazy asset guidance', async () => {
+  const { experiment_recorded_json: obsolete } = await import('../experiments-pkg/experiments.js');
+  expect(() => obsolete()).toThrow(/lazy recorded asset/);
 });

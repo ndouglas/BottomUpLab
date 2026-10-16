@@ -6,12 +6,14 @@ const MAX_ASSET_BYTES: usize = 5 * 1024 * 1024;
 static STRATEGIC: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static STRATEGY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static AUDIT: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
+#[cfg(not(target_arch = "wasm32"))]
 static GAME: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static DISCOVERY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static KEY: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 static GATE: OnceLock<Result<Value, Vec<FieldError>>> = OnceLock::new();
 /// Embedded immutable assets are parsed once; no simulation state is cached.
 pub(super) fn retained(study: &str) -> Result<&'static Value, Vec<FieldError>> {
+    #[cfg(not(target_arch = "wasm32"))]
     let (slot, text) = match study {
         "strategic_reporting" => (&STRATEGIC, include_str!("fixtures/strategic-recorded.json")),
         "strategy_inference" => (&STRATEGY, include_str!("fixtures/strategy-recorded.json")),
@@ -21,6 +23,27 @@ pub(super) fn retained(study: &str) -> Result<&'static Value, Vec<FieldError>> {
             include_str!("fixtures/testimony-search-recorded.json"),
         ),
         _ => return Err(super::error("study", "unknown retained study")),
+    };
+    #[cfg(target_arch = "wasm32")]
+    let (slot, text) = match study {
+        "strategic_reporting" => (
+            &STRATEGIC,
+            include_str!(concat!(env!("OUT_DIR"), "/strategic-selected.json")),
+        ),
+        "strategy_inference" => (
+            &STRATEGY,
+            include_str!(concat!(env!("OUT_DIR"), "/strategy-selected.json")),
+        ),
+        "adversarial_audit" => (
+            &AUDIT,
+            include_str!(concat!(env!("OUT_DIR"), "/audit-selected.json")),
+        ),
+        _ => {
+            return Err(super::error(
+                "study",
+                "retained campaign unavailable in WASM; load the recorded asset",
+            ))
+        }
     };
     slot.get_or_init(|| {
         if text.len() > MAX_ASSET_BYTES {
@@ -140,10 +163,16 @@ fn notes_summary() -> Result<&'static Value, Vec<FieldError>> {
             }
             let mut summary: Value =
                 serde_json::from_str(text).map_err(|e| super::error("fixture", e.to_string()))?;
-            let source = crate::persistent_notes::source_identity()
-                .map_err(|e| super::error("fixture", e.to_string()))?;
-            let reference = crate::persistent_notes::reference_identity()
-                .map_err(|e| super::error("fixture", e.to_string()))?;
+            let source = "28b90c51a6f8d126eae517f1292a32518207c888ff95f60abd9c2b45ee3c572e";
+            let reference = "2227ad21600c94e54245bd2743509b6aa65399f2f8eb86693c1aecd483225788";
+            if crate::persistent_notes::raw_summary_sha256(text.as_bytes())
+                != "f5939b98e8f5ceadf6066e3d7b13809d2f9422e6fbb695807f368b157a6ccb02"
+            {
+                return Err(super::error(
+                    "fixture",
+                    "frozen Notes raw summary hash mismatch",
+                ));
+            }
             if summary["version"] != "persistent-notes-summary-v1"
                 || summary["protocol_version"] != 1
                 || summary["source"]["sha256"] != source

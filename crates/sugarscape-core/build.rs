@@ -1,4 +1,6 @@
 //! Deterministic raw receipts for the shared Gate input inventory.
+#[path = "build_support/compact_receipts.rs"]
+mod compact_receipts;
 #[path = "src/gate_assistance/source_inputs.rs"]
 mod source_inputs;
 #[path = "build_support/surface_discovery.rs"]
@@ -64,6 +66,13 @@ fn generate(name: &str, inputs: &[(&str, &[u8])], out: &mut String) -> Result<()
 }
 fn main() {
     let result = (|| -> Result<(), String> {
+        compact_receipts::generate(
+            &PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").ok_or("missing manifest dir")?)
+                .join("../..")
+                .canonicalize()
+                .map_err(|e| e.to_string())?,
+            &PathBuf::from(std::env::var_os("OUT_DIR").ok_or("missing output dir")?),
+        )?;
         let mut out =
             String::from("// Derived from the shared inventory; excluded from its own inputs.\n");
         generate("SOURCE", source_inputs::SOURCE_INPUTS, &mut out)?;

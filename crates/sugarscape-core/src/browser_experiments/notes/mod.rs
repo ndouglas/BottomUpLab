@@ -1,4 +1,16 @@
 //! One selected native paid-notes episode; no exhaustive collector or evaluation.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 pub(crate) mod duplicate;
 mod projection;
 use super::{
@@ -48,7 +60,7 @@ pub(crate) fn rules_identity() -> Result<String> {
         ($p:literal) => {
             (
                 concat!("crates/sugarscape-core/src/", $p),
-                include_bytes!(concat!("../../", $p)).as_slice(),
+                identity_bytes!(concat!("../../", $p)),
             )
         };
     }

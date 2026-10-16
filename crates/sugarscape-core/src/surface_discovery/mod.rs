@@ -22,4 +22,11 @@ pub use metrics::*;
 mod diagnostics;
 pub use diagnostics::*;
 
-pub(crate) use diagnostics::{compiled_bytes_identity, compiled_source_identity};
+pub(crate) use diagnostics::{
+    compiled_bytes_identity, compiled_file_identity, compiled_source_identity,
+};
+
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn raw_sha256(bytes: &[u8]) -> String {
+    diagnostics::hash::sha256(bytes)
+}

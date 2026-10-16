@@ -24,6 +24,7 @@ pub const FILES: &[&str] = &[
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
     "crates/sugarscape-core/build.rs",
     "crates/sugarscape-core/build_support/surface_discovery.rs",
+    "crates/sugarscape-core/build_support/compact_receipts.rs",
     "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
     "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
@@ -355,6 +356,7 @@ pub fn fingerprint(
 pub const GATE_REQUIRED: &[&str] = &[
     "crates/sugarscape-core/build.rs",
     "crates/sugarscape-core/build_support/surface_discovery.rs",
+    "crates/sugarscape-core/build_support/compact_receipts.rs",
     "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
     "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
     "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",

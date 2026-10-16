@@ -1,4 +1,16 @@
 //! One selected native Key episode, with a public-stratum compile per request.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 pub(crate) mod duplicate;
 mod projection;
 use super::{
@@ -57,7 +69,7 @@ pub(crate) fn rules_identity() -> Result<String> {
         ($path:literal) => {
             (
                 concat!("crates/sugarscape-core/src/", $path),
-                include_bytes!(concat!("../../", $path)).as_slice(),
+                identity_bytes!(concat!("../../", $path)),
             )
         };
     }

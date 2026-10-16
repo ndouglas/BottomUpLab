@@ -30,3 +30,8 @@ pub use diagnostics::{
     Report, Summary,
 };
 pub use source_inputs::{reference_identity, source_identity, Receipt, SourceIdentity};
+
+/// Raw authentication for the immutable retained Notes summary.
+pub(crate) fn raw_summary_sha256(bytes: &[u8]) -> String {
+    sha256::digest(bytes)
+}

@@ -1,106 +1,126 @@
 /// Explicit compiled dependency order for gate source receipts.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
     (
+        "crates/sugarscape-core/build_support/compact_receipts.rs",
+        identity_bytes!("../../build_support/compact_receipts.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/compact_receipts.rs",
+        identity_bytes!("../../src/compact_receipts.rs"),
+    ),
+    (
         "crates/sugarscape-core/src/gate_assistance/mod.rs",
-        include_bytes!("mod.rs"),
+        identity_bytes!("mod.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/types.rs",
-        include_bytes!("types.rs"),
+        identity_bytes!("types.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/controller.rs",
-        include_bytes!("controller.rs"),
+        identity_bytes!("controller.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/kernel.rs",
-        include_bytes!("kernel.rs"),
+        identity_bytes!("kernel.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/observation.rs",
-        include_bytes!("observation.rs"),
+        identity_bytes!("observation.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/canonical.rs",
-        include_bytes!("canonical.rs"),
+        identity_bytes!("canonical.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/metrics.rs",
-        include_bytes!("metrics.rs"),
+        identity_bytes!("metrics.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/game.rs",
-        include_bytes!("game.rs"),
+        identity_bytes!("game.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/budget.rs",
-        include_bytes!("budget.rs"),
+        identity_bytes!("budget.rs"),
     ),
     (
         "crates/sugarscape-core/src/surface_discovery/mod.rs",
-        include_bytes!("../surface_discovery/mod.rs"),
+        identity_bytes!("../surface_discovery/mod.rs"),
     ),
     (
         "crates/sugarscape-core/src/surface_discovery/types.rs",
-        include_bytes!("../surface_discovery/types.rs"),
+        identity_bytes!("../surface_discovery/types.rs"),
     ),
     (
         "crates/sugarscape-core/src/surface_discovery/diagnostics.rs",
-        include_bytes!("../surface_discovery/diagnostics.rs"),
+        identity_bytes!("../surface_discovery/diagnostics.rs"),
     ),
     (
         "crates/sugarscape-core/src/surface_discovery/diagnostics/hash.rs",
-        include_bytes!("../surface_discovery/diagnostics/hash.rs"),
+        identity_bytes!("../surface_discovery/diagnostics/hash.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/diagnostics.rs",
-        include_bytes!("diagnostics.rs"),
+        identity_bytes!("diagnostics.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/protocol.rs",
-        include_bytes!("protocol.rs"),
+        identity_bytes!("protocol.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/references.rs",
-        include_bytes!("references.rs"),
+        identity_bytes!("references.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/source_inputs.rs",
-        include_bytes!("source_inputs.rs"),
+        identity_bytes!("source_inputs.rs"),
     ),
     (
         "crates/sugarscape-core/build.rs",
-        include_bytes!("../../build.rs"),
+        identity_bytes!("../../build.rs"),
     ),
     (
         "crates/sugarscape-core/build_support/surface_discovery.rs",
-        include_bytes!("../../build_support/surface_discovery.rs"),
+        identity_bytes!("../../build_support/surface_discovery.rs"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
-        include_bytes!("tests/fixtures/kernel-reference.json"),
+        identity_bytes!("tests/fixtures/kernel-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
-        include_bytes!("tests/fixtures/game-reference.json"),
+        identity_bytes!("tests/fixtures/game-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
-        include_bytes!("tests/fixtures/limits-reference.json"),
+        identity_bytes!("tests/fixtures/limits-reference.json"),
     ),
 ];
 
 pub const REFERENCE_INPUTS: &[(&str, &[u8])] = &[
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/kernel-reference.json",
-        include_bytes!("tests/fixtures/kernel-reference.json"),
+        identity_bytes!("tests/fixtures/kernel-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/game-reference.json",
-        include_bytes!("tests/fixtures/game-reference.json"),
+        identity_bytes!("tests/fixtures/game-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/gate_assistance/tests/fixtures/limits-reference.json",
-        include_bytes!("tests/fixtures/limits-reference.json"),
+        identity_bytes!("tests/fixtures/limits-reference.json"),
     ),
 ];

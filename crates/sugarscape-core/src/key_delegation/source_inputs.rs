@@ -1,86 +1,122 @@
 //! Raw embedded source and reference receipts; no generated self receipt.
+macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            include_bytes!($p).as_slice()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            b"".as_slice()
+        }
+    }};
+}
 use super::*;
 wire_object!(Receipt {pub path:String,pub bytes:u64,pub sha256:String});
 pub const SOURCE_INPUTS: &[(&str, &[u8])] = &[
     (
+        "crates/sugarscape-core/src/surface_discovery/mod.rs",
+        identity_bytes!("../surface_discovery/mod.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build_support/compact_receipts.rs",
+        identity_bytes!("../../build_support/compact_receipts.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/compact_receipts.rs",
+        identity_bytes!("../../src/compact_receipts.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build.rs",
+        identity_bytes!("../../build.rs"),
+    ),
+    (
+        "crates/sugarscape-core/build_support/surface_discovery.rs",
+        identity_bytes!("../../build_support/surface_discovery.rs"),
+    ),
+    (
+        "crates/sugarscape-core/src/surface_discovery/diagnostics/hash.rs",
+        identity_bytes!("../../src/surface_discovery/diagnostics/hash.rs"),
+    ),
+    (
         "crates/sugarscape-core/src/key_delegation/mod.rs",
-        include_bytes!("mod.rs"),
+        identity_bytes!("mod.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/types.rs",
-        include_bytes!("types.rs"),
+        identity_bytes!("types.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/validation.rs",
-        include_bytes!("validation.rs"),
+        identity_bytes!("validation.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/controller.rs",
-        include_bytes!("controller.rs"),
+        identity_bytes!("controller.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/observation.rs",
-        include_bytes!("observation.rs"),
+        identity_bytes!("observation.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/kernel.rs",
-        include_bytes!("kernel.rs"),
+        identity_bytes!("kernel.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/canonical.rs",
-        include_bytes!("canonical.rs"),
+        identity_bytes!("canonical.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/sha256.rs",
-        include_bytes!("sha256.rs"),
+        identity_bytes!("sha256.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/budget.rs",
-        include_bytes!("budget.rs"),
+        identity_bytes!("budget.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/game.rs",
-        include_bytes!("game.rs"),
+        identity_bytes!("game.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/metrics.rs",
-        include_bytes!("metrics.rs"),
+        identity_bytes!("metrics.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/diagnostics.rs",
-        include_bytes!("diagnostics.rs"),
+        identity_bytes!("diagnostics.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
-        include_bytes!("source_inputs.rs"),
+        identity_bytes!("source_inputs.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/protocol.rs",
-        include_bytes!("protocol.rs"),
+        identity_bytes!("protocol.rs"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/references.rs",
-        include_bytes!("references.rs"),
+        identity_bytes!("references.rs"),
     ),
-    ("Cargo.toml", include_bytes!("../../../../Cargo.toml")),
+    ("Cargo.toml", identity_bytes!("../../../../Cargo.toml")),
     (
         "crates/sugarscape-core/Cargo.toml",
-        include_bytes!("../../Cargo.toml"),
+        identity_bytes!("../../Cargo.toml"),
     ),
-    ("Cargo.lock", include_bytes!("../../../../Cargo.lock")),
+    ("Cargo.lock", identity_bytes!("../../../../Cargo.lock")),
 ];
 pub const REFERENCE_INPUTS: &[(&str, &[u8])] = &[
     (
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",
-        include_bytes!("tests/fixtures/kernel-reference.json"),
+        identity_bytes!("tests/fixtures/kernel-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/game-reference.json",
-        include_bytes!("tests/fixtures/game-reference.json"),
+        identity_bytes!("tests/fixtures/game-reference.json"),
     ),
     (
         "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
-        include_bytes!("tests/fixtures/limits-reference.json"),
+        identity_bytes!("tests/fixtures/limits-reference.json"),
     ),
 ];
 impl Receipt {
@@ -112,10 +148,12 @@ pub(crate) fn receipts(inputs: &[(&str, &[u8])]) -> Result<Vec<Receipt>, Error> 
     inputs
         .iter()
         .map(|(path, bytes)| {
+            let (bytes, sha256) =
+                crate::compact_receipts::raw(path, bytes).map_err(Error::InvalidReport)?;
             Ok(Receipt {
                 path: (*path).into(),
-                bytes: u64::try_from(bytes.len()).map_err(|_| Error::ArithmeticOverflow)?,
-                sha256: super::sha256::sha256(bytes),
+                bytes,
+                sha256,
             })
         })
         .collect()

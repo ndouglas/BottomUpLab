@@ -120,6 +120,21 @@ pub(crate) fn compiled_bytes_identity(inputs: &[(&str, &[u8])]) -> Result<String
         .collect();
     content_hash(&sources)
 }
+/// Declared source files may use generated raw receipts on the browser target.
+pub(crate) fn compiled_file_identity(inputs: &[(&str, &[u8])]) -> Result<String, Error> {
+    let sources: Vec<_> = inputs
+        .iter()
+        .map(|(path, bytes)| {
+            let (bytes, sha256) = crate::compact_receipts::raw(path, bytes).map_err(invalid)?;
+            Ok(ArtifactReceipt {
+                path: (*path).into(),
+                bytes,
+                sha256,
+            })
+        })
+        .collect::<Result<Vec<_>, Error>>()?;
+    content_hash(&sources)
+}
 
 impl PrefixRef {
     pub fn reconstruct(&self, histories: &[Prefix]) -> Result<Prefix, Error> {
