@@ -25,13 +25,13 @@
 **Goal**: Verify affected native/web boundaries and actual release budgets on merged source.
 **Success Criteria**: Relevant tests, formatting/lints/typecheck and production build pass; identities/assets verified; independent review clean.
 **Tests**: Retained initial whole-workspace attempt, then fresh complete core package and affected CLI/WASM-crate checks after canonical metadata correction; focused current web integration/parity/import/recorded/budget tests, production build and receipt inventory tests. The initial workspace attempt is partial, not a current whole-workspace pass. No duplicate unchanged slow diagnostic suites absent doubt.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 3: Land and preserve
 **Goal**: Local main integration with review/evidence retained.
 **Success Criteria**: Recheck actual main/state, fast-forward only if unchanged from merged parent, verify main tree equals reviewed tree; retain original untracked evidence. Archive complete tracker/ledger and local bundle.
 **Tests**: Git ancestry/tree/status/hash verification; any new concurrent main work re-enters isolated integration and verification.
-**Status**: Not Started
+**Status**: Complete
 
 ## Task1: Integration and verification
 
@@ -45,3 +45,13 @@
 Source merge `f9d27e0` passed complete current core checks (3818passed/0failed/109existingignored), affected CLI10/10, standalone source parity1/1, source parser tests16/16 plus synthetic workflow1/1, workspace/survey lint and formatting, actual production build, nine raw-budget regressions,573current web tests, three independently rehashed200-entry receipt tables and fresh controller Browser smoke.3372repository files and exact module/dist/native/recorded identities were verified after tests. All raw scientific JSON remains unchanged.
 
 Stage2 remains InProgress only for controller independent review. The initial whole-workspace invocation completed16CLI targets/126tests before interruption to correct canonical metadata; it is retained earlier-snapshot evidence. Fresh complete core and affected current checks supply final verification without replaying unchanged slow diagnostic suites. No universal whole-workspace pass is claimed. Stage3 remains controller-owned; no main movement/push occurred in this task.
+
+## Local integration complete — 2026-10-17
+
+Independent task and whole-integration reviews approved the combined source and final execution receipts with no Critical or Important findings. Main was rechecked at7251bb1 with only the original untracked `survey/out/foraging-shortcuts/`, then fast-forwarded locally to reviewed handoffc43d62c. The main Git tree matched the tested tree exactly; all3372frozen repository files also rehashed successfully in the main checkout. The earlier handoff status above is historical and superseded by this completion.
+
+Experiments WASM is6,053,451bytes; engine is6,863,383bytes. Both remain within their unchanged8,000,000-byte ceilings. Complete recorded data remains byte-identical to the original9,641,132-byte asset. All raw scientific JSON and main's newer validation/model/social-preview work are preserved. No new scientific campaign, training, push, publication or author contact occurred.
+
+Completed tracker, complete ledger including both rulings, historical/final reviews, failures, exact runtime and tested preview, frozen source inventory, Git bundles and lifecycle/hash receipts are preserved under ignored `studio/out/lean-wasm-integration-20261017/` in the integration worktree. Native executable and complete preview compression were verified against original hashes. Original Notes and lean worktrees remain clean and unchanged. The integration worktree and verified local preview at `http://127.0.0.1:4181` are retained. Only this plan's preserved temporary SDD/tracker is retired; sibling plans and root tracking are untouched.
+
+The next study remains design discussion only: the user selected learning a communication convention first. Fixed logistics with learned information decisions and arbitrary symbol meanings is the current recommendation; no new learner implementation or training budget is approved by this integration.
