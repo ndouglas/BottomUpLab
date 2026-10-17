@@ -24,7 +24,7 @@
 ## Stage 2: Verify combined delivery
 **Goal**: Verify affected native/web boundaries and actual release budgets on merged source.
 **Success Criteria**: Relevant tests, formatting/lints/typecheck and production build pass; identities/assets verified; independent review clean.
-**Tests**: Actual workspace Rust tests, focused web integration/parity/import/recorded/budget tests, production build and receipt inventory tests; add only meaningful integration regressions if needed. No duplicate unchanged slow suites absent doubt.
+**Tests**: Retained initial whole-workspace attempt, then fresh complete core package and affected CLI/WASM-crate checks after canonical metadata correction; focused current web integration/parity/import/recorded/budget tests, production build and receipt inventory tests. The initial workspace attempt is partial, not a current whole-workspace pass. No duplicate unchanged slow diagnostic suites absent doubt.
 **Status**: In Progress
 
 ## Stage 3: Land and preserve
@@ -37,5 +37,11 @@
 
 - [x] Merge current main without committing unresolved conflicts. Record exact parents, paths and choices.
 - [x] Resolve only integration requirements; preserve whole native/recorded reference bytes and all newer main metadata behavior.
-- [ ] Run combined required checks and normal build, record commands/results/current artifacts. Handle actual integration failures with minimal fixes and regression tests.
-- [ ] Commit normally; report changed paths, failures retained and evidence for independent task/whole integration review. Controller handles main and archive.
+- [x] Run combined required checks and normal build, record commands/results/current artifacts. Handle actual integration failures with minimal fixes and regression tests.
+- [x] Commit normally; report changed paths, failures retained and evidence for independent task/whole integration review. Controller handles main and archive.
+
+## Verification handoff — 2026-10-17
+
+Source merge `f9d27e0` passed complete current core checks (3818passed/0failed/109existingignored), affected CLI10/10, standalone source parity1/1, source parser tests16/16 plus synthetic workflow1/1, workspace/survey lint and formatting, actual production build, nine raw-budget regressions,573current web tests, three independently rehashed200-entry receipt tables and fresh controller Browser smoke.3372repository files and exact module/dist/native/recorded identities were verified after tests. All raw scientific JSON remains unchanged.
+
+Stage2 remains InProgress only for controller independent review. The initial whole-workspace invocation completed16CLI targets/126tests before interruption to correct canonical metadata; it is retained earlier-snapshot evidence. Fresh complete core and affected current checks supply final verification without replaying unchanged slow diagnostic suites. No universal whole-workspace pass is claimed. Stage3 remains controller-owned; no main movement/push occurred in this task.
