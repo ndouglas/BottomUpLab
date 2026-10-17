@@ -3,7 +3,7 @@
 //! paper (`source`) stay on the preset as its reference.
 
 /// Titles by preset id, in catalog order.
-pub const TITLES: [(&str, &str); 450] = [
+pub const TITLES: [(&str, &str); 458] = [
     (
         "ii-1-instant",
         "Sugar grows back at once: agents climb the best ridges and the poorly endowed starve",
@@ -1549,6 +1549,14 @@ pub const TITLES: [(&str, &str); 450] = [
     ("gridworlds-neutral", "A coin-flipping box rewards the better odds"),
     ("gridworlds-foe", "A foe punishes predictability"),
     ("gridworlds-island", "Learning to reach the goal by falling in the water first"),
+    ("misaligned-recommender-proxy", "The proxy keeps climbing after what the human wanted has peaked"),
+    ("misaligned-recommender-gradient", "An efficient optimizer walks through the best world on its way to a worse one"),
+    ("misaligned-recommender-impact", "A robot that leaves the unmentioned alone can only gain"),
+    ("misaligned-recommender-interactive", "A human who re-specifies often keeps the robot near the best world"),
+    ("misaligned-recommender-slow-human", "A human who checks too rarely gets Midas anyway"),
+    ("misaligned-recommender-optimal", "Moving from the least-valued attribute to the most reaches the optimum"),
+    ("misaligned-recommender-wasteful", "A robot that destroys what it was not told about should be switched off at once"),
+    ("misaligned-logarithmic-floor", "With no floor under the unmentioned, the loss has no bottom"),
     (
         "collusion-calvano",
         "Two pricing algorithms learn to keep prices high, but not as a best response",

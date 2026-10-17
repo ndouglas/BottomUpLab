@@ -19,13 +19,13 @@
 **Goal**: Merge actual main into integration branch, resolve overlaps preserving both sides.
 **Success Criteria**: Clean merge; explicit conflict/accounting report.
 **Tests**: Diff/source-inventory inspection; no lost main work.
-**Status**: In Progress
+**Status**: Complete
 
 ## Stage 2: Verify combined delivery
 **Goal**: Verify affected native/web boundaries and actual release budgets on merged source.
 **Success Criteria**: Relevant tests, formatting/lints/typecheck and production build pass; identities/assets verified; independent review clean.
 **Tests**: Actual workspace Rust tests, focused web integration/parity/import/recorded/budget tests, production build and receipt inventory tests; add only meaningful integration regressions if needed. No duplicate unchanged slow suites absent doubt.
-**Status**: Not Started
+**Status**: In Progress
 
 ## Stage 3: Land and preserve
 **Goal**: Local main integration with review/evidence retained.
@@ -35,7 +35,7 @@
 
 ## Task1: Integration and verification
 
-- [ ] Merge current main without committing unresolved conflicts. Record exact parents, paths and choices.
-- [ ] Resolve only integration requirements; preserve whole native/recorded reference bytes and all newer main metadata behavior.
+- [x] Merge current main without committing unresolved conflicts. Record exact parents, paths and choices.
+- [x] Resolve only integration requirements; preserve whole native/recorded reference bytes and all newer main metadata behavior.
 - [ ] Run combined required checks and normal build, record commands/results/current artifacts. Handle actual integration failures with minimal fixes and regression tests.
 - [ ] Commit normally; report changed paths, failures retained and evidence for independent task/whole integration review. Controller handles main and archive.

@@ -1,6 +1,6 @@
 // The schema-driven Rules panel's pure parts (Decision 8): grouping, reading and writing fields.
 import { getPath, setPath } from './paths';
-import type { ModelConfig, Param } from './types';
+import type { ModelConfig, ModelKind, Param } from './types';
 
 /**
  * What a control's input holds: a number box's text, a checkbox, a choice, or a range's two boxes
@@ -11,6 +11,15 @@ export type ParamInput = string | boolean | { min: string; max: string; edited?:
 /** The accessible name a schema field contributes to a single or paired control. */
 export function schemaControlLabel(label: string, part?: 'slider' | 'number' | 'minimum' | 'maximum'): string {
   return part ? `${label} ${part}`.trim() : label;
+}
+
+/**
+ * The part of a config the Rules panel is built for, beyond its model: the misaligned world, whose
+ * two worlds bound the floor and the start differently (`misalignedParams`). The panel rebuilds
+ * when this changes; every other model's panel is built once per model.
+ */
+export function schemaVariant(model: ModelKind, config: ModelConfig): string {
+  return model === 'misaligned' ? String((config as { world?: unknown }).world ?? '') : '';
 }
 
 /** The params in panel sections, in the order each group first appears. */

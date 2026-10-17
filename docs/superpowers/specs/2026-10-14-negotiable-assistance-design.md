@@ -1,6 +1,6 @@
 # Negotiable assistance — exact foundation design
 
-**Date:** 2026-10-14. **Status:** user-approved design; finite engineering foundation implemented and required checks passed. Fresh Task 4 and whole-branch reviews remain pending. Scientific first/repeat collection and publication remain uninvoked.
+**Date:** 2026-10-14. **Status:** user-approved design; finite engineering foundation implemented and required checks passed. Fresh Task 4 and whole-branch reviews passed for foundation commit `2adba597e9298e630b23ced58658d4b9a5c44c21`; their retained reports are identified in the [collection provenance receipt](../../../survey/out/negotiable/provenance.json). At that foundation handoff, scientific first/repeat collection and publication remained uninvoked. The separately authorized later collection is recorded below.
 **Program:** [assistance and alignment](../../studies/2026-10-11-alignment-program.md), reproduction queue item 41. No milestone number is assigned here.
 **Intent:** reproduce how differing beliefs change a jointly owned assistant's priorities, with an exact, inspectable foundation before the paper's sequential gridworld and strategic-reporting follow-up.
 **Approvals:** the user approved this written design and its implementation plan; independent source and numerical v2 reviews and core Tasks 2–3 reviews approved the foundation. The implemented slice contains exact cake, stochastic Pareto and supplied-history checks. Gridworld investigation retains its separate scope and does not begin here.
@@ -81,3 +81,7 @@ The later plan must predeclare bounded report sizes and execution limits, indepe
 ## Handoff
 
 After written review, write a three-to-five-stage implementation plan covering independent registration, the exact core, survey integration and independent delivery verification. Preserve the unrelated root tracker for key delegation. Keep this design branch separate from the crowd and Gridworlds worktrees. Gridworld reproduction and strategic misreporting each require their own later scope and source review.
+
+## Dated collection update — 2026-10-14
+
+The user subsequently authorized collector certification, exactly one bounded first/repeat pair, comparison and interpretation under the separate [collection plan](../plans/2026-10-14-negotiable-collection.md). Fresh collector re-review and retained-evidence review passed. Both accepted reports return Holds for the three finite claims; all 4,833 mathematical rows agree across the pair. The [dated findings](2026-10-14-negotiable-assistance-findings.md), [compact result table](../../../survey/out/negotiable/results.md) and [provenance receipt](../../../survey/out/negotiable/provenance.json) preserve observations and limitations. This update extends the historical authorization boundary; it does not rewrite the original design as collection authorization. Queue item 41 remains partially reproduced, with sequential/action-dependent and strategic work unresolved. No external publication, push or merge is authorized by this update.

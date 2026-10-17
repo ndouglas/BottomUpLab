@@ -33,7 +33,7 @@ fn negotiable_registration_is_exact_and_unique() {
 
 #[test]
 fn negotiable_legacy_catalog_metadata_is_byte_identical() {
-    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
     rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
     assert_eq!(rows.len(), 817);
     assert_eq!(
@@ -43,15 +43,28 @@ fn negotiable_legacy_catalog_metadata_is_byte_identical() {
 }
 
 #[test]
-fn negotiable_merge_preserves_premerge_main_gridworlds_catalog_metadata() {
-    // Premerge main f55c052's ten literal claim constructors, without executing checks.
-    let mut rows: Vec<_> = super::all().into_iter().filter(|c| c.id.starts_with("gridworlds.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
-    rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
-    assert_eq!(rows.len(), 10);
-    assert_eq!(
-        format!("{:x}", Sha256::digest(serde_json::to_vec(&rows).unwrap())),
-        "96ab7daca04892aa31ea5563609c66318e0a4b71c9b63d68d8c8508664cc208f"
-    );
+fn negotiable_merge_preserves_preintegration_main_catalog_metadata() {
+    // Literal constructors from preintegration main eb1555b; never execute their checks.
+    for (prefix, count, expected) in [
+        (
+            "gridworlds.",
+            10,
+            "96ab7daca04892aa31ea5563609c66318e0a4b71c9b63d68d8c8508664cc208f",
+        ),
+        (
+            "misaligned.",
+            12,
+            "2d029ac03a2ae3ca8266403c38e1babbdf12f0142daffaf37d3447c9690f6b0c",
+        ),
+    ] {
+        let mut rows: Vec<_> = super::all().into_iter().filter(|c| c.id.starts_with(prefix)).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+        rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+        assert_eq!(rows.len(), count);
+        assert_eq!(
+            format!("{:x}", Sha256::digest(serde_json::to_vec(&rows).unwrap())),
+            expected
+        );
+    }
 }
 
 #[test]
@@ -394,22 +407,27 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     let export = "\npub mod negotiable;\n";
     assert_eq!(text.matches(export).count(), 1);
     assert_eq!(export.len(), 21);
-    let notes_export = "\npub mod persistent_notes;\n";
-    assert_eq!(text.matches(notes_export).count(), 1);
-    let previous = text.replacen(notes_export, "", 1);
-    assert_eq!(previous.len(), 1860);
-    assert_eq!(
-        records::sha256(previous.as_bytes()),
-        "a73aa69e6a17c22195ff950a959d532d9183d1a2e02126efbd4f403e61c8d978"
-    );
-    let original = previous.replacen(export, "", 1);
-    // Prospective baseline: premerge main f55c052, including its gridworld export.
-    assert_eq!(original.len(), 1839);
+    // Remove only the exact Notes/compact-receipt registration additions.
+    let additions = [
+        "mod identity_bytes;\n",
+        "\npub mod persistent_notes;\n\nmod compact_receipts;\n",
+    ];
+    let mut pre_notes = text.to_owned();
+    for addition in additions {
+        assert_eq!(pre_notes.matches(addition).count(), 1);
+        pre_notes = pre_notes.replacen(addition, "", 1);
+    }
+    let original = pre_notes.replacen(export, "", 1);
+    // Exact eb1555b library, including both pre-existing model registrations.
+    assert_eq!(original.len(), 1949);
     assert_eq!(
         records::sha256(original.as_bytes()),
-        "eb7a6ee09a7e4b2013cf8dd0a962c9ea0fa08640993bc616afd353b8e487b561"
+        "260322051e3e1a94834471168a64414a385bb99dfe32f0b65fc5eb5e41a1e3cc"
     );
-    assert_eq!(library.len(), original.len() + 21 + notes_export.len());
+    assert_eq!(
+        library.len(),
+        original.len() + 21 + additions.iter().map(|a| a.len()).sum::<usize>()
+    );
     let bytes=include_bytes!("../../../crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json");
     let mut metadata: Value = serde_json::from_slice(bytes).unwrap();
     let bindings = metadata["bindings"].as_array_mut().unwrap();
@@ -424,15 +442,15 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
         let row = rows.into_iter().next().unwrap();
         assert_eq!(row["bytes"], library.len());
         assert_eq!(row["sha256"], records::sha256(library));
-        row["bytes"] = serde_json::json!(original.len());
-        row["sha256"] = serde_json::json!(records::sha256(original.as_bytes()));
+        row["bytes"] = serde_json::json!(1930);
+        row["sha256"] =
+            serde_json::json!("80b9f3b95d65c38742eea91e7fe773b161a603f9298d41a958ae787e5e9086ea");
     }
-    // Restoring only the two lib receipts recovers every premerge main field/receipt,
+    // Restoring only the two lib receipts recovers the complete reviewed lean metadata,
     // including historical identity, native source and reference identities.
-    // The pin uses serde_json::Value serialization, which sorts object keys.
     assert_eq!(
         records::sha256(&serde_json::to_vec(&metadata).unwrap()),
-        "158e464f5b85cecbbad01729b01cd5f4fddca435f287d6c11ca1ee1d55afc09e"
+        "4c83c2acf3c20e707c9221af01b96421820311a9d2ac51744fef3aa401b4b6d7"
     );
 }
 

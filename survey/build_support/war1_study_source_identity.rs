@@ -16,6 +16,7 @@ pub const KEY_REQUIRED: &[&str] = &[
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/limits-reference.json",
 ];
 pub const FILES: &[&str] = &[
+    "crates/sugarscape-core/build_support/compact_receipts.rs",
     "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md",
     "Cargo.toml",
     "Cargo.lock",

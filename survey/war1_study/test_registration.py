@@ -69,7 +69,7 @@ class RegistrationTests(unittest.TestCase):
 
     def test_literal_inventory_matches_all_core_compile_time_includes(self):
         paths = registration.audit_literal_inputs(ROOT)
-        self.assertEqual(len(paths), 247)
+        self.assertEqual(len(paths), 250)
         self.assertIn("data/anasazi/Map.txt", paths)
         self.assertIn("docs/examples/burrow/access-explore.json", paths)
 
@@ -86,11 +86,12 @@ class RegistrationTests(unittest.TestCase):
                 root = Path(temp).resolve()
                 # Use actual source bytes; mutation is confined to this temp tree.
                 shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
-                for manifest in ("Cargo.toml", "Cargo.lock"):
+                for manifest in ("Cargo.toml", "Cargo.lock", "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md"):
+                    (root/manifest).parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(ROOT/manifest, root/manifest)
                 (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
                 (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
-                self.assertEqual(len(registration.audit_literal_inputs(root)), 247)
+                self.assertEqual(len(registration.audit_literal_inputs(root)), 250)
                 path = root/original
                 text = path.read_text()
                 call = next(re.finditer(r'source!\("([^"\n]+)"\)', text)).group(1)
@@ -98,7 +99,7 @@ class RegistrationTests(unittest.TestCase):
                 replacements = (
                     text.replace('$path:literal', '$path:expr'),
                     text.replace('"'+prefix+'", $path', '"../../../", $path'),
-                    text.replace('$path)).', '$other)).'),
+                    text.replace('$path))', '$other))'),
                     text.replace('source!("'+call+'")', 'source!(concat!("'+call+'"))'),
                     text.replace('source!("'+call+'")', 'source!("../Cargo.toml")'),
                     text.replace('source!("'+call+'")', 'source!("/tmp/forged")'),
@@ -128,11 +129,12 @@ class RegistrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="construction_test_key_include_") as temp:
             root = Path(temp).resolve()
             shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
-            for manifest in ("Cargo.toml", "Cargo.lock"):
+            for manifest in ("Cargo.toml", "Cargo.lock", "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md"):
+                (root/manifest).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT/manifest, root/manifest)
             (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
             (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
-            self.assertEqual(len(registration.audit_literal_inputs(root)), 247)
+            self.assertEqual(len(registration.audit_literal_inputs(root)), 250)
             path = root/"crates/sugarscape-core/src/key_delegation/source_inputs.rs"
             original = path.read_text()
             (root/"unregistered.bin").write_bytes(b"undeclared asset")
@@ -158,11 +160,12 @@ class RegistrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="construction_test_gate_include_") as temp:
             root = Path(temp).resolve()
             shutil.copytree(ROOT/"crates/sugarscape-core", root/"crates/sugarscape-core")
-            for manifest in ("Cargo.toml", "Cargo.lock"):
+            for manifest in ("Cargo.toml", "Cargo.lock", "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md"):
+                (root/manifest).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT/manifest, root/manifest)
             (root/registration.LITERAL_INVENTORY).parent.mkdir(parents=True)
             (root/registration.LITERAL_INVENTORY).write_bytes((ROOT/registration.LITERAL_INVENTORY).read_bytes())
-            self.assertEqual(len(registration.audit_literal_inputs(root)), 247)
+            self.assertEqual(len(registration.audit_literal_inputs(root)), 250)
             path = root/"crates/sugarscape-core/src/gate_assistance/diagnostics.rs"
             original = path.read_text()
             expression = 'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))'
@@ -194,7 +197,7 @@ class RegistrationTests(unittest.TestCase):
 
 class SyntheticPacketWorkflowTests(unittest.TestCase):
     def test_freeze_build_declare_and_all_required_mutations(self):
-        """Real Git and receipt validators; only executable metadata is synthetic."""
+        """Real Git and receipt validators over a declared synthetic include closure."""
         import os
         import subprocess
         from copy import deepcopy
@@ -210,6 +213,10 @@ class SyntheticPacketWorkflowTests(unittest.TestCase):
                 target = root/relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes((ROOT/relative).read_bytes())
+            # This fixture never compiles an engine. Its only include closure is
+            # declared below, so required source stubs must not reference absent real modules.
+            (root/"crates/sugarscape-core/src/key_delegation/source_inputs.rs").write_text(
+                "// construction_test synthetic required source; never compiled\n")
             core = root/"crates/sugarscape-core/src/lib.rs"
             core.write_text("// construction_test synthetic include closure; never compiled\n" + "\n".join(
                 'const _: &str = include_str!("' + os.path.relpath(root/path, core.parent) + '");' for path in literals))

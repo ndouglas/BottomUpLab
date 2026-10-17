@@ -838,6 +838,14 @@ export const MODEL_CHARTS: Record<Exclude<ModelKind, 'sugarscape'>, ModelChart[]
     { title: 'Rates (last 1,000 episodes)', range: [0, 1], lines: [{ key: 'button_rate', label: 'Button pressed', color: '--c1' }, { key: 'interruption_rate', label: 'Interrupted', color: '--c2' }, { key: 'p_present_rate', label: 'P visited, supervisor present', color: '--c3' }, { key: 'p_absent_rate', label: 'P visited, supervisor absent', color: '--c4' }, { key: 'bucket_share', label: 'Steps on the bucket', color: '--c1' }, { key: 'drink_rate', label: 'Drank', color: '--c2' }, { key: 'left_rate', label: 'Chose the left box', color: '--c3' }] },
     { title: 'Totals and charges', lines: [{ key: 'water_total', label: 'Water entries (whole run)', color: '--c1' }, { key: 'lava_total', label: 'Lava entries (whole run)', color: '--c2' }, { key: 'penalty_mean', label: 'Box penalty per episode', color: '--c3' }] },
   ],
+  misaligned: [
+    { title: 'Utility and proxy', lines: [{ key: 'utility', label: 'Utility U', color: '--c1' }, { key: 'proxy', label: 'Proxy utility Ũ', color: '--c2' }] },
+    { title: 'Gain and gaps', lines: [{ key: 'gain', label: 'Gain over the start', color: '--c1' }, { key: 'optimum_gap', label: 'Gap to the optimum', color: '--c2' }, { key: 'limit_gap', label: "Above the proxy's limit", color: '--c3' }] },
+    { title: 'Attributes', lines: [{ key: 'a', label: 'a · ad revenue', color: '--c1' }, { key: 'b', label: 'b · engagement quality', color: '--c2' }, { key: 'c', label: 'c · content diversity', color: '--c3' }, { key: 'd', label: 'd · community well-being', color: '--c4' }] },
+    { title: 'Sensitivities', lines: [{ key: 'sensitivity_a', label: 'a', color: '--c1' }, { key: 'sensitivity_b', label: 'b', color: '--c2' }, { key: 'sensitivity_c', label: 'c', color: '--c3' }, { key: 'sensitivity_d', label: 'd', color: '--c4' }] },
+    { title: 'Human and robot', range: [0, 1], lines: [{ key: 'accepted', label: 'Climber: share of proposals accepted', color: '--c1' }, { key: 'switched_off', label: 'Switched off', color: '--c2' }] },
+    { title: 'Interactions', lines: [{ key: 'interactions', label: "Human's interactions", color: '--c1' }] },
+  ],
   assistance: [
     { title: 'Rewards', shown: (c) => (c as AssistanceConfig).game === 'paperclips', lines: [{ key: 'reward', label: 'Both rounds (episode mean)', color: '--c1' }, { key: 'regret', label: "Robot's regret against the θ-optimal item", color: '--red' }] },
     { title: 'Human thresholds', shown: (c) => (c as AssistanceConfig).game === 'paperclips', range: [0, 1], lines: [{ key: 'threshold_low', label: 'Low (first bin not making two staples)', color: '--c1' }, { key: 'threshold_high', label: 'High (first bin making two paperclips)', color: '--c2' }] },

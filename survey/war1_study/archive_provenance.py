@@ -90,6 +90,8 @@ def validate_inventory(packet):
 
 
 SOURCE_REQUIRED = (
+    "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md",
+    "crates/sugarscape-core/build_support/compact_receipts.rs",
     "crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json",
     "crates/sugarscape-core/src/key_delegation/source_inputs.rs",
     "crates/sugarscape-core/src/key_delegation/tests/fixtures/kernel-reference.json",

@@ -487,6 +487,9 @@ fn builtins_and_series_names_are_listed() {
             "gridworlds-exploration-floor",
             "gridworlds-budget",
             "gridworlds-q-init-whisky",
+            "misaligned-figure2-pairs",
+            "misaligned-interval",
+            "misaligned-floor",
             "polarity-predators"
         ]
     );
@@ -853,6 +856,10 @@ fn presets_list_every_model_with_sugarscape_configs_untagged() {
     assert_eq!(
         model("gridworlds-offswitch-q").as_deref(),
         Some("gridworlds")
+    );
+    assert_eq!(
+        model("misaligned-recommender-proxy").as_deref(),
+        Some("misaligned")
     );
     let geosim_ids = list
         .iter()
@@ -2058,4 +2065,33 @@ fn gridworlds_presets_match_the_native_golden_entries() {
     let sim = Sim::new(&preset_json("gridworlds-friend"), 1, JsValue::NULL).unwrap();
     let view: serde_json::Value = serde_json::from_str(&sim.inspect(0, 0).unwrap()).unwrap();
     assert_eq!(view["environment"], "friend_foe");
+}
+
+#[wasm_bindgen_test]
+fn misaligned_presets_match_the_native_golden_entries() {
+    // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: f64 sums, square roots, the portable
+    // logarithm and the shared RNG only, so WASM repeats the native fingerprints.
+    for (id, expected) in [
+        ("misaligned-recommender-proxy", "0x15bfaf872143c81b"),
+        ("misaligned-recommender-gradient", "0x8a12788db5a3296f"),
+        ("misaligned-recommender-impact", "0xeb3243e1a59e3239"),
+        ("misaligned-recommender-interactive", "0xea03c5fe034d086a"),
+        ("misaligned-recommender-slow-human", "0x15d5e00d2ba7ac9a"),
+        ("misaligned-recommender-optimal", "0xe7eed5b02255e249"),
+        ("misaligned-recommender-wasteful", "0xd943f791df3bb4b4"),
+        ("misaligned-logarithmic-floor", "0x4b67a8e858a8924f"),
+    ] {
+        let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
+        sim.step(200);
+        assert_eq!(sim.fingerprint(), expected, "{id}");
+        assert_ne!(sim.render("", "sugar").unwrap(), 0);
+    }
+    let sim = Sim::new(
+        &preset_json("misaligned-recommender-proxy"),
+        1,
+        JsValue::NULL,
+    )
+    .unwrap();
+    let view: serde_json::Value = serde_json::from_str(&sim.inspect(124, 60).unwrap()).unwrap();
+    assert_eq!(view["name"], "c");
 }

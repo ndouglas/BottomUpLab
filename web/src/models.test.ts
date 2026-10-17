@@ -25,6 +25,8 @@ import {
   isTippingView,
   isRetirementView,
   isFarolView,
+  isGridworldsView,
+  isMisalignedView,
   isCivilView,
   isClassesView,
   isOpinionsView,
@@ -888,5 +890,25 @@ describe('pilfering (Minds 6 and 8)', () => {
     expect([{}, { watching: { on: false } }, { theft: { find: 0, cheaters: 0 } }].map((x) => pilferingOn(c(x)))).toEqual([false, false, false]);
     expect(watchingOn(c({ watching: { on: true } }))).toBe(true);
     expect(watchingOn(c({}))).toBe(false);
+  });
+});
+
+describe('the misaligned model', () => {
+  it('is read by its tag, and its inspections by their panel and outcome', () => {
+    expect(modelOf({ model: 'misaligned' } as unknown as ModelConfig)).toBe('misaligned');
+    const bar = { panel: 'attribute', index: 2, name: 'c', x: 124, y: 60, value: 6.4, outcome: { utility_start: 16, utility: 19 }, tick: 40, agent: null } as unknown as AnyInspection;
+    const strip = { panel: 'utility', x: 100, y: 135, utility: 19, outcome: { utility_start: 16 }, tick: 40, agent: null } as unknown as AnyInspection;
+    const cell = { state_key: 'x', q: [0, 0, 0, 0], greedy: 1, agent: null } as unknown as AnyInspection;
+    const firms = { site: { x: 1, y: 2 }, panel: 'firms', firm: null, member: null, agent: null } as unknown as AnyInspection;
+    expect([bar, strip, cell, firms].map(isMisalignedView)).toEqual([true, true, false, false]);
+    expect([isGridworldsView(bar), isFirmsView(bar), isGridworldsView(cell)]).toEqual([false, false, true]);
+  });
+
+  it('colors one way (the bars), has no overlays and never ends on its own', () => {
+    expect(COLOR_MODES.misaligned.map(([m]) => m)).toEqual(['bars']);
+    expect(MODEL_OVERLAYS.misaligned).toEqual([]);
+    const c = { model: 'misaligned' } as unknown as ModelConfig;
+    expect(ticksLeft(c, 500)).toBe(Infinity);
+    expect(finishesUnpredictably(c)).toBe(false);
   });
 });

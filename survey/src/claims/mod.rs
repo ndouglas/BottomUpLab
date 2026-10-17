@@ -39,6 +39,7 @@ mod minds7;
 mod minds8;
 pub(crate) mod minds8b;
 pub(crate) mod minds9;
+mod misaligned;
 mod negotiable;
 mod negotiable_records;
 mod norms;
@@ -65,6 +66,7 @@ pub fn all() -> Vec<Claim> {
         auctions::claims(),
         assistance::claims(),
         gridworlds::claims(),
+        misaligned::claims(),
         negotiable::claims(),
         ants::claims(),
         bali::claims(),

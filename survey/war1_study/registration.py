@@ -92,13 +92,24 @@ _SOURCE_MACRO_BODIES = (
         };
     }''',
 )
+# Lean identity wrappers preserve the same exact native include expansions.
+_SOURCE_MACRO_BODIES += tuple(body.replace('include_bytes!', 'identity_bytes!').replace('.as_slice(),)', ',)') for body in _SOURCE_MACRO_BODIES[:2])
+_SOURCE_MACRO_BODIES += (r'''macro_rules! source {
+    ($path:literal) => {{
+        let path = concat!("crates/sugarscape-core/src/", $path);
+        let raw = crate::identity_bytes::identity_bytes!(concat!("../../", $path));
+        let (bytes, sha256) = crate::compact_receipts::raw(path, raw).expect("compiled source receipt");
+        ArtifactReceipt { path: path.into(), bytes, sha256, }
+    }};
+}''',)
+_SOURCE_MACRO_BODIES += tuple(body.replace("$path", "$p") for body in _SOURCE_MACRO_BODIES)
 _SOURCE_MACROS = tuple(re.compile(r"\s*".join(re.escape(token) for token in
     re.findall(r'"[^"\n]*"|[A-Za-z_][A-Za-z_0-9]*|=>|::|[^\s]', body)))
     for body in _SOURCE_MACRO_BODIES)
 
 
 def _audit_source_macro(text, path, root):
-    if re.search(r"\b(?:source|include(?:_str|_bytes)?)\s*/[/*]", text):
+    if re.search(r"\b(?:source|input|identity_bytes|include(?:_str|_bytes)?)\s*/[/*]", text):
         raise ValueError("comment-interposed include/macro syntax is unsupported")
     definitions = list(re.finditer(r"\bmacro_rules\s*!\s*source\b", text))
     calls = list(re.finditer(r"\bsource\s*!(?!=)", text))
@@ -129,6 +140,91 @@ def _audit_source_macro(text, path, root):
     return text
 
 
+_IDENTITY_MACRO_BODY = r'''macro_rules! identity_bytes {
+    ($p:expr) => {{
+        #[cfg(not(target_arch = "wasm32"))] { include_bytes!($p).as_slice() }
+        #[cfg(target_arch = "wasm32")] { b"".as_slice() }
+    }};
+}'''
+def _token_pattern(body):
+    return re.compile(r"\s*".join(re.escape(token) for token in
+        re.findall(r'"[^"\n]*"|[A-Za-z_][A-Za-z_0-9]*|=>|::|[^\s]', body)))
+
+
+def _audit_identity_macro(text, path, root):
+    notes_input = r'''macro_rules! input {
+        ($p:literal) => {
+            (concat!("crates/sugarscape-core/src/persistent_notes/", $p), identity_bytes!($p),)
+        };
+    }'''
+    if path == root / "crates/sugarscape-core/src/persistent_notes/source_inputs.rs":
+        matches = list(_token_pattern(notes_input).finditer(text))
+        if len(matches) != 1:
+            raise ValueError("unsupported Notes input macro definition")
+        match = matches[0]
+        text = text[:match.start()] + text[match.end():]
+        calls = list(re.finditer(r'\binput\s*!\s*\(\s*"([^"\\\n]+)"\s*\)', text))
+        if len(calls) != len(re.findall(r"\binput\s*!", text)):
+            raise ValueError("unsupported Notes input macro call")
+        for call in reversed(calls):
+            value = call.group(1)
+            if not re.fullmatch(r"[A-Za-z_0-9/-]+\.rs|tests/fixtures/[A-Za-z_0-9-]+\.json", value):
+                raise ValueError("noncanonical Notes input path")
+            text = text[:call.start()] + 'identity_bytes!("' + value + '")' + text[call.end():]
+    if path == root / "crates/sugarscape-core/src/identity_bytes.rs":
+        matches = list(_token_pattern(_IDENTITY_MACRO_BODY).finditer(text))
+        if len(matches) != 1 or len(re.findall(r"macro_rules\s*!\s*identity_bytes", text)) != 1:
+            raise ValueError("unsupported identity literal macro definition")
+        match = matches[0]
+        text = text[:match.start()] + text[match.end():]
+    if re.search(r"macro_rules\s*!\s*identity_bytes", text):
+        raise ValueError("identity literal macro outside bound definition")
+    literal = r'"([^"\\\n]+)"'
+    expression = rf'(?:{literal}|concat!\(\s*{literal}(?:\s*,\s*{literal})*\s*,?\s*\))'
+    pattern = re.compile(rf'\bidentity_bytes\s*!\s*\(\s*({expression})\s*\)')
+    matches = list(pattern.finditer(text))
+    if len(matches) != len(re.findall(r"\bidentity_bytes\s*!", text)):
+        raise ValueError("unsupported identity literal macro call")
+    for match in reversed(matches):
+        value = ''.join(re.findall(literal, match.group(1)))
+        if (len(value.encode()) > 4096 or not re.fullmatch(r"[A-Za-z_0-9./-]+", value)
+                or Path(value).is_absolute() or any(part in ("", ".") for part in value.split('/'))):
+            raise ValueError("noncanonical identity literal path")
+        target = _checked_path(path.parent / value).resolve()
+        if not target.is_relative_to(root):
+            raise ValueError("identity literal outside bound repository")
+        # This precise unrelated reference was already omitted by the native W1 selector.
+        if str(target.relative_to(root)) == "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json":
+            if not stat.S_ISREG(target.stat().st_mode):
+                raise ValueError("Notes reference is not regular")
+        else:
+            read_regular(target, METADATA_LIMIT)
+        text = text[:match.start()] + 'include_bytes!("' + value + '")' + text[match.end():]
+    return text
+
+
+_GENERATED_INCLUDES = {
+    "crates/sugarscape-core/src/gate_assistance/diagnostics.rs": (
+        'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))',),
+    "crates/sugarscape-core/src/compact_receipts.rs": (
+        'include!(concat!(env!("OUT_DIR"), "/compact_raw_receipts.rs"))',),
+    "crates/sugarscape-core/src/browser_experiments/recorded.rs": tuple(
+        'include_str!(concat!(env!("OUT_DIR"), "/' + name + '-selected.json"))'
+        for name in ("strategic", "strategy", "audit")),
+}
+
+
+def _audit_generated_includes(text, path, root):
+    for expression in _GENERATED_INCLUDES.get(str(path.relative_to(root)), ()):
+        if text.count(expression) != 1:
+            raise ValueError("unsupported bound generated receipt include")
+        text = text.replace(expression, "", 1)
+        read_regular(root / "crates/sugarscape-core/build.rs", METADATA_LIMIT)
+        generator = "surface_discovery.rs" if "gate_source_receipts" in expression else "compact_receipts.rs"
+        read_regular(root / "crates/sugarscape-core/build_support" / generator, METADATA_LIMIT)
+    return text
+
+
 def audit_literal_inputs(root: Path):
     expected = set(literal_paths(read_regular(root / LITERAL_INVENTORY, METADATA_LIMIT)))
     found = set()
@@ -140,13 +236,8 @@ def audit_literal_inputs(root: Path):
         raw = read_regular(path, min(METADATA_LIMIT, 64*1024**2 - retained))
         retained += len(raw)
         text = _audit_source_macro(raw.decode("utf-8"), path, root)
-        # Exactly one generated Gate receipt module is derived from the bound
-        # host generator and shared inventory; generated output is not an input.
-        if path == root / "crates/sugarscape-core/src/gate_assistance/diagnostics.rs":
-            generated = 'include!(concat!(env!("OUT_DIR"), "/gate_source_receipts.rs"))'
-            if text.count(generated) != 1:
-                raise ValueError("unsupported Gate generated receipt include")
-            text = text.replace(generated, "", 1)
+        text = _audit_identity_macro(text, path, root)
+        text = _audit_generated_includes(text, path, root)
         matches = list(pattern.finditer(text))
         if len(matches) != len(re.findall(r"include_(?:str|bytes)\s*!", text)) or re.search(r"\binclude\s*!", text):
             raise ValueError("unsupported or unresolved core include syntax")
@@ -160,6 +251,8 @@ def audit_literal_inputs(root: Path):
                     "crates/sugarscape-core/Cargo.toml",
                     "crates/sugarscape-core/build.rs",
                     "crates/sugarscape-core/build_support/surface_discovery.rs",
+                    "crates/sugarscape-core/build_support/compact_receipts.rs",
+                    "docs/superpowers/protocols/2026-10-14-paid-persistent-notes.md",
                 ):
                     # These exact mandatory manifests/host sources are separate from the fixed
                     # external asset inventory and must actually exist.
@@ -183,7 +276,11 @@ def source_inventory(root: Path, selected: str) -> Json:
     paths = set(SOURCE_REQUIRED) | {selected} | set(literal_paths(read_regular(root / LITERAL_INVENTORY, METADATA_LIMIT)))
     for base in ("crates/sugarscape-core/src", "survey/src/war1_study"):
         for path in _source_files(root, base):
-            paths.add(str(path.relative_to(root)))
+            relative = str(path.relative_to(root))
+            # Match the pre-existing native W1 closure; Notes verifies this separate large reference.
+            if relative == "crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json":
+                continue
+            paths.add(relative)
             if len(paths) > 4096:
                 raise ValueError("source entry bound")
     with os.scandir(root / "survey/war1_study") as children:

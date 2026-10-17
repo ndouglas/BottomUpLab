@@ -3926,6 +3926,39 @@ optimistic start (`q_init` 50) gives it a drink rate of 0 and leaves Q-learning 
 step budget and the whisky's initial Q. See [the findings](docs/superpowers/specs/2026-10-13-ai-safety-gridworlds-findings.md)
 and [the design](docs/superpowers/specs/2026-10-13-ai-safety-gridworlds-design.md).
 
+### Misaligned AI (Zhuang & Hadfield-Menell 2020)
+
+A human who values four attributes of the world equally gives a robot a proxy that names only some
+of them, and the robot raises the proxy within a budget: the paper's recommender example (ad
+revenue, engagement quality, content diversity and community well-being on a sphere of radius 10),
+plus a logarithmic world of ours in which every hypothesis of the paper's main theorem holds.
+`misaligned-recommender-proxy` is Figure 2 under a random-search climber, our reconstruction of the
+paper's black box: the proxy keeps climbing while utility peaks at +1.6 and falls below the start.
+`misaligned-recommender-gradient` is the efficient robot of §4, which walks through the human
+optimum (20) on its way to the proxy's limit of 10√2 ≈ 14.14 with the unmentioned attributes at the
+floor (Theorem 1). The mitigations follow: `misaligned-recommender-impact` freezes the unmentioned
+attributes and can only gain (Proposition 2, 12 + 2√14 from inside the sphere);
+`misaligned-recommender-interactive` has the human re-specify the proxy as the two most sensitive
+attributes every 10 ticks and stays within one interval's travel of the optimum (Theorem 3,
+Proposition 4); `misaligned-recommender-slow-human` checks every 200 ticks and switches the robot
+off below the start; `misaligned-recommender-optimal` names the most and the least sensitive
+attribute with impact minimization and reaches the optimum exactly (Proposition 5);
+`misaligned-recommender-wasteful` destroys the unmentioned for a sliver of proxy and should be
+switched off at once (Proposition 3); `misaligned-logarithmic-floor` is our world with the floor at
+0.01, where the fixed proxy's limit is −3.22 against an optimum of 9.21.
+
+Every closed form holds: Theorem 1, all fourteen proxy subsets' limits, Propositions 2–5 and Theorem
+3, and Theorem 2's "arbitrarily low" on the logarithmic world (−7.82 at floor 0.001). Two things the
+paper does not say are now measured: its own example reads at floor 0, because the sum of squares
+stops increasing below zero (with a floor of −5 the flow still leaves c and d at 0) and its utility
+is bounded below on the ball, so the figure shows net loss, not unbounded loss; and Figure 2's modest
+peak needs an inefficient optimizer, since the efficient one delivers +4 before it loses. The
+interval sweep puts the human's reaction limit at δ × rate well below the 6.4 units of path to the
+optimum: the gain falls from +4.00 at δ ≤ 10 ticks to −0.23 at 200. Three `misaligned-*` sweeps
+cover the climber's step by proxy pair, the human's interval and the floor in both worlds. See
+[the findings](docs/superpowers/specs/2026-10-14-misaligned-ai-findings.md) and
+[the design](docs/superpowers/specs/2026-10-14-misaligned-ai-design.md).
+
 ### Emergent polarity (Cederman 1994; 1997 chapters 4–5)
 
 `polarity` reconstructs sovereign capitals and provinces on a bounded cardinal
