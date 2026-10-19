@@ -42,8 +42,11 @@ runs, per-world rules-panel variants and survey wiring. `graph.rs` already suppl
 
 **Cited, not reproduced** (catalog and findings only): Fernández Domingos et al., Sci. Rep. 12:8492
 (2022), a lab experiment on delegation in the collective-risk dilemma; Ishowo-Oloko et al., Nat.
-Mach. Intell. 1:517 (2019), the "machine penalty," human data (its OSF deposit, said to hold code,
-was unreachable on 2026-10-16; retry); Crandall et al., Nat. Commun. 9:233 (2018), S++ and S#, whose
+Mach. Intell. 1:517 (2019), the "machine penalty," human data (its OSF deposit, 10.17605/OSF.IO/AK3TF,
+fetched on 2026-10-18 into `papers/alignment/code/ishowo-oloko-et-al-2019-natmachintell-osf-ak3tf/`,
+holds the experiment server with a JavaScript S++ (`hagent/jefe_plus.js` and its experts), the
+per-round logs and aspiration data behind Fig. 3, and the R code for Figs. 1–3 and Table 1; it
+makes S++ reproducible from code in a later milestone, and is not executed here); Crandall et al., Nat. Commun. 9:233 (2018), S++ and S#, whose
 Supplementary Notes and the 2014 JAIR paper are now local for a later milestone.
 
 ## Goal and intended use
