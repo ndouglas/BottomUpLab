@@ -29,8 +29,9 @@ runs, per-world rules-panel variants and survey wiring. `graph.rs` already suppl
   and Algorithms I–II come from the arXiv source (`SI/2supp.tex`, saved under
   `papers/alignment/code/guo-et-al-2023-iscience-supplement-arxiv-source/`). No code.
 - Si, He, Shen and Tanimoto, "Cooperative bots exhibit nuanced effects on cooperation across
-  strategic frameworks," arXiv 2406.14913v1, published J. R. Soc. Interface 22:20240427 (2025; the
-  journal PDF is not yet local). The Prisoner's Dilemma R = 1, S = −r, T = 1 + r, P = 0 with
+  strategic frameworks," J. R. Soc. Interface 22:20240427 (2025; received 24 June 2024, accepted
+  25 October 2024; same title as the preprint, arXiv 2406.14913v1; both local). The journal version
+  is the reference text. The Prisoner's Dilemma R = 1, S = −r, T = 1 + r, P = 0 with
   discrete, continuous and mixed strategies, well-mixed and on a Moore lattice. **Code:** Zenodo
   10.5281/zenodo.13957161 (22 C++ files, one per panel), saved under
   `papers/alignment/code/si-et-al-2024-jrsi-cooperative-bots-zenodo-13957161/`.
@@ -77,9 +78,12 @@ Several findings are in view before any measurement and are to be tested, not as
   their own β = 0.1 snapshots are still changing at 10⁵.
 - Guo attributes the network reversal in snowdrift (cooperation falls with φ on the lattice, rises
   on random and scale-free graphs) to hubs by inference. A discriminating test is possible.
-- Si's code differs from the prose: the mixed strategy redraws an action per neighbor (the Fig. A1
-  example draws once per round), the well-mixed N is 10⁴ (the prose says 500), and κ is a
-  temperature on the lattice but an inverse temperature in the well-mixed files.
+- Si's code differs from the prose: the mixed strategy redraws an action per neighbor (the
+  journal's introduction says "in each interaction," but the Fig. A1 example draws once per round);
+  N is 10⁴ in the code, 10⁵ for both structures in the journal (§2.4) and 500 well-mixed in the
+  preprint; κ is a temperature on the lattice but an inverse temperature in the well-mixed files;
+  and the deposited Fig. 6 code is well-mixed (no neighbor table, κ = 10^m) while the journal's
+  Fig. 6 caption says "regular lattice".
 
 ## Binding constraints
 
@@ -161,7 +165,9 @@ prose reading is the named variant.
   actions redrawn per neighbor interaction, the code; variant `per_round` draws one action per
   player per round, Fig. A1).
 - Lattice: 100 × 100 Moore, periodic, N = 10⁴, payoff summed; κ = 0.1 as temperature (β = 10).
-  Well-mixed: N = 10⁴ (variant `prose_n` = 500), expected payoffs from counts, β = 10^m.
+  Well-mixed: N = 10⁴ (variants `journal_n` = 10⁵, `preprint_n` = 500), expected payoffs from
+  counts, β = 10^m. The lattice also has `journal_n` (316 × 316 = 99,856, the nearest square;
+  ours).
 - One round is N focal picks with replacement; only ordinary players act; one random neighbor or
   random other as model; 10⁴ rounds, the mean of the last 2,000, 100 runs. Ordinary players start
   uniform in [0, 1] (continuous, mixed) or as the code does (discrete). Bot fraction ρ is a
@@ -216,10 +222,10 @@ Fixed on 2026-10-17, before any measurement. "SE" is the standard error over ind
 | S1 | Docking against the published code | at 27 lattice points (r ∈ {0.05, 0.1, 0.15} × ρ ∈ {0, 0.3, 0.5} × three frameworks) and 9 well-mixed points (r ∈ {0.05, 0.1, 0.15} × three frameworks, ρ = 0.3), our mean minus theirs is within 3 combined SE, or under 0.02 in absolute value |
 | S2 | Fig. 1: bots raise well-mixed cooperation; continuous and mixed stay near θ up to r ≈ 0.1 at ρ = 0.5 | cooperation at each ρ ∈ {0.1, 0.3, 0.5} exceeds ρ = 0 at every r in {0, 0.04, …, 0.2}; at ρ = 0.5, continuous and mixed are ≥ 0.8 for every r ≤ 0.1 |
 | S3 | Fig. 3: on the lattice, bots suppress cooperation in discrete and continuous for r < 0.13 and promote it in mixed at every r | the ρ = 0.5 mean is below ρ = 0 by more than 2 SE at every r < 0.13 on the grid for discrete and continuous, and above ρ = 0 by more than 2 SE at every r for mixed |
-| S4 | Fig. 6: an interior optimum θ in mixed at r = 0.01 | at ρ = 0.3, the argmax over θ ∈ {0, 0.1, …, 1} lies strictly inside (0, 1) and exceeds the θ = 1 mean by more than 2 SE |
+| S4 | Fig. 6: an interior optimum θ in mixed at r = 0.01 | at ρ = 0.3, the argmax over θ ∈ {0, 0.1, …, 1} lies strictly inside (0, 1) and exceeds the θ = 1 mean by more than 2 SE. Judged twice, each with its own verdict: on the lattice (the journal caption, the claim as published) and well-mixed (the deposited code, the docking reading) |
 
 Evaluation rows (reported, not scored as the paper's claims): S3 under `per_round`; S2 under
-`prose_n`.
+`preprint_n` and `journal_n`; S3 under `journal_n` if the pilot shows it affordable.
 
 ### Coloring
 
