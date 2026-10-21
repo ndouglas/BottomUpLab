@@ -28,6 +28,7 @@ mod farol;
 mod firms;
 pub(crate) mod foraging_shortcuts;
 mod gridworlds;
+mod hybrid;
 mod image;
 mod minds1;
 mod minds2;
@@ -67,6 +68,7 @@ pub fn all() -> Vec<Claim> {
         assistance::claims(),
         gridworlds::claims(),
         misaligned::claims(),
+        hybrid::claims(),
         negotiable::claims(),
         ants::claims(),
         bali::claims(),

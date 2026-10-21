@@ -33,7 +33,7 @@ fn negotiable_registration_is_exact_and_unique() {
 
 #[test]
 fn negotiable_legacy_catalog_metadata_is_byte_identical() {
-    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.") && !c.id.starts_with("hybrid.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
     rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
     assert_eq!(rows.len(), 817);
     assert_eq!(
@@ -407,14 +407,18 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     let export = "\npub mod negotiable;\n";
     assert_eq!(text.matches(export).count(), 1);
     assert_eq!(export.len(), 21);
-    let original = text.replacen(export, "", 1);
+    // Milestone 42 appends its own export after this one; set it aside first.
+    let hybrid = "\n/// Hybrid human\u{2013}machine populations: bots as a second species (milestone 42).\npub mod hybrid;\n";
+    assert_eq!(text.matches(hybrid).count(), 1);
+    assert!(text.ends_with(hybrid));
+    let original = text.replacen(hybrid, "", 1).replacen(export, "", 1);
     // Exact eb1555b library, including both pre-existing model registrations.
     assert_eq!(original.len(), 1949);
     assert_eq!(
         records::sha256(original.as_bytes()),
         "260322051e3e1a94834471168a64414a385bb99dfe32f0b65fc5eb5e41a1e3cc"
     );
-    assert_eq!(library.len(), original.len() + 21);
+    assert_eq!(library.len(), original.len() + 21 + hybrid.len());
     let bytes=include_bytes!("../../../crates/sugarscape-core/src/browser_experiments/fixtures/key-registration-compatibility.json");
     let mut metadata: Value = serde_json::from_slice(bytes).unwrap();
     let bindings = metadata["bindings"].as_array_mut().unwrap();
