@@ -3,6 +3,7 @@
 //! bots, Guo et al.'s (T, S) plane with probabilistic bots, Si et al.'s r-family Prisoner's
 //! Dilemma in three strategy frameworks, and Shirado and Christakis's network coloring game with
 //! noisy bots. Exact references are pure functions of the config.
+pub mod booker;
 pub mod engine;
 pub mod exact;
 pub mod graph;
