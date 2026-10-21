@@ -8,3 +8,4 @@ pub mod engine;
 pub mod exact;
 pub mod graph;
 pub mod guo;
+pub mod si;
