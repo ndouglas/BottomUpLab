@@ -3,7 +3,7 @@
 //! paper (`source`) stay on the preset as its reference.
 
 /// Titles by preset id, in catalog order.
-pub const TITLES: [(&str, &str); 458] = [
+pub const TITLES: [(&str, &str); 466] = [
     (
         "ii-1-instant",
         "Sugar grows back at once: agents climb the best ridges and the poorly endowed starve",
@@ -1557,6 +1557,14 @@ pub const TITLES: [(&str, &str); 458] = [
     ("misaligned-recommender-optimal", "Moving from the least-valued attribute to the most reaches the optimum"),
     ("misaligned-recommender-wasteful", "A robot that destroys what it was not told about should be switched off at once"),
     ("misaligned-logarithmic-floor", "With no floor under the unmentioned, the loss has no bottom"),
+    ("hybrid-booker-samaritan", "Samaritan bots among noisy imitators on a lattice"),
+    ("hybrid-booker-discriminatory", "Bots that mirror their partner, among sharp imitators"),
+    ("hybrid-guo-snowdrift-lattice", "Coin-flip bots in a snowdrift game on a lattice"),
+    ("hybrid-guo-snowdrift-scale-free", "The same bots and game on a scale-free network"),
+    ("hybrid-guo-hub-bots", "Ten cooperative bots on the hubs of a scale-free network"),
+    ("hybrid-si-mixed-lattice", "Bots that defect one time in ten, among imitators on a lattice"),
+    ("hybrid-si-discrete-lattice", "Fixed cooperators and defectors among imitators on a lattice"),
+    ("hybrid-coloring-central", "Three slightly noisy bots at the center of a coloring game"),
     (
         "collusion-calvano",
         "Two pricing algorithms learn to keep prices high, but not as a best response",
