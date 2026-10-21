@@ -61,10 +61,34 @@ pub const PROBE: f64 = 1e-12;
 
 /// The zeros of f on [lo, hi]: f is sampled at `cells + 1` evenly spaced points; an exact zero is
 /// a root, and each strict sign change between neighboring samples is bisected until the bracket
-/// cannot shrink. A root is stable when the flow points toward it on every side it has inside the
-/// interval (f > 0 just left of it, f < 0 just right), read at ±`PROBE`.
+/// cannot shrink. Beside an exact zero the sign change is sought between the zero's offset point
+/// (x ± `PROBE`) and the neighboring sample, so a root strictly inside the adjacent cell is found
+/// too (flows such as ρ(1 − ρ)g(ρ) vanish exactly at the ends). A root is stable when the flow
+/// points toward it on every side it has inside the interval (f > 0 just left of it, f < 0 just
+/// right), read at ±`PROBE`.
 pub fn roots(f: impl Fn(f64) -> f64, lo: f64, hi: f64, cells: usize) -> Vec<Root> {
     let at = |k: usize| lo + (hi - lo) * k as f64 / cells as f64;
+    // The point where f changes sign in (a, b), given f(a) = fa and a strict sign change.
+    let bisect = |mut a: f64, mut b: f64, fa: f64| {
+        for _ in 0..200 {
+            let m = 0.5 * (a + b);
+            if m <= a || m >= b {
+                break;
+            }
+            let fm = f(m);
+            if fm == 0.0 {
+                a = m;
+                b = m;
+                break;
+            }
+            if (fm < 0.0) == (fa < 0.0) {
+                a = m;
+            } else {
+                b = m;
+            }
+        }
+        0.5 * (a + b)
+    };
     let mut xs = vec![];
     let (mut px, mut pf) = (at(0), f(at(0)));
     if pf == 0.0 {
@@ -74,27 +98,26 @@ pub fn roots(f: impl Fn(f64) -> f64, lo: f64, hi: f64, cells: usize) -> Vec<Root
         let x = at(k);
         let fx = f(x);
         if fx == 0.0 {
-            xs.push(x);
-        } else if pf * fx < 0.0 {
-            let (mut a, mut b) = (px, x);
-            for _ in 0..200 {
-                let m = 0.5 * (a + b);
-                if m <= a || m >= b {
-                    break;
-                }
-                let fm = f(m);
-                if fm == 0.0 {
-                    a = m;
-                    b = m;
-                    break;
-                }
-                if (fm < 0.0) == (pf < 0.0) {
-                    a = m;
-                } else {
-                    b = m;
+            // Left of an exact zero: from the previous sample to just short of it.
+            let xl = x - PROBE;
+            if pf != 0.0 && xl > px {
+                let fl = f(xl);
+                if fl != 0.0 && pf * fl < 0.0 {
+                    xs.push(bisect(px, xl, pf));
                 }
             }
-            xs.push(0.5 * (a + b));
+            xs.push(x);
+        } else if pf == 0.0 {
+            // Right of an exact zero: from just past it to this sample.
+            let xr = px + PROBE;
+            if xr < x {
+                let fr = f(xr);
+                if fr != 0.0 && fr * fx < 0.0 {
+                    xs.push(bisect(xr, x, fr));
+                }
+            }
+        } else if pf * fx < 0.0 {
+            xs.push(bisect(px, x, pf));
         }
         (px, pf) = (x, fx);
     }
@@ -128,6 +151,20 @@ mod tests {
         assert_eq!(log_sum_exp(&[]), f64::NEG_INFINITY);
         assert!((ln_factorial(10) - 15.104_412_573_075_516).abs() < 1e-12);
         assert_eq!(ln_factorial(0), 0.0);
+    }
+
+    #[test]
+    fn roots_find_a_root_inside_the_cell_next_to_an_exact_zero() {
+        // x(x − 0.0004): an exact zero at 0 and a root strictly inside the first cell (0, 0.001).
+        let r = roots(|x| x * (x - 0.0004), 0.0, 1.0, 1000);
+        assert_eq!(r.len(), 2, "{r:?}");
+        assert!(r[0].x == 0.0 && r[0].stable, "{r:?}");
+        assert!((r[1].x - 0.0004).abs() < 1e-15 && !r[1].stable, "{r:?}");
+        // The mirror image at the upper end: (x − 1)(x − 0.9996) has its roots at 1 and 0.9996.
+        let r = roots(|x| (x - 1.0) * (x - 0.9996), 0.0, 1.0, 1000);
+        assert_eq!(r.len(), 2, "{r:?}");
+        assert!((r[0].x - 0.9996).abs() < 1e-15 && r[0].stable, "{r:?}");
+        assert!(r[1].x == 1.0 && !r[1].stable, "{r:?}");
     }
 
     #[test]

@@ -213,4 +213,12 @@ mod tests {
             "bots keep both ends open"
         );
     }
+
+    #[test]
+    fn a_root_in_the_cell_next_to_an_exact_endpoint_zero_is_still_found() {
+        // ρ* = 0.99971 sits inside the last cell, beside the exact zero at ρ = 1.
+        let phase = SD.phase_closed(0.45, 0.08);
+        assert_eq!(phase, Phase::Coexistence);
+        assert_eq!(phase_numeric(&SD, 0.45, 0.08), Some(phase));
+    }
 }
