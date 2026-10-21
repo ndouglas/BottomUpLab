@@ -24,6 +24,7 @@ use crate::firms::{FirmsConfig, FirmsWorld};
 use crate::geosim::{GeosimConfig, GeosimWorld};
 use crate::gridworlds::{GridworldsConfig, GridworldsWorld};
 use crate::hoard::{HoardConfig, HoardWorld};
+use crate::hybrid::{HybridConfig, HybridWorld};
 use crate::image::{ImageConfig, ImageWorld};
 use crate::line::{LineConfig, LineWorld};
 use crate::misaligned::{MisalignedConfig, MisalignedWorld};
@@ -85,13 +86,14 @@ pub enum ModelKind {
     Assistance,
     Gridworlds,
     Misaligned,
+    Hybrid,
     Polarity,
     Geosim,
     DemocraticPeace,
 }
 
 impl ModelKind {
-    pub const ALL: [ModelKind; 35] = [
+    pub const ALL: [ModelKind; 36] = [
         ModelKind::Sugarscape,
         ModelKind::Schelling,
         ModelKind::Ring,
@@ -124,6 +126,7 @@ impl ModelKind {
         ModelKind::Assistance,
         ModelKind::Gridworlds,
         ModelKind::Misaligned,
+        ModelKind::Hybrid,
         ModelKind::Polarity,
         ModelKind::Geosim,
         ModelKind::DemocraticPeace,
@@ -163,6 +166,7 @@ impl ModelKind {
             ModelKind::Assistance => "assistance",
             ModelKind::Gridworlds => "gridworlds",
             ModelKind::Misaligned => "misaligned",
+            ModelKind::Hybrid => "hybrid",
             ModelKind::Polarity => "polarity",
             ModelKind::Geosim => "geosim",
             ModelKind::DemocraticPeace => "democratic_peace",
@@ -205,6 +209,7 @@ impl ModelKind {
             ModelKind::Assistance => crate::assistance::schema(),
             ModelKind::Gridworlds => crate::gridworlds::schema(),
             ModelKind::Misaligned => crate::misaligned::schema(),
+            ModelKind::Hybrid => crate::hybrid::schema(),
             ModelKind::Polarity => crate::polarity::schema(),
             ModelKind::Geosim => crate::geosim::schema(),
             ModelKind::DemocraticPeace => crate::democratic_peace::schema(),
@@ -253,6 +258,7 @@ pub enum ModelConfig {
     Assistance(AssistanceConfig),
     Gridworlds(GridworldsConfig),
     Misaligned(MisalignedConfig),
+    Hybrid(HybridConfig),
     Polarity(PolarityConfig),
     Geosim(GeosimConfig),
     DemocraticPeace(DemocraticPeaceConfig),
@@ -293,6 +299,7 @@ enum Tagged<'a> {
     Assistance(&'a AssistanceConfig),
     Gridworlds(&'a GridworldsConfig),
     Misaligned(&'a MisalignedConfig),
+    Hybrid(&'a HybridConfig),
     Polarity(&'a PolarityConfig),
     Geosim(&'a GeosimConfig),
     DemocraticPeace(&'a DemocraticPeaceConfig),
@@ -340,6 +347,7 @@ impl Serialize for ModelConfig {
             ModelConfig::Assistance(c) => Tagged::Assistance(c).serialize(s),
             ModelConfig::Gridworlds(c) => Tagged::Gridworlds(c).serialize(s),
             ModelConfig::Misaligned(c) => Tagged::Misaligned(c).serialize(s),
+            ModelConfig::Hybrid(c) => Tagged::Hybrid(c).serialize(s),
             ModelConfig::Polarity(c) => Tagged::Polarity(c).serialize(s),
             ModelConfig::Geosim(c) => Tagged::Geosim(c).serialize(s),
             ModelConfig::DemocraticPeace(c) => Tagged::DemocraticPeace(c).serialize(s),
@@ -382,6 +390,7 @@ impl ModelConfig {
             ModelConfig::Assistance(_) => ModelKind::Assistance,
             ModelConfig::Gridworlds(_) => ModelKind::Gridworlds,
             ModelConfig::Misaligned(_) => ModelKind::Misaligned,
+            ModelConfig::Hybrid(_) => ModelKind::Hybrid,
             ModelConfig::Polarity(_) => ModelKind::Polarity,
             ModelConfig::Geosim(_) => ModelKind::Geosim,
             ModelConfig::DemocraticPeace(_) => ModelKind::DemocraticPeace,
@@ -511,6 +520,9 @@ impl ModelConfig {
             "misaligned" => serde_json::from_value(value)
                 .map(ModelConfig::Misaligned)
                 .map_err(|e| FieldError::new("config", e.to_string())),
+            "hybrid" => serde_json::from_value(value)
+                .map(ModelConfig::Hybrid)
+                .map_err(|e| FieldError::new("config", e.to_string())),
             "collusion" => serde_json::from_value(value)
                 .map(ModelConfig::Collusion)
                 .map_err(|e| FieldError::new("config", e.to_string())),
@@ -523,7 +535,7 @@ impl ModelConfig {
             _ => Err(FieldError::new(
                 "model",
                 format!(
-                    "unknown model {tag:?} (expected sugarscape, schelling, ring, anasazi, civil, spatial, tags, culture, classes, ethno, opinions, structure, dpd, norms, agreement, image, farol, ants, thresholds, retirement, punishment, zi, bali, line, tipping, hoard, firms, collusion, auctions, assistance, gridworlds, misaligned or polarity)"
+                    "unknown model {tag:?} (expected sugarscape, schelling, ring, anasazi, civil, spatial, tags, culture, classes, ethno, opinions, structure, dpd, norms, agreement, image, farol, ants, thresholds, retirement, punishment, zi, bali, line, tipping, hoard, firms, collusion, auctions, assistance, gridworlds, misaligned, hybrid or polarity)"
                 ),
             )),
         }
@@ -563,6 +575,7 @@ impl ModelConfig {
             ModelConfig::Assistance(c) => c.validate(),
             ModelConfig::Gridworlds(c) => c.validate(),
             ModelConfig::Misaligned(c) => c.validate(),
+            ModelConfig::Hybrid(c) => c.validate(),
             ModelConfig::Polarity(c) => c.validate(),
             ModelConfig::Geosim(c) => c.validate(),
             ModelConfig::DemocraticPeace(c) => c.validate(),
@@ -605,6 +618,7 @@ impl ModelConfig {
             ModelConfig::Assistance(c) => set_path(c, path, value).map(ModelConfig::Assistance),
             ModelConfig::Gridworlds(c) => set_path(c, path, value).map(ModelConfig::Gridworlds),
             ModelConfig::Misaligned(c) => set_path(c, path, value).map(ModelConfig::Misaligned),
+            ModelConfig::Hybrid(c) => set_path(c, path, value).map(ModelConfig::Hybrid),
             ModelConfig::Polarity(c) => set_path(c, path, value).map(ModelConfig::Polarity),
             ModelConfig::Geosim(c) => set_path(c, path, value).map(ModelConfig::Geosim),
             ModelConfig::DemocraticPeace(c) => {
@@ -657,7 +671,8 @@ impl ModelConfig {
             | ModelConfig::Auctions(_)
             | ModelConfig::Assistance(_)
             | ModelConfig::Gridworlds(_)
-            | ModelConfig::Misaligned(_) => None,
+            | ModelConfig::Misaligned(_)
+            | ModelConfig::Hybrid(_) => None,
         }
     }
 
@@ -704,6 +719,7 @@ impl ModelConfig {
             ModelConfig::Assistance(_) => crate::assistance::series_names(),
             ModelConfig::Gridworlds(_) => crate::gridworlds::series_names(),
             ModelConfig::Misaligned(_) => crate::misaligned::series_names(),
+            ModelConfig::Hybrid(_) => crate::hybrid::series_names(),
             ModelConfig::Polarity(_) => crate::polarity::series_names(),
             ModelConfig::Geosim(_) => crate::geosim::series_names(),
             ModelConfig::DemocraticPeace(_) => crate::democratic_peace::series_names(),
@@ -912,6 +928,7 @@ pub enum ModelWorld {
     Assistance(Box<AssistanceWorld>),
     Gridworlds(Box<GridworldsWorld>),
     Misaligned(Box<MisalignedWorld>),
+    Hybrid(Box<HybridWorld>),
     Polarity(Box<PolarityWorld>),
     Geosim(Box<GeosimWorld>),
     DemocraticPeace(Box<DemocraticPeaceWorld>),
@@ -992,6 +1009,7 @@ impl ModelWorld {
             ModelConfig::Misaligned(c) => {
                 ModelWorld::Misaligned(Box::new(MisalignedWorld::new(c, seed)?))
             }
+            ModelConfig::Hybrid(c) => ModelWorld::Hybrid(Box::new(HybridWorld::new(c, seed)?)),
             ModelConfig::Collusion(c) => {
                 ModelWorld::Collusion(Box::new(CollusionWorld::new(c, seed)?))
             }
@@ -1032,6 +1050,7 @@ impl ModelWorld {
             ModelWorld::Assistance(_) => ModelKind::Assistance,
             ModelWorld::Gridworlds(_) => ModelKind::Gridworlds,
             ModelWorld::Misaligned(_) => ModelKind::Misaligned,
+            ModelWorld::Hybrid(_) => ModelKind::Hybrid,
             ModelWorld::Polarity(_) => ModelKind::Polarity,
             ModelWorld::Geosim(_) => ModelKind::Geosim,
             ModelWorld::DemocraticPeace(_) => ModelKind::DemocraticPeace,
@@ -1072,6 +1091,7 @@ impl ModelWorld {
             ModelWorld::Assistance(w) => w.as_ref(),
             ModelWorld::Gridworlds(w) => w.as_ref(),
             ModelWorld::Misaligned(w) => w.as_ref(),
+            ModelWorld::Hybrid(w) => w.as_ref(),
             ModelWorld::Polarity(w) => w.as_ref(),
             ModelWorld::Geosim(w) => w.as_ref(),
             ModelWorld::DemocraticPeace(w) => w.as_ref(),
@@ -1112,6 +1132,7 @@ impl ModelWorld {
             ModelWorld::Assistance(w) => w.as_mut(),
             ModelWorld::Gridworlds(w) => w.as_mut(),
             ModelWorld::Misaligned(w) => w.as_mut(),
+            ModelWorld::Hybrid(w) => w.as_mut(),
             ModelWorld::Polarity(w) => w.as_mut(),
             ModelWorld::Geosim(w) => w.as_mut(),
             ModelWorld::DemocraticPeace(w) => w.as_mut(),
@@ -1239,6 +1260,7 @@ impl ModelWorld {
             ModelWorld::Assistance(w) => copy_without_history!(Assistance, w),
             ModelWorld::Gridworlds(w) => copy_without_history!(Gridworlds, w),
             ModelWorld::Misaligned(w) => copy_without_history!(Misaligned, w),
+            ModelWorld::Hybrid(w) => copy_without_history!(Hybrid, w),
             _ => return None,
         };
         Some(Checkpoint { world, tick })
@@ -1319,6 +1341,9 @@ impl ModelWorld {
                 restore_into!(live, kept)
             }
             (ModelWorld::Misaligned(live), ModelWorld::Misaligned(kept)) => {
+                restore_into!(live, kept)
+            }
+            (ModelWorld::Hybrid(live), ModelWorld::Hybrid(kept)) => {
                 restore_into!(live, kept)
             }
             _ => return Err("the keyframe is of another model".into()),
@@ -1993,6 +2018,7 @@ mod tests {
                 "assistance",
                 "gridworlds",
                 "misaligned",
+                "hybrid",
                 "polarity",
                 "geosim",
                 "democratic_peace"
