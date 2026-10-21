@@ -264,7 +264,7 @@ export interface Config {
 }
 
 /** The models the playground runs (milestones 9–13). */
-export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace' | 'gridworlds' | 'misaligned';
+export type ModelKind = 'sugarscape' | 'schelling' | 'ring' | 'anasazi' | 'civil' | 'spatial' | 'tags' | 'culture' | 'classes' | 'ethno' | 'opinions' | 'structure' | 'dpd' | 'norms' | 'agreement' | 'image' | 'farol' | 'ants' | 'thresholds' | 'retirement' | 'punishment' | 'zi' | 'bali' | 'line' | 'tipping' | 'hoard' | 'firms' | 'collusion' | 'auctions' | 'assistance' | 'polarity' | 'geosim' | 'democratic_peace' | 'gridworlds' | 'misaligned' | 'hybrid';
 
 /** A fraction range (Schelling's preferences). */
 export interface FRange { min: number; max: number }
@@ -683,7 +683,7 @@ export interface AgreementConfig {
   stop_at: number;
 }
 
-export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig | GridworldsConfig | MisalignedConfig;
+export type ModelConfig = Config | SchellingConfig | RingConfig | AnasaziConfig | CivilConfig | TagsConfig | SpatialConfig | CultureConfig | ClassesConfig | EthnoConfig | OpinionsConfig | StructureConfig | DpdConfig | NormsConfig | AgreementConfig | ImageConfig | FarolConfig | AntsConfig | ThresholdsConfig | RetirementConfig | PunishmentConfig | ZiConfig | BaliConfig | LineConfig | TippingConfig | HoardConfig | FirmsConfig | CollusionConfig | AuctionsConfig | AssistanceConfig | PolarityConfig | GeosimConfig | DemocraticPeaceConfig | GridworldsConfig | MisalignedConfig | HybridConfig;
 
 /**
  * Arthur's El Farol bar and Challet and Zhang's minority game (milestone 23), with Challet, Marsili
@@ -1481,7 +1481,7 @@ export interface AgreementStats {
   stable_at: number;
 }
 
-export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats | GridworldsStats | MisalignedStats;
+export type ModelStats = Snapshot | SchellingStats | RingStats | AnasaziStats | CivilStats | TagsStats | SpatialStats | CultureStats | ClassesStats | EthnoStats | OpinionsStats | StructureStats | DpdStats | NormsStats | AgreementStats | ImageStats | FarolStats | AntsStats | ThresholdsStats | RetirementStats | PunishmentStats | ZiStats | BaliStats | HoardStats | FirmsStats | CollusionStats | AuctionsStats | AssistanceStats | PolarityStats | GeosimStats | DemocraticPeaceStats | GridworldsStats | MisalignedStats | HybridStats;
 
 export interface SiteView {
   x: number;
@@ -2222,7 +2222,7 @@ export interface AgreementInspection {
   agent: null;
 }
 
-export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection | GridworldsInspection | MisalignedInspection;
+export type AnyInspection = Inspection | SchellingInspection | RingInspection | AnasaziInspection | CivilInspection | TagsInspection | SpatialInspection | CultureInspection | ClassesInspection | EthnoInspection | OpinionsInspection | StructureInspection | DpdInspection | NormsInspection | AgreementInspection | ImageInspection | FarolInspection | AntsInspection | ThresholdsInspection | RetirementInspection | PunishmentInspection | ZiInspection | BaliInspection | LineInspection | TippingInspection | HoardInspection | FirmsInspection | CollusionInspection | AuctionsInspection | AssistanceInspection | PolarityInspection | GeosimInspection | DemocraticPeaceInspection | GridworldsInspection | MisalignedInspection | HybridInspection;
 
 /**
  * A sugarscape color mode, or (Schelling) `color`, `satisfaction`, `preference`, or (the anasazi)
@@ -2470,6 +2470,33 @@ export interface MisalignedUtilityInspection {
   interactions: number; switched_off: boolean; tick: number; outcome: MisalignedOutcome; agent: null;
 }
 export type MisalignedInspection = MisalignedAttributeInspection | MisalignedUtilityInspection;
+
+/** Hybrid human–machine populations (milestone 42); structure, population, framework, θ, the step and the time limit apply at reset. */
+export interface HybridConfig {
+  model: 'hybrid'; world: 'booker' | 'guo' | 'si' | 'coloring';
+  structure: 'well_mixed' | 'lattice' | 'erdos_renyi' | 'barabasi_albert'; side: number; nodes: number; neighborhood: 'von_neumann' | 'moore'; periodic: boolean; mean_degree: number; links: number; graph_seed: number | null;
+  bots: 'count' | 'fraction' | 'bernoulli'; bot_count: number; bot_fraction: number; placement: 'random' | 'hubs' | 'leaves';
+  beta: number; step: 'paper' | 'sweep'; accumulate: 'sum' | 'mean'; initial_cooperation: number;
+  bot_kind: 'samaritan' | 'discriminatory' | 'malicious'; b: number; c: number;
+  t: number; s: number; phi: number; bot_action: 'redraw' | 'frozen' | 'per_interaction';
+  r: number; theta: number; framework: 'discrete' | 'continuous' | 'mixed'; mixed_draw: 'per_interaction' | 'per_round'; division: 'integer' | 'float';
+  noise: number; errant: number; reaction: number; bot_interval: number; time_limit: number;
+}
+export interface HybridStats {
+  tick: number; cooperation: number | null; bot_cooperation: number | null; bot_share: number | null; reference: number | null;
+  conflicts: number | null; solved_at: number | null; game_time: number | null;
+}
+interface HybridCell { world: HybridConfig['world']; tick: number; x: number; y: number; reference: number | null; agent: null }
+export interface HybridEmptyInspection extends HybridCell { panel: 'empty' }
+export interface HybridNodeInspection extends HybridCell {
+  panel: 'node'; node: number; bot: boolean; strategy: number; action: 'C' | 'D'; degree: number; payoff: number | null; cooperation: number | null;
+  /** Booker: the largest stable replicator rest point; Guo: the replicator phase. */
+  replicator: number | null; phase: 'full_c' | 'full_d' | 'coexistence' | 'bistable' | null;
+}
+export interface HybridColoringInspection extends HybridCell {
+  panel: 'node'; node: number; bot: boolean; color: number; degree: number; conflicts_here: number; solutions: number; conflicts: number; time: number; solved_at: number | null;
+}
+export type HybridInspection = HybridEmptyInspection | HybridNodeInspection | HybridColoringInspection;
 
 /** Cederman 1994/1997 reconstruction; every control requires reset. */
 export interface PolarityConfig {

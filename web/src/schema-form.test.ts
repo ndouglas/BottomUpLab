@@ -14,6 +14,10 @@ const ring = (): RingConfig => ({
 const param = (p: Partial<Param> & Pick<Param, 'path' | 'kind'>): Param => ({ label: p.path, apply: 'reset', group: 'Setup', ...p });
 
 describe('the schema form', () => {
+  it('rebuilds the hybrid panel per world', () => {
+    expect(schemaVariant('hybrid', { model: 'hybrid', world: 'coloring' } as unknown as ModelConfig)).toBe('coloring');
+  });
+
   it('rebuilds the misaligned panel per world, and no other panel per config', () => {
     const recommender = { model: 'misaligned', world: 'recommender' } as unknown as ModelConfig;
     const logarithmic = { model: 'misaligned', world: 'logarithmic' } as unknown as ModelConfig;

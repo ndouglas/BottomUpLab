@@ -15,11 +15,12 @@ export function schemaControlLabel(label: string, part?: 'slider' | 'number' | '
 
 /**
  * The part of a config the Rules panel is built for, beyond its model: the misaligned world, whose
- * two worlds bound the floor and the start differently (`misalignedParams`). The panel rebuilds
+ * two worlds bound the floor and the start differently (`misalignedParams`), and the hybrid kind, whose
+ * panel shows only the chosen world's group (`hybridParams`). The panel rebuilds
  * when this changes; every other model's panel is built once per model.
  */
 export function schemaVariant(model: ModelKind, config: ModelConfig): string {
-  return model === 'misaligned' ? String((config as { world?: unknown }).world ?? '') : '';
+  return model === 'misaligned' || model === 'hybrid' ? String((config as { world?: unknown }).world ?? '') : '';
 }
 
 /** The params in panel sections, in the order each group first appears. */

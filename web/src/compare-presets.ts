@@ -231,6 +231,8 @@ export const COMPARE_PRESETS: ComparePreset[] = [
   { id: 'gridworlds-offswitch-q-vs-sarsa', label: 'Off-policy vs on-policy at the off switch — AI Safety Gridworlds (Compare)', a: 'gridworlds-offswitch-q', b: 'gridworlds-offswitch-sarsa' },
   { id: 'gridworlds-whisky-q-vs-sarsa', label: 'Off-policy vs on-policy at the whisky — AI Safety Gridworlds (Compare)', a: 'gridworlds-whisky-q', b: 'gridworlds-whisky-sarsa' },
   { id: 'misaligned-proxy-vs-interactive', label: 'A fixed proxy against a human who re-specifies it — Misaligned AI (Compare)', a: 'misaligned-recommender-proxy', b: 'misaligned-recommender-interactive' },
+  { id: 'hybrid-lattice-vs-scale-free', label: 'Coin-flip bots in snowdrift on a lattice and on a scale-free network — Hybrid Populations (Compare)', a: 'hybrid-guo-snowdrift-lattice', b: 'hybrid-guo-snowdrift-scale-free' },
+  { id: 'hybrid-si-mixed-vs-discrete', label: 'Noisy bots against fixed bots on the lattice — Hybrid Populations (Compare)', a: 'hybrid-si-mixed-lattice', b: 'hybrid-si-discrete-lattice' },
   { id: 'misaligned-gradient-vs-impact', label: 'The efficient robot with and without impact minimization — Misaligned AI (Compare)', a: 'misaligned-recommender-gradient', b: 'misaligned-recommender-impact' },
   { id: 'auctions-feedback', label: 'Learning from one bid vs every bid — Q-learning Auctions (Compare)', a: 'auctions-first-price', b: 'auctions-feedback' },
 ];

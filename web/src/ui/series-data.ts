@@ -1,5 +1,5 @@
 import type { ChartGroup, HoardCharts, HoardGenerationSeries, Wants } from '../protocol';
-import type { AssistanceConfig, Config, HoardConfig, ModelConfig, ModelKind } from '../types';
+import type { AssistanceConfig, Config, HoardConfig, HybridConfig, ModelConfig, ModelKind } from '../types';
 
 /** uPlot data: x values, then one array per line (null is a gap). */
 export type LineData = [number[], ...(number | null)[][]];
@@ -845,6 +845,11 @@ export const MODEL_CHARTS: Record<Exclude<ModelKind, 'sugarscape'>, ModelChart[]
     { title: 'Sensitivities', lines: [{ key: 'sensitivity_a', label: 'a', color: '--c1' }, { key: 'sensitivity_b', label: 'b', color: '--c2' }, { key: 'sensitivity_c', label: 'c', color: '--c3' }, { key: 'sensitivity_d', label: 'd', color: '--c4' }] },
     { title: 'Human and robot', range: [0, 1], lines: [{ key: 'accepted', label: 'Climber: share of proposals accepted', color: '--c1' }, { key: 'switched_off', label: 'Switched off', color: '--c2' }] },
     { title: 'Interactions', lines: [{ key: 'interactions', label: "Human's interactions", color: '--c1' }] },
+  ],
+  hybrid: [
+    { title: 'Cooperation', range: [0, 1], shown: (c) => (c as HybridConfig).world !== 'coloring', lines: [{ key: 'cooperation', label: 'Humans', color: '--c1' }, { key: 'bot_cooperation', label: 'Bots acting C (Si continuous: mean strategy θ)', color: '--c2' }, { key: 'reference', label: 'Exact reference (Booker, Guo)', color: '--c3' }] },
+    { title: 'Coloring', shown: (c) => (c as HybridConfig).world === 'coloring', lines: [{ key: 'conflicts', label: 'Conflicting edges', color: '--red' }, { key: 'game_time', label: 'Game clock (s)', color: '--c1' }] },
+    { title: 'Bots', range: [0, 1], lines: [{ key: 'bot_share', label: 'Share of the nodes', color: '--c1' }] },
   ],
   assistance: [
     { title: 'Rewards', shown: (c) => (c as AssistanceConfig).game === 'paperclips', lines: [{ key: 'reward', label: 'Both rounds (episode mean)', color: '--c1' }, { key: 'regret', label: "Robot's regret against the θ-optimal item", color: '--red' }] },

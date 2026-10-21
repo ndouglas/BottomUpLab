@@ -9,6 +9,8 @@ import type {
   FirmsInspection,
   CollusionConfig,
   GeosimConfig,
+  HybridConfig,
+  HybridInspection,
   GeosimInspection,
   PolarityConfig,
   PolarityInspection,
@@ -66,7 +68,7 @@ import type {
   TagsInspection,
 } from './types';
 
-export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'assistance', 'polarity', 'geosim', 'democratic_peace', 'gridworlds', 'misaligned'];
+export const MODELS: ModelKind[] = ['sugarscape', 'schelling', 'ring', 'anasazi', 'civil', 'tags', 'spatial', 'culture', 'classes', 'ethno', 'opinions', 'structure', 'dpd', 'norms', 'agreement', 'image', 'farol', 'ants', 'thresholds', 'retirement', 'punishment', 'zi', 'bali', 'line', 'tipping', 'hoard', 'firms', 'collusion', 'auctions', 'assistance', 'polarity', 'geosim', 'democratic_peace', 'gridworlds', 'misaligned', 'hybrid'];
 
 /** The presets menu's group labels. */
 export const MODEL_LABELS: Record<ModelKind, string> = {
@@ -102,6 +104,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
   assistance: 'Assistance Games',
   gridworlds: 'AI Safety Gridworlds',
   misaligned: 'Misaligned AI',
+  hybrid: 'Hybrid Populations',
   polarity: 'Emergent Polarity',
   geosim: 'GeoSim: The Size of Wars',
   democratic_peace: 'Democratic Peace as Selection',
@@ -110,7 +113,7 @@ export const MODEL_LABELS: Record<ModelKind, string> = {
 /** A config without a `model` key (or with `"sugarscape"`) is a sugarscape config. */
 export function modelOf(c: ModelConfig): ModelKind {
   const tag = (c as { model?: unknown }).model;
-  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'assistance' || tag === 'gridworlds' || tag === 'misaligned' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
+  return tag === 'schelling' || tag === 'ring' || tag === 'anasazi' || tag === 'civil' || tag === 'spatial' || tag === 'tags' || tag === 'culture' || tag === 'classes' || tag === 'ethno' || tag === 'opinions' || tag === 'structure' || tag === 'dpd' || tag === 'norms' || tag === 'agreement' || tag === 'image' || tag === 'farol' || tag === 'ants' || tag === 'thresholds' || tag === 'retirement' || tag === 'punishment' || tag === 'zi' || tag === 'bali' || tag === 'line' || tag === 'tipping' || tag === 'hoard' || tag === 'firms' || tag === 'collusion' || tag === 'auctions' || tag === 'assistance' || tag === 'gridworlds' || tag === 'misaligned' || tag === 'hybrid' || tag === 'polarity' || tag === 'geosim' || tag === 'democratic_peace'
     ? tag
     : 'sugarscape';
 }
@@ -224,6 +227,11 @@ export function isAssistanceView(v: AnyInspection): v is AssistanceInspection {
   return 'game' in v && 'panel' in v && (v.game === 'paperclips' || v.game === 'off_switch');
 }
 
+/** A hybrid frame: a node or an empty cell, tagged with its world. */
+export function isHybridView(v: AnyInspection): v is HybridInspection {
+  return 'panel' in v && (v.panel === 'node' || v.panel === 'empty') && 'world' in v && ['booker', 'guo', 'si', 'coloring'].includes(String((v as { world: unknown }).world));
+}
+
 /** A misaligned frame: one attribute bar or the utility strip. */
 export function isMisalignedView(v: AnyInspection): v is MisalignedInspection {
   return 'panel' in v && (v.panel === 'attribute' || v.panel === 'utility') && 'outcome' in v && 'utility_start' in (v as { outcome: object }).outcome;
@@ -295,6 +303,7 @@ export function calendarYear(c: ModelConfig, tick: number): number | null {
  * last generation); Infinity for a model that never finishes.
  */
 export function ticksLeft(c: ModelConfig, tick: number): number {
+  if (modelOf(c) === 'hybrid' && (c as HybridConfig).world === 'coloring') return Math.max(0, Math.ceil((c as HybridConfig).time_limit) - tick);
   if (modelOf(c) === 'geosim') {
     const g = c as GeosimConfig;
     return Math.max(0, Math.ceil((g.initialization_periods + g.observation_periods) / g.periods_per_tick) - tick);
@@ -363,6 +372,7 @@ export function finishesUnpredictably(c: ModelConfig): boolean {
   if (model === 'retirement') return (c as RetirementConfig).stop_at_norm;
   if (model === 'collusion' || model === 'polarity') return true;
   if (model === 'sugarscape') return (c as Config).culture.rule === 'axelrod' && (c as Config).culture.stop_when_settled === true;
+  if (model === 'hybrid') return (c as HybridConfig).world === 'coloring';
   return model === 'civil' && (c as CivilConfig).variant === 'ethnic' && (c as CivilConfig).stop_at_extinction;
 }
 
@@ -709,6 +719,7 @@ export const COLOR_MODES: Record<ModelKind, [ColorMode, string][]> = {
   assistance: [['bands', 'Rule, map and posterior'], ['surface', 'Δ over σ and β']],
   gridworlds: [['tiles', 'Tiles'], ['policy', 'Greedy policy'], ['value', 'State value']],
   misaligned: [['bars', 'Attributes and utility']],
+  hybrid: [['strategy', 'Strategies and bots']],
   auctions: [['bids', 'Bids · whole run'], ['late', 'Bids · final 20%'], ['values', 'Values']],
   // Each firm's strategy map: price or how often each state was visited.
   collusion: [
@@ -755,6 +766,7 @@ export const MODEL_OVERLAYS: Record<ModelKind, Overlay[]> = {
   assistance: [],
   gridworlds: [],
   misaligned: [],
+  hybrid: [],
 };
 
 export function isPolarityView(v: AnyInspection): v is PolarityInspection {
