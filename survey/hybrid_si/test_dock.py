@@ -1,5 +1,7 @@
-"""Tests of the docking harness's patcher and parsers; nothing here compiles or runs C++."""
-import pathlib, sys, unittest
+"""Tests of the docking harness's patcher, parsers and runner; nothing here compiles or runs C++
+(the runner's tests replace subprocess.run)."""
+import pathlib, subprocess, sys, tempfile, unittest
+from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dock  # noqa: E402
@@ -70,6 +72,50 @@ class Parsers(unittest.TestCase):
         results = [("fig3a", 0.1, 0.5, 1, 6, [0.25], 1.0), ("fig1a", 0.05, 0.3, 0, 1, [0.5, 0.125], 2.0)]
         self.assertEqual(dock.csv("fig1a", results), "r,rho,chunk,seed,run,cooperation\n0.05,0.3,0,1,0,0.500000\n0.05,0.3,0,1,1,0.125000\n")
         self.assertIsNone(dock.csv("fig1b", results))
+
+    def test_smoke_points_are_each_files_first_point(self):
+        self.assertEqual(dock.smoke_indices(), [0, 3, 6, 9, 18, 27])
+        self.assertEqual([dock.points()[p][0] for p in dock.smoke_indices()], list(dock.FILES))
+
+
+class Runner(unittest.TestCase):
+    LINE = "r,rho,Kappa,theta,loop,c_fraction\n0.050000,0.300000,10.000000,0.900000,0,0.500000\n"
+
+    def fake_run(self, argv, **kw):
+        self.calls.append((argv, kw))
+        return subprocess.CompletedProcess(argv, 0, stdout=self.LINE if argv[0] != "c++" else "", stderr="")
+
+    def run_once(self, scratch):
+        job = ("fig1a", 0.05, 0.3, 1, 1, "int main(){}", scratch, 0)
+        with mock.patch.object(dock.subprocess, "run", side_effect=self.fake_run):
+            return dock.run_chunk(job)
+
+    def test_the_binary_runs_only_under_sandbox_exec(self):
+        self.calls = []
+        with tempfile.TemporaryDirectory() as t:
+            out = self.run_once(pathlib.Path(t))
+            argv, kw = self.calls[1]
+            box = kw["cwd"]
+            self.assertEqual(argv, ["/usr/bin/sandbox-exec", "-D", f"BOX={box}", "-p", dock.SANDBOX, "./run"])
+            self.assertEqual(box, box.resolve())
+            self.assertEqual(self.calls[0][1]["cwd"], box)
+            self.assertEqual(out[5], [0.5])
+
+    def test_a_finished_chunk_is_resumed_not_rerun(self):
+        self.calls = []
+        with tempfile.TemporaryDirectory() as t:
+            first = self.run_once(pathlib.Path(t))
+            self.calls = []
+            second = self.run_once(pathlib.Path(t))
+            self.assertEqual(self.calls, [])
+            self.assertEqual(first[:6], second[:6])
+
+    def test_a_failure_reports_its_stderr(self):
+        def failing(argv, **kw):
+            raise subprocess.CalledProcessError(1, argv, output="", stderr="x.cpp:3: error: boom")
+        with tempfile.TemporaryDirectory() as t, mock.patch.object(dock.subprocess, "run", side_effect=failing):
+            with self.assertRaisesRegex(RuntimeError, "boom"):
+                dock.run_chunk(("fig1a", 0.05, 0.3, 1, 1, "int main(){}", pathlib.Path(t), 0))
 
 
 if __name__ == "__main__":
