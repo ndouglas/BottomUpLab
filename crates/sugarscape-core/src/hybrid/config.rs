@@ -252,11 +252,26 @@ impl HybridConfig {
                 "structure",
                 "Booker's runs need a graph; the well-mixed case is the exact chain, drawn as the reference",
             ),
-            World::Coloring => check(
-                self.structure == Structure::BarabasiAlbert && self.links <= 2 && self.nodes <= 200,
-                "structure",
-                "the coloring game runs on a Barabási–Albert graph of at most 200 nodes with one or two links per new node",
-            ),
+            World::Coloring => {
+                // The solution count enumerates the proper colorings one at a time, so the
+                // graph stays small: Shirado and Christakis's two links per new node, at most
+                // 60 nodes (about 1.7 million colorings; one link would give 6·2^(n−3)).
+                check(
+                    self.structure == Structure::BarabasiAlbert,
+                    "structure",
+                    "the coloring game runs on a Barabási–Albert graph",
+                );
+                check(
+                    self.links == 2,
+                    "links",
+                    "the coloring game adds two links per new node",
+                );
+                check(
+                    (3..=60).contains(&self.nodes),
+                    "nodes",
+                    "the coloring game runs on 3 to 60 nodes",
+                );
+            }
             World::Guo | World::Si => {}
         }
         if self.structure == Structure::Lattice {
@@ -575,6 +590,29 @@ mod tests {
             lattice_coloring.validate().unwrap_err()[0].field,
             "structure"
         );
+        // The solution count enumerates proper colorings one at a time: one link per new node
+        // gives 6·2^(n−3) of them, and two links grow too fast past 60 nodes.
+        let one_link = HybridConfig {
+            links: 1,
+            ..coloring_defaults()
+        };
+        assert_eq!(one_link.validate().unwrap_err()[0].field, "links");
+        let large = HybridConfig {
+            nodes: 61,
+            ..coloring_defaults()
+        };
+        assert_eq!(large.validate().unwrap_err()[0].field, "nodes");
+        let tiny = HybridConfig {
+            nodes: 2,
+            ..coloring_defaults()
+        };
+        assert_eq!(tiny.validate().unwrap_err()[0].field, "nodes");
+        assert!(HybridConfig {
+            nodes: 60,
+            ..coloring_defaults()
+        }
+        .validate()
+        .is_ok());
         let crowded = HybridConfig {
             bots: Bots::Count,
             bot_count: 2500,

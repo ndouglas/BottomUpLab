@@ -39,6 +39,8 @@ pub struct Runner {
     /// Paper steps taken.
     pub steps: u64,
     rng: SimRng,
+    /// The coloring graph's number of proper 3-colorings, counted once (0 for a population).
+    solutions: u64,
 }
 
 pub(crate) fn booker_rules(c: &HybridConfig) -> booker::Rules {
@@ -118,11 +120,13 @@ impl Runner {
         let mut rng = rng::seeded(seed);
         let adj = graph_of(&config, &mut rng);
         let bot = bots_of(&config, adj.as_ref(), &mut rng);
+        let mut solutions = 0;
         let body = if config.world == World::Coloring {
             let adj = adj.expect("the coloring game has a graph");
+            solutions = coloring::colorings(&adj, 3);
             assert!(
-                coloring::colorings(&adj, 3) > 0,
-                "a Barabási–Albert graph with m ≤ 2 is 3-colorable"
+                solutions > 0,
+                "a Barabási–Albert graph with m = 2 is 3-colorable"
             );
             Body::Coloring(Session::new(adj, bot, coloring_rules(&config), &mut rng))
         } else {
@@ -145,6 +149,7 @@ impl Runner {
             body,
             steps: 0,
             rng,
+            solutions,
         })
     }
 
@@ -288,7 +293,7 @@ impl HybridWorld {
                     _ => f64::NAN,
                 }
             }
-            Body::Coloring(s) => coloring::colorings(&s.adj, 3) as f64,
+            Body::Coloring(_) => self.runner.solutions as f64,
         }
     }
 
@@ -306,7 +311,11 @@ impl HybridWorld {
         }
     }
 
+    /// One tick; nothing once a coloring session has finished.
     pub fn step(&mut self) {
+        if self.runner.finished() {
+            return;
+        }
         self.runner.step();
         self.tick += 1;
         let s = self.snapshot();
@@ -645,6 +654,13 @@ mod tests {
             (w.tick, w.fingerprint()),
             (tick, fp),
             "a finished session runs no more ticks"
+        );
+        let recorded = w.stats.history().len();
+        w.step();
+        assert_eq!(
+            (w.tick, w.stats.history().len(), w.fingerprint()),
+            (tick, recorded, fp),
+            "stepping a finished session changes nothing"
         );
         let s = w.stats.latest().unwrap();
         assert!(
