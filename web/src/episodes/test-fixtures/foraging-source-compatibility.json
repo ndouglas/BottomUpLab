@@ -97,7 +97,7 @@
       "path": "crates/sugarscape-core/src/sweep.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/sweep.rs.txt",
       "historical_sha256": "3d79b0c4037095efb03a135a03a4f710598c0c0a93259319f5781346eeb8cbd3",
-      "reviewed_sha256": "be3b25e7cf407a3ba2882727f42c84952664bb3d2095c5094abe69c5d0137cf5"
+      "reviewed_sha256": "f7906747acc713c3e4f1b20902decefcee42a74092bde0c241d65f7b7be5babc"
     },
     {
       "path": "crates/sugarscape-core/src/titles.rs",

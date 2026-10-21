@@ -490,6 +490,9 @@ fn builtins_and_series_names_are_listed() {
             "misaligned-figure2-pairs",
             "misaligned-interval",
             "misaligned-floor",
+            "hybrid-booker-lattice-alpha",
+            "hybrid-guo-phi-networks",
+            "hybrid-si-lattice-r",
             "polarity-predators"
         ]
     );

@@ -172,6 +172,9 @@ sweeps/hk-updating.json
 sweeps/hoard-cheaters.json
 sweeps/hoard-ratio.json
 sweeps/hoard-recovery.json
+sweeps/hybrid-booker-lattice-alpha.json
+sweeps/hybrid-guo-phi-networks.json
+sweeps/hybrid-si-lattice-r.json
 sweeps/ifd-crowding.json
 sweeps/ifd-detour.json
 sweeps/ifd-idle.json
