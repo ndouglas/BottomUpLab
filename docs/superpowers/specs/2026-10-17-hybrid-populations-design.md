@@ -175,8 +175,8 @@ prose reading is the named variant.
 
 ### World `coloring`
 
-- Graph: Barabási–Albert, 20 nodes, each new node with 2 links, regenerated per session; kept only
-  if 3-colorable (rejection, ours; the paper says "by construction"). Three colors.
+- Graph: Barabási–Albert, 20 nodes, each new node with 2 links, regenerated per session; always
+  3-colorable (amendment 12). Three colors.
 - Bot: decides every 1.5 s; with probability equal to its noise (0, 0.1, 0.3) picks a uniform color
   among all three; otherwise, if its color is not the least common among its neighbors, switches to
   the least common (ties broken uniformly at random, ours). Placement: 3 highest-degree, 3
@@ -185,7 +185,7 @@ prose reading is the named variant.
   times of mean 1.59 s (Extended Data Fig. 1's median), errant rate e (default 0.041, Fig. 4's human
   mean) choosing a conflict-increasing color, otherwise greedy as the bot. Initial colors uniform
   (ours). Time limit 300 s; success is reaching a proper coloring.
-- Exact: the chromatic polynomial at 3 by deletion–contraction (20 nodes is small).
+- Exact: the number of proper 3-colorings, by backtracking (amendment 12).
 - Extended Data Fig. 2 statistic: from a fixed initial coloring, a random node recolors to a color
   different from a random neighbor's until solved; mean steps over 100 repeats per graph.
 
@@ -265,7 +265,7 @@ One `HybridConfig` with `world` and per-world fields; the rules panel narrows th
 world (the `schemaVariant` mechanism). Key fields: graph (complete, lattice, Erdős–Rényi,
 Barabási–Albert; size; neighborhood; boundary), bots (count or fraction, placement, type or φ or θ),
 game parameters (b; T and S; r), β, framework (si), step unit, payoff accumulation, and the named
-variants listed above. Live changes rebuild the world from the current seed.
+variants listed above. Live changes follow amendment 13.
 
 ## Dynamics
 
@@ -311,3 +311,68 @@ replicator equations are not simulated; they are drawn as references.
 Plan, implementation, survey, a findings doc with per-claim verdicts, the reproducibility register
 and a `docs/papers.md` queue update (catalog lines for the cited papers). An independent review of
 rules and measurements before anything is called complete.
+
+## Amendments (2026-10-20, planning, before any measurement)
+
+Planning read the published code and pseudocode line by line and settled what the design left
+open. Each item names its default and, where there is one, its named switch.
+
+1. **Si et al.'s well-mixed payoff drops the S and P terms.** In every well-mixed discrete and
+   mixed file (Figs. 1A, 1C, 2A, 2C, 6 Discrete, 6 Mixed) the payoff is
+   `(double) c / nn * M[a][0] + (nn - c) / nn * M[a][1]` with `int c, nn`: the second share is
+   integer division, 0 unless no other player cooperates. A cooperator earns c/(N − 1), a
+   defector (1 + r)·c/(N − 1); S = −r and P = 0 never enter. Every such file subtracts the focal
+   from the cooperator count when the focal cooperates, so the files agree on self-exclusion.
+   The continuous files and every lattice file compute the stated game. Default: the code
+   (`division: integer`, for docking). Named switch: `division: float` (the stated Eq. 1).
+   **S2 is judged twice**, each with its own verdict: as the code runs it, and on the stated game.
+2. **Si et al.'s deposit does not compile as published.** Three files begin with a stray `c` or
+   `cc` before `#include` (Fig. 3B, Fig. 3C, Fig. 5 continuous), and the well-mixed files
+   initialize a variable-length array (`double record_fc[loop]={0}` with `int loop`), which clang
+   rejects. The docking build removes the stray characters and makes `loop` a `const int`; it
+   also pins each file's parameter loops to one point, sets the seed and splits each point's 100
+   runs into four processes of 25 (seeds 4p + 1 … 4p + 4 for point p). Every patch is recorded
+   with the source and patched hashes. Per-run values are read from each run's stdout line.
+3. **Si et al.'s well-mixed mixed update** (Figs. 1C, 2C, 6 Mixed) draws a role model for every
+   picked node, lets an ordinary player imitate, then redraws the picked node's action from its
+   strategy, bots included. The lattice mixed payoff redraws both players' actions for every
+   game. Both are the defaults; `mixed_draw: per_round` draws every action once per round.
+4. **Guo et al.'s Algorithm II** sets a bot chosen as focal to C with probability φ and to D
+   otherwise (`bot_action: redraw`, the default); `frozen` keeps the initial draw;
+   `per_interaction` draws a fresh action for every game and for every imitation of a bot, on
+   graphs only.
+5. **Guo et al.'s Algorithm I** fixes no run length. Ours, for G3: bots keep the action drawn at
+   the start (the pseudocode draws once and never chooses a bot to learn); 10⁶ comparisons; the
+   mean human cooperation over the last 5 × 10⁵, read after every comparison; 20 runs; humans
+   start cooperating with p = 0.5, and a cell with two stable roots is run twice, from p = 0 and
+   from p = 1, each compared with the stable root on its side. N = 1,000 with
+   round(1,000·y/(1 + y)) bots.
+6. **G2 with several stable roots** compares highest with highest and lowest with lowest.
+7. **B3, operational.** On Eq. 18 (and separately Eq. 20), let x̄(b) be the largest stable fixed
+   point and b*(β_H) the smallest b in {1.1, 1.11, …, 3} with x̄ ≥ 0.5 (∞ if none). Statement 1
+   ("lower β cooperates at lower b") holds if b*(0.1) < b*(0.5) at α = 0.1, β_AI = 1 (the
+   Fig. 3 pair). Statement 2 ("x = 0 is a fixed point at α = 0.5") holds if |ẋ(0)| < 1e-12 at
+   α = 0.5, β_H = 0.5, β_AI = 1 for every b on that grid. The claim holds if both hold.
+8. **Compute.** A pilot times one run of every simulated protocol. A scored row whose projected
+   wall time exceeds 8 hours on the survey machine has its run count cut to the largest count that
+   fits (at least 10) and is labeled "reduced"; sizes, lengths and windows never change. An
+   evaluation row that would exceed 8 hours is reported as not run, with its projection.
+9. **Graphs per run.** A new graph per run (Guo, Si, coloring). Booker's Barabási–Albert protocol:
+   ten networks (`graph_seed` 1–10) × 20 runs each. Booker's lattice bot count is
+   round(α·2,500).
+10. **B5's `sweep_steps` row** is judged by B5's rule as its own variant row.
+11. **Bootstrap (G4, G5):** 2,000 resamples of runs within each φ, survey seed 42, percentile 95%.
+12. **Coloring.** A Barabási–Albert graph grown from a triangle with two links per node is
+    2-degenerate, so it is always 3-colorable: "by construction" holds and the rejection step
+    never fires (kept as an assertion). The solution count is exact backtracking in arrival order
+    (deletion–contraction would branch 2³⁷ times on 37 edges); deletion–contraction's closed forms
+    (paths, cycles, complete graphs, wheels) are its tests. Each bot's first decision falls at a
+    uniform offset in [0, 1.5 s) (ours). An errant human move picks uniformly among the colors
+    that would raise the node's conflicts, and keeps its color if none would (ours). Extended Data
+    Fig. 2's recolored node is drawn uniformly from all nodes (literal); a repeat that has not
+    converged after 10⁷ steps is censored and reported.
+13. **Live changes.** Game parameters (β, the payoff accumulation, b, c, T, S, φ, r, the
+    bot-action, mixed-draw and division switches, and the coloring rates) apply to the running
+    world; structure, population, framework, θ, the step unit and the time limit apply on reset,
+    which rebuilds the world from the current seed.
+14. **View.** One cell per node, so bots are drawn in their own shades instead of outlined.

@@ -93,3 +93,6 @@ pub mod gridworlds;
 pub mod misaligned;
 
 pub mod negotiable;
+
+/// Hybrid human–machine populations: bots as a second species (milestone 42).
+pub mod hybrid;

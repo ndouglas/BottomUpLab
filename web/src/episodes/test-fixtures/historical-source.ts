@@ -22,10 +22,10 @@ export async function historicalSourceBytes(path: string, live: Uint8Array<Array
   const original = '6ac710e9fe3521e6591dc8edc02b884e2aaae55a36298ab7313d9a9fb4c85f4f';
   if (expectedHistorical !== undefined) expect(expectedHistorical).toBe(original);
   expect(await sha(historical)).toBe(original);
-  const reviewedAdditions = '\npub mod surface_discovery;\n\n#[cfg(all(feature = "war-benchmarks", not(target_arch = "wasm32")))]\npub mod war;\n\n/// Six-round paid gate assistance with local histories.\npub mod gate_assistance;\n\n/// Six-round carrier-only paid key delegation with local histories.\npub mod key_delegation;\n\n/// Assistance games: the paperclip game and the off-switch game (milestone 39).\npub mod assistance;\n\n/// AI Safety Gridworlds: eight environments with hidden performance functions (milestone 40).\npub mod gridworlds;\n\n/// Consequences of misaligned AI: a proxy on a subset of the attributes (milestone 43).\npub mod misaligned;\n\npub mod negotiable;\n';
+  const reviewedAdditions = '\npub mod surface_discovery;\n\n#[cfg(all(feature = "war-benchmarks", not(target_arch = "wasm32")))]\npub mod war;\n\n/// Six-round paid gate assistance with local histories.\npub mod gate_assistance;\n\n/// Six-round carrier-only paid key delegation with local histories.\npub mod key_delegation;\n\n/// Assistance games: the paperclip game and the off-switch game (milestone 39).\npub mod assistance;\n\n/// AI Safety Gridworlds: eight environments with hidden performance functions (milestone 40).\npub mod gridworlds;\n\n/// Consequences of misaligned AI: a proxy on a subset of the attributes (milestone 43).\npub mod misaligned;\n\npub mod negotiable;\n\n/// Hybrid human–machine populations: bots as a second species (milestone 42).\npub mod hybrid;\n';
   const additionBytes = new TextEncoder().encode(reviewedAdditions);
   const expectedLive = new Uint8Array(historical.length + additionBytes.length);
   expectedLive.set(historical); expectedLive.set(additionBytes, historical.length);
-  expect(new Uint8Array(live), 'live lib.rs differs beyond the reviewed discovery/Gate/Key/assistance/gridworlds/misaligned/negotiable exports and native W1 gate').toEqual(expectedLive);
+  expect(new Uint8Array(live), 'live lib.rs differs beyond the reviewed discovery/Gate/Key/assistance/gridworlds/misaligned/negotiable/hybrid exports and native W1 gate').toEqual(expectedLive);
   return historical;
 }
