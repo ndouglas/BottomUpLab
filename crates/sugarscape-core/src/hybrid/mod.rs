@@ -7,3 +7,4 @@ pub mod booker;
 pub mod engine;
 pub mod exact;
 pub mod graph;
+pub mod guo;
