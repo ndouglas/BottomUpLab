@@ -4,6 +4,7 @@
 //! Dilemma in three strategy frameworks, and Shirado and Christakis's network coloring game with
 //! noisy bots. Exact references are pure functions of the config.
 pub mod booker;
+pub mod coloring;
 pub mod engine;
 pub mod exact;
 pub mod graph;
