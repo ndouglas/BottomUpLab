@@ -454,6 +454,20 @@ fn ends(v: &[f64]) -> (f64, f64) {
     )
 }
 
+/// G2's dilemma part: every stable root at every checked (y, φ) is ≤ 0.05.
+/// A point with no stable root fails the part (amendment 15).
+fn all_roots_low(sets: &[Vec<f64>]) -> Outcome {
+    let worst = sets.iter().flatten().copied().fold(0.0, f64::max);
+    let empty = sets.iter().filter(|v| v.is_empty()).count();
+    scored(
+        worst <= 0.05 && empty == 0,
+        format!(
+            "largest stable root {worst:.4}; (y, φ) points with no stable root: {empty} of {}",
+            sets.len()
+        ),
+    )
+}
+
 fn g1(_: &[u64]) -> Outcome {
     let mut parts = vec![];
     for (name, plane) in [("snowdrift", SD3), ("stag hunt", SH4), ("dilemma", PD)] {
@@ -516,17 +530,13 @@ fn g1(_: &[u64]) -> Outcome {
 
 fn g2(_: &[u64]) -> Outcome {
     let ys: Vec<f64> = (0..=100).map(|i| 0.05 * f64::from(i)).collect();
-    let worst = ys
+    let sets: Vec<Vec<f64>> = ys
         .iter()
-        .flat_map(|&y| {
-            [0.1, 0.9]
-                .into_iter()
-                .flat_map(move |phi| stable_roots(&PD, y, phi, 100.0))
-        })
-        .fold(0.0, f64::max);
+        .flat_map(|&y| [0.1, 0.9].map(|phi| stable_roots(&PD, y, phi, 100.0)))
+        .collect();
     let mut parts = vec![(
         "K 100, dilemma: every stable root ≤ 0.05".to_string(),
-        scored(worst <= 0.05, format!("largest stable root {worst:.4}")),
+        all_roots_low(&sets),
     )];
     for (phi, rising) in [(0.1, true), (0.9, false)] {
         let (lows, highs): (Vec<f64>, Vec<f64>) = ys
@@ -834,7 +844,12 @@ fn si_well_mixed(
 
 /// The published code's runs at (r, ρ) from Task 11's CSV.
 fn theirs(slug: &str, r: f64, rho: f64) -> Result<Vec<f64>, String> {
-    let path = Path::new(DOCK).join(format!("{slug}.csv"));
+    theirs_in(Path::new(DOCK), slug, r, rho, RUNS_SI as usize)
+}
+
+/// `theirs` against the CSVs in `dir`, which must hold exactly `want` runs at (r, ρ).
+fn theirs_in(dir: &Path, slug: &str, r: f64, rho: f64, want: usize) -> Result<Vec<f64>, String> {
+    let path = dir.join(format!("{slug}.csv"));
     let text = std::fs::read_to_string(&path).map_err(|e| {
         format!(
             "{}: {e} (run survey/hybrid_si/dock.py first)",
@@ -856,6 +871,11 @@ fn theirs(slug: &str, r: f64, rho: f64) -> Result<Vec<f64>, String> {
         .collect();
     if v.is_empty() {
         Err(format!("{slug}: no runs at r {r}, ρ {rho}"))
+    } else if v.len() != want {
+        Err(format!(
+            "{slug}: {} runs at r {r}, ρ {rho}, but docking needs exactly {want}, our run count (spec, Measurement and compute)",
+            v.len()
+        ))
     } else {
         Ok(v)
     }
@@ -1304,4 +1324,43 @@ pub fn claims() -> Vec<Claim> {
         claim("hybrid.c2-mechanism", "hybrid-coloring-central", SHIRADO, "with e fit to the control arm, 10% central bots solve more often than 0% and 30% central bots (mechanism sufficiency, not the human result)", c2),
         claim("hybrid.c2-observed-e", "hybrid-coloring-central", SHIRADO, "the same at the paper's measured human errant rate, 0.041", c2_observed),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn reference(dir: &Path, rows: usize) {
+        std::fs::create_dir_all(dir).unwrap();
+        let mut text = String::from("r,rho,run,a,b,cooperation\n");
+        for k in 0..rows {
+            text.push_str(&format!("0.1,0.3,{k},0,0,0.5\n"));
+        }
+        std::fs::write(dir.join("fig1a.csv"), text).unwrap();
+    }
+
+    #[test]
+    fn docking_refuses_a_reference_with_the_wrong_run_count() {
+        let dir = std::env::temp_dir().join(format!("hybrid-s1-{}", std::process::id()));
+        reference(&dir, 1);
+        let short = theirs_in(&dir, "fig1a", 0.1, 0.3, 4);
+        reference(&dir, 4);
+        let exact = theirs_in(&dir, "fig1a", 0.1, 0.3, 4);
+        let missing = theirs_in(&dir, "fig1a", 0.15, 0.3, 4);
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert!(short.unwrap_err().contains("1 runs"));
+        assert_eq!(exact.unwrap().len(), 4);
+        assert!(missing.is_err());
+    }
+
+    #[test]
+    fn g2_dilemma_fails_where_a_point_has_no_stable_root() {
+        assert!(matches!(
+            all_roots_low(&[vec![0.01], vec![0.0]]).verdict,
+            Verdict::Holds
+        ));
+        let empty = all_roots_low(&[vec![0.01], vec![]]);
+        assert!(matches!(empty.verdict, Verdict::Fails));
+        assert!(empty.measured.contains("no stable root"));
+    }
 }

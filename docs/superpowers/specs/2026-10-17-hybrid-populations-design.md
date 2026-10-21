@@ -376,3 +376,17 @@ open. Each item names its default and, where there is one, its named switch.
     world; structure, population, framework, θ, the step unit and the time limit apply on reset,
     which rebuilds the world from the current seed.
 14. **View.** One cell per node, so bots are drawn in their own shades instead of outlined.
+15. **Grids and guards (2026-10-21, before the full survey run; no scored measurement had been
+    taken).** These rule details were fixed in the 2026-10-20 plan and are recorded here as coded:
+    - G2: y runs over {0, 0.05, …, 5}; the PD part checks φ ∈ {0.1, 0.9}, and a (y, φ) with no
+      stable root fails that part.
+    - G2 snowdrift: "rises" and "falls" also require a strict net change from y = 0 to y = 5, for
+      both the lowest and the highest stable root; the K = 1 "exceeds" is strict for both.
+    - B4: G_D at M ∈ {1, 10, 50, 100} (N = 100, b = 2, c = 1, malicious bots, β = 1); α_c at
+      β_H = β_AI ∈ {0.1, 1, 2.5} (b = 2, c = 1).
+    - B6: β ∈ {0.1, 1, 5} at each α.
+    - S3: r ∈ {0, 0.01, …, 0.20}; discrete and continuous are judged at r ≤ 0.12, mixed at every r.
+    - C1: a repeat censored at the 10⁷-step cap counts as 10⁷ steps in its graph's mean, and the
+      censored count is reported.
+    - S1: a point whose reference CSV holds no runs, or a run count other than ours, makes S1
+      Untestable instead of docking.
