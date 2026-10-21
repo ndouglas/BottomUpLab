@@ -110,6 +110,46 @@ class Runner(unittest.TestCase):
             self.assertEqual(self.calls, [])
             self.assertEqual(first[:6], second[:6])
 
+    def test_links_left_in_an_old_box_are_not_followed(self):
+        # A previous binary may write anything inside its box, including links to files outside it.
+        # The fake compiler writes box/run the way the linker would, following any link there.
+        def compile_like_a_linker(argv, **kw):
+            self.calls.append((argv, kw))
+            if argv[0] == "c++":
+                (kw["cwd"] / "run").write_text("binary", encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0, stdout=self.LINE if argv[0] != "c++" else "", stderr="")
+
+        for planted in ("x.cpp", "run"):
+            with self.subTest(planted=planted), tempfile.TemporaryDirectory() as t:
+                self.calls = []
+                scratch = pathlib.Path(t).resolve()
+                sentinel = scratch / "sentinel.txt"
+                sentinel.write_text("untouched", encoding="utf-8")
+                box = scratch / "fig1a-r0.05-rho0.3-seed1" / "box"
+                box.mkdir(parents=True)
+                (box / planted).symlink_to(sentinel)
+                job = ("fig1a", 0.05, 0.3, 1, 1, "int main(){}", scratch, 0)
+                with mock.patch.object(dock.subprocess, "run", side_effect=compile_like_a_linker):
+                    dock.run_chunk(job)
+                self.assertEqual(sentinel.read_text(encoding="utf-8"), "untouched")
+                self.assertFalse((box / planted).is_symlink())
+
+        # The box itself replaced by a link to a directory outside it (BOX's own path is writable).
+        with tempfile.TemporaryDirectory() as t:
+            self.calls = []
+            scratch = pathlib.Path(t).resolve()
+            elsewhere = scratch / "elsewhere"
+            elsewhere.mkdir()
+            (elsewhere / "x.cpp").write_text("untouched", encoding="utf-8")
+            home = scratch / "fig1a-r0.05-rho0.3-seed1"
+            home.mkdir()
+            (home / "box").symlink_to(elsewhere, target_is_directory=True)
+            with mock.patch.object(dock.subprocess, "run", side_effect=compile_like_a_linker):
+                dock.run_chunk(("fig1a", 0.05, 0.3, 1, 1, "int main(){}", scratch, 0))
+            self.assertEqual(sorted(p.name for p in elsewhere.iterdir()), ["x.cpp"])
+            self.assertEqual((elsewhere / "x.cpp").read_text(encoding="utf-8"), "untouched")
+            self.assertFalse((home / "box").is_symlink())
+
     def test_a_failure_reports_its_stderr(self):
         def failing(argv, **kw):
             raise subprocess.CalledProcessError(1, argv, output="", stderr="x.cpp:3: error: boom")

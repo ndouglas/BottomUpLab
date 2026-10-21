@@ -17,7 +17,7 @@ their working directory), forks, Mach lookups, and exec of anything but the box'
 deposit is never compiled or run in place. Each chunk's result is kept on disk as it finishes, and
 rerunning the same command resumes. --smoke runs one run of each file's first point.
 """
-import argparse, concurrent.futures, hashlib, json, os, pathlib, re, subprocess, time
+import argparse, concurrent.futures, hashlib, json, os, pathlib, re, shutil, subprocess, time
 
 FILES = {  # slug: (source file, structure, framework)
     "fig1a": ("For data_Figure1A_Discrete.cpp", "well_mixed", "discrete"),
@@ -131,7 +131,15 @@ def run_chunk(job):
         kept = json.loads(result.read_text(encoding="utf-8"))
         if {k: kept.get(k) for k in key} == key:
             return slug, r, rho, chunk, seed, kept["values"], kept["seconds"]
-    box.mkdir(parents=True, exist_ok=True)
+    # An earlier binary could have left links in its box (or made the box itself a link) pointing
+    # outside it; writing x.cpp or linking `run` would follow them. Start from a fresh box. rmtree
+    # does not follow links inside the tree, and a link at the box's own path is unlinked.
+    if box.is_symlink() or box.is_file():
+        box.unlink()
+    elif box.exists():
+        shutil.rmtree(box)
+    home.mkdir(parents=True, exist_ok=True)
+    box.mkdir()
     (box / "x.cpp").write_text(patched, encoding="utf-8")
     defines = [f"-DSI_R={r}", f"-DSI_RHO={rho}", f"-DSI_SEED={seed}", f"-DSI_LOOP={per}"]
     checked("compile", box, ["c++", *FLAGS, *defines, "-o", "run", "x.cpp"])
