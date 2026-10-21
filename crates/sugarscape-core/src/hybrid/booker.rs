@@ -3,8 +3,10 @@
 //! finite well-mixed chain (Eqs 1–15) and the replicator equations (Eqs 16–20) are exact
 //! references; the network dynamics follow in this file's second part.
 
+use super::engine::{accumulate, fermi, Accumulate, Population};
 use super::exact::{exp, ln_factorial, log_sum_exp, logistic, roots, tanh_half, Root};
-use crate::portable::ln;
+use crate::{portable::ln, rng::SimRng};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -270,10 +272,82 @@ pub fn alpha_c_scan(game: Donation, beta_h: f64, beta_ai: f64) -> f64 {
     roots(h, 0.0, 1.0, 10_000)[0].x
 }
 
+/// What the network dynamics read from the config.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Rules {
+    pub game: Donation,
+    pub kind: BotKind,
+    pub beta: f64,
+    pub accumulate: Accumulate,
+}
+
+/// The actions nodes i and j play against each other: a discriminatory bot mirrors its partner
+/// (perfect intention recognition); two discriminatory bots cooperate (ours; never needed, since
+/// they are never role models).
+pub fn play(pop: &Population, kind: BotKind, i: usize, j: usize) -> (bool, bool) {
+    let mirror = |k: usize| pop.bot[k] && kind == BotKind::Discriminatory;
+    match (mirror(i), mirror(j)) {
+        (false, false) => (pop.action[i], pop.action[j]),
+        (false, true) => (pop.action[i], pop.action[i]),
+        (true, false) => (pop.action[j], pop.action[j]),
+        (true, true) => (true, true),
+    }
+}
+
+/// Node i's payoff: the donation game against every neighbor, summed (Booker's "sum of
+/// payoffs") or averaged.
+pub fn payoff(rules: &Rules, pop: &Population, i: usize) -> f64 {
+    let total: f64 = pop
+        .neighbors(i)
+        .iter()
+        .map(|&j| {
+            let (a, b) = play(pop, rules.kind, i, j as usize);
+            rules.game.payoff(a, b)
+        })
+        .sum();
+    accumulate(total, pop.degree(i), rules.accumulate)
+}
+
+/// The initial state, in index order: each human cooperates with probability `p` (the paper's
+/// ½); Samaritan bots cooperate, malicious bots defect, discriminatory bots store C (they mirror
+/// when they play).
+pub fn init(pop: &mut Population, kind: BotKind, p: f64, rng: &mut SimRng) {
+    for i in 0..pop.nodes {
+        let c = if pop.bot[i] {
+            kind != BotKind::Malicious
+        } else {
+            rng.gen::<f64>() < p
+        };
+        pop.set_pure(i, c);
+    }
+}
+
+/// One update, the paper's step: a uniformly random human picks a uniformly random neighbor as
+/// its role model and adopts the model's action with the Fermi probability. A discriminatory bot
+/// is never a role model (in Eq 6 it only enlarges the sampling denominator), so drawing one ends
+/// the update; so does an isolated human.
+pub fn micro(rules: &Rules, pop: &mut Population, rng: &mut SimRng) {
+    let Some(i) = pop.random_human(rng) else {
+        return;
+    };
+    let Some(j) = pop.partner(i, rng) else {
+        return;
+    };
+    if pop.bot[j] && rules.kind == BotKind::Discriminatory {
+        return;
+    }
+    let p = fermi(rules.beta, payoff(rules, pop, i), payoff(rules, pop, j));
+    if rng.gen::<f64>() < p {
+        let a = pop.action[j];
+        pop.set_pure(i, a);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::portable::ln;
+    use crate::{graph::Graph, rng::seeded};
 
     const GAME: Donation = Donation { b: 2.0, c: 1.0 };
     const KINDS: [BotKind; 3] = [
@@ -497,5 +571,98 @@ mod tests {
         }
         assert!((alpha_c_corrected(1.0, 1.0) - 0.632_120_558_828_557_7).abs() < 1e-15);
         assert!((alpha_c_printed(1.0, 1.0) - 0.268_941_421_369_995_1).abs() < 1e-15);
+    }
+
+    fn rules(kind: BotKind, beta: f64) -> Rules {
+        Rules {
+            game: GAME,
+            kind,
+            beta,
+            accumulate: Accumulate::Sum,
+        }
+    }
+
+    #[test]
+    fn discriminatory_bots_mirror_and_are_never_copied() {
+        // A path: human 0 — bot 1 — human 2.
+        let g = Graph::from_lists(vec![vec![1], vec![0, 2], vec![1]]);
+        let mut pop = Population::new(g, vec![false, true, false]);
+        pop.set_pure(0, true);
+        pop.set_pure(2, false);
+        let r = rules(BotKind::Discriminatory, 100.0);
+        assert_eq!(play(&pop, BotKind::Discriminatory, 0, 1), (true, true));
+        assert_eq!(payoff(&r, &pop, 0), 1.0, "C against a mirror: R = b − c");
+        assert_eq!(payoff(&r, &pop, 2), 0.0, "D against a mirror: P");
+        let mut rng = seeded(1);
+        for _ in 0..1000 {
+            micro(&r, &mut pop, &mut rng);
+        }
+        assert_eq!(
+            (pop.action[0], pop.action[2]),
+            (true, false),
+            "their only neighbor is never a role model"
+        );
+    }
+
+    #[test]
+    fn samaritan_bots_are_role_models_and_payoffs_are_sums() {
+        // A star: the Samaritan bot 0 at the center of four defecting humans.
+        let g = Graph::from_lists(vec![vec![1, 2, 3, 4], vec![0], vec![0], vec![0], vec![0]]);
+        let mut pop = Population::new(g, vec![true, false, false, false, false]);
+        init(&mut pop, BotKind::Samaritan, 0.0, &mut seeded(2));
+        assert_eq!(
+            (pop.cooperating, pop.action[0]),
+            (1, true),
+            "p = 0: only the bot cooperates"
+        );
+        let r = rules(BotKind::Samaritan, 1.0);
+        assert_eq!(
+            payoff(&r, &pop, 0),
+            -4.0,
+            "the Samaritan pays c to each of four defectors"
+        );
+        assert_eq!(
+            payoff(&r, &pop, 1),
+            2.0,
+            "a defector earns b from the Samaritan"
+        );
+        assert_eq!(
+            payoff(
+                &Rules {
+                    accumulate: Accumulate::Mean,
+                    ..r
+                },
+                &pop,
+                0
+            ),
+            -1.0
+        );
+        // Each update: a defector copies the Samaritan with probability 1/(1 + e^{6}).
+        let mut rng = seeded(3);
+        let trials = 40_000;
+        let mut copied = 0;
+        for _ in 0..trials {
+            let mut q = pop.clone();
+            micro(&r, &mut q, &mut rng);
+            copied += q.cooperating - pop.cooperating;
+        }
+        let p = logistic(-6.0);
+        let share = copied as f64 / f64::from(trials);
+        assert!(
+            (share - p).abs() < 4.0 * (p / f64::from(trials)).sqrt(),
+            "{share} vs {p}"
+        );
+    }
+
+    #[test]
+    fn malicious_bots_defect_and_humans_start_at_one_half() {
+        let g = Graph::from_lists(vec![vec![1], vec![0]]);
+        let mut pop = Population::new(g, vec![true, false]);
+        init(&mut pop, BotKind::Malicious, 1.0, &mut seeded(4));
+        assert_eq!(pop.action, vec![false, true]);
+        let n = 100_000;
+        let mut big = Population::new(Graph::from_lists(vec![vec![]; n]), vec![false; n]);
+        init(&mut big, BotKind::Samaritan, 0.5, &mut seeded(5));
+        assert!((big.human_cooperation() - 0.5).abs() < 0.01);
     }
 }
