@@ -465,4 +465,162 @@ mod tests {
                 && (pop.human_cooperation() - 0.5).abs() < 0.01
         );
     }
+
+    /// A human (node 0) between two frozen bots; returns the rate at which one update turns
+    /// node 0 into the other action.
+    fn flip_rate(rules: &Rules, actions: [bool; 3], seed: u64, trials: u32) -> f64 {
+        let g = Graph::from_lists(vec![vec![1, 2], vec![0], vec![0]]);
+        let mut pop = Population::new(g, vec![false, true, true]);
+        for (i, a) in actions.into_iter().enumerate() {
+            pop.set_pure(i, a);
+        }
+        let mut rng = seeded(seed);
+        let mut flips = 0;
+        for _ in 0..trials {
+            let mut q = pop.clone();
+            micro_network(rules, &mut q, &mut rng);
+            flips += usize::from(q.action[0] != pop.action[0]);
+        }
+        flips as f64 / f64::from(trials)
+    }
+
+    #[test]
+    fn a_human_imitates_a_better_paid_model_and_rarely_a_worse_one() {
+        // Focal is node 0 with probability 1/3, picks the differing model with probability 1/2,
+        // then copies with probability logistic(β Δπ). Tolerance: 5 standard deviations of a
+        // binomial rate at 60,000 trials.
+        let r = Rules {
+            beta: 1.0,
+            ..rules(0.5, BotAction::Frozen)
+        };
+        let trials = 60_000;
+        // C human between a D bot (earning T = 1.3) and a C bot: π_0 = S + R = 0.8, Δ = +0.5.
+        let better = flip_rate(&r, [true, false, true], 11, trials);
+        // D human between a C bot (earning S = −0.2) and a D bot: π_0 = T + P = 1.3, Δ = −1.5.
+        let worse = flip_rate(&r, [false, true, false], 12, trials);
+        for (got, delta) in [(better, 0.5), (worse, -1.5)] {
+            let want = logistic(delta) / 6.0;
+            let sd = (want * (1.0 - want) / f64::from(trials)).sqrt();
+            assert!((got - want).abs() < 5.0 * sd, "{got} vs {want}");
+        }
+    }
+
+    #[test]
+    fn copying_a_per_interaction_bot_adopts_a_fresh_draw() {
+        // The human stores D, its only neighbor is a bot storing D, φ = 1, β = 0: half of the
+        // focal-human updates copy, and a copy draws C. Focal is the human half the time, so
+        // 1/4 of updates make it C; 5 standard deviations of that rate at 40,000 trials is 0.011.
+        let g = Graph::from_lists(vec![vec![1], vec![0]]);
+        let pop = Population::new(g, vec![false, true]);
+        let r = Rules {
+            beta: 0.0,
+            ..rules(1.0, BotAction::PerInteraction)
+        };
+        let mut rng = seeded(13);
+        let trials = 40_000;
+        let mut became_c = 0;
+        for _ in 0..trials {
+            let mut q = pop.clone();
+            micro_network(&r, &mut q, &mut rng);
+            became_c += usize::from(q.action[0]);
+        }
+        let got = became_c as f64 / f64::from(trials);
+        assert!((got - 0.25).abs() < 0.012, "{got}");
+    }
+
+    #[test]
+    fn algorithm_i_follows_the_expected_payoff_gap_and_never_moves_bots() {
+        // One human among nine frozen bots of the other action on the snowdrift plane, β = 5.
+        // Every partner differs, so each update flips the human with probability
+        // logistic(β(π_partner − π_human)), the focal excluded from both counts.
+        // Case 1, a D human among C bots: π_D = T = 1.2, π_C = (8R + S)/9.
+        // Case 2, a C human among D bots: π_C = S = 0.5, π_D = T/9.
+        let r = Rules {
+            plane: SD,
+            phi: 0.5,
+            beta: 5.0,
+            bot_action: BotAction::Frozen,
+            accumulate: Accumulate::Sum,
+        };
+        let cases = [
+            (false, logistic(5.0 * ((8.0 * 1.0 + 0.5) / 9.0 - 1.2))),
+            (true, logistic(5.0 * (1.2 / 9.0 - 0.5))),
+        ];
+        for (seed, (human, want)) in (14..).zip(cases) {
+            let mut pop = Population::new(Graph::default(), (0..10).map(|i| i > 0).collect());
+            for i in 0..10 {
+                pop.set_pure(i, if i == 0 { human } else { !human });
+            }
+            let mut rng = seeded(seed);
+            let trials = 40_000;
+            let mut flips = 0;
+            for _ in 0..trials {
+                let mut q = pop.clone();
+                micro_well_mixed(&r, &mut q, &mut rng);
+                assert!(
+                    q.action[1..].iter().all(|&a| a == !human),
+                    "bots never change"
+                );
+                flips += usize::from(q.action[0] != human);
+            }
+            // 5 standard deviations of a binomial rate at 40,000 trials.
+            let sd = (want * (1.0 - want) / f64::from(trials)).sqrt();
+            assert!(
+                (flips as f64 / f64::from(trials) - want).abs() < 5.0 * sd,
+                "{flips} vs {want}"
+            );
+        }
+    }
+
+    #[test]
+    fn per_interaction_payoffs_use_the_fresh_draws_not_the_stored_actions() {
+        // Human and bot both store D; φ = 1 and β = 10. Stored payoffs tie (0 vs 0, a coin
+        // flip), but in play the bot cooperates against the human's D: π_human = T = 1.3,
+        // π_bot = S = −0.2, so a copy has probability logistic(−15), about 3e-7. Across 20,000
+        // updates the human should never become C (the stored-payoff bug gives about 1/4 of them).
+        let g = Graph::from_lists(vec![vec![1], vec![0]]);
+        let pop = Population::new(g, vec![false, true]);
+        let r = Rules {
+            beta: 10.0,
+            ..rules(1.0, BotAction::PerInteraction)
+        };
+        let mut rng = seeded(18);
+        let mut became_c = 0;
+        for _ in 0..20_000 {
+            let mut q = pop.clone();
+            micro_network(&r, &mut q, &mut rng);
+            became_c += usize::from(q.action[0]);
+        }
+        assert_eq!(became_c, 0);
+    }
+
+    #[test]
+    fn algorithm_i_bots_keep_their_initial_actions() {
+        let mut pop = Population::new(Graph::default(), (0..20).map(|i| i % 2 == 0).collect());
+        init(&mut pop, 0.5, 0.5, &mut seeded(15));
+        let bots: Vec<bool> = (0..20)
+            .filter(|&i| pop.bot[i])
+            .map(|i| pop.action[i])
+            .collect();
+        let r = Rules {
+            plane: SD,
+            phi: 0.5,
+            beta: 2.0,
+            bot_action: BotAction::Frozen,
+            accumulate: Accumulate::Sum,
+        };
+        let mut rng = seeded(16);
+        let mut human_moves = 0;
+        for _ in 0..5000 {
+            let before = pop.action.clone();
+            micro_well_mixed(&r, &mut pop, &mut rng);
+            human_moves += usize::from(pop.action != before);
+        }
+        let after: Vec<bool> = (0..20)
+            .filter(|&i| pop.bot[i])
+            .map(|i| pop.action[i])
+            .collect();
+        assert_eq!(bots, after);
+        assert!(human_moves > 0, "the humans do imitate");
+    }
 }
