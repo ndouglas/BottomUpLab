@@ -1057,7 +1057,7 @@ pub struct Builtin {
     pub json: &'static str,
 }
 
-const BUILTINS: [Builtin; 236] = [
+const BUILTINS: [Builtin; 239] = [
     Builtin {
         id: "fig-ii-5",
         json: include_str!("../../../sweeps/fig-ii-5.json"),
@@ -1997,6 +1997,18 @@ const BUILTINS: [Builtin; 236] = [
     Builtin {
         id: "misaligned-floor",
         json: include_str!("../../../sweeps/misaligned-floor.json"),
+    },
+    Builtin {
+        id: "hybrid-booker-lattice-alpha",
+        json: include_str!("../../../sweeps/hybrid-booker-lattice-alpha.json"),
+    },
+    Builtin {
+        id: "hybrid-guo-phi-networks",
+        json: include_str!("../../../sweeps/hybrid-guo-phi-networks.json"),
+    },
+    Builtin {
+        id: "hybrid-si-lattice-r",
+        json: include_str!("../../../sweeps/hybrid-si-lattice-r.json"),
     },
     Builtin {
         id: "polarity-predators",
@@ -3077,6 +3089,9 @@ mod tests {
                 "misaligned-figure2-pairs",
                 "misaligned-interval",
                 "misaligned-floor",
+                "hybrid-booker-lattice-alpha",
+                "hybrid-guo-phi-networks",
+                "hybrid-si-lattice-r",
                 "polarity-predators"
             ]
         );

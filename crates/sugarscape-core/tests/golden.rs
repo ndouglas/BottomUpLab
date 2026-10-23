@@ -479,6 +479,15 @@ const MODEL_GOLDEN: &[(&str, u64)] = &[
     ("misaligned-recommender-optimal", 0xe7eed5b02255e249),
     ("misaligned-recommender-wasteful", 0xd943f791df3bb4b4),
     ("misaligned-logarithmic-floor", 0x4b67a8e858a8924f),
+    // Hybrid human–machine populations: 200 ticks, seed 1.
+    ("hybrid-booker-samaritan", 0x007b1894c6b8911e),
+    ("hybrid-booker-discriminatory", 0x005b1cf5210f1cce),
+    ("hybrid-guo-snowdrift-lattice", 0xf2c16526f0660a4c),
+    ("hybrid-guo-snowdrift-scale-free", 0x1669894ad571210e),
+    ("hybrid-guo-hub-bots", 0x33da757bf1b9c5ab),
+    ("hybrid-si-mixed-lattice", 0xc02c933a847be963),
+    ("hybrid-si-discrete-lattice", 0xdfcff86a9fa3ef3f),
+    ("hybrid-coloring-central", 0x930e04efcb783c1b),
 ];
 
 fn fingerprint(id: &str) -> u64 {

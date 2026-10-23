@@ -1,11 +1,12 @@
 import { DEMOCRATIC_PEACE_RULES, democraticPeaceParams } from '../democratic-peace';
 import { GEOSIM_RULES, geosimParams } from '../geosim';
+import { hybridParams } from '../hybrid';
 import { misalignedParams } from '../misaligned';
 import { scheduleLines } from '../civil';
 import type { Engine } from '../engine';
 import { errorsFor } from '../paths';
 import { describedBy, groupParams, paramEdit, paramInput, paramShown, paramSlider, schemaControlLabel, schemaVariant, type ParamInput } from '../schema-form';
-import type { CivilConfig, FieldError, MisalignedConfig, ModelKind, Param } from '../types';
+import type { CivilConfig, FieldError, HybridConfig, MisalignedConfig, ModelKind, Param } from '../types';
 import { h } from './dom';
 
 /**
@@ -70,7 +71,7 @@ export class SchemaPanel {
     this.slots = [];
     this.errors = [];
     const params = this.engine.schemas[model] ?? [];
-    const sections = groupParams(model === 'democratic_peace' ? democraticPeaceParams(params) : model === 'geosim' ? geosimParams(params) : model === 'misaligned' ? misalignedParams(params, this.engine.config as MisalignedConfig) : params).map(({ group, params }) => {
+    const sections = groupParams(model === 'democratic_peace' ? democraticPeaceParams(params) : model === 'geosim' ? geosimParams(params) : model === 'misaligned' ? misalignedParams(params, this.engine.config as MisalignedConfig) : model === 'hybrid' ? hybridParams(params, this.engine.config as HybridConfig) : params).map(({ group, params }) => {
       const section = h('section', { class: 'group' }, h('h3', {}, group), h('p', { class: 'hint' }, note(params)), ...params.map((p) => this.control(p)));
       if (params.every((p) => p.show_if)) this.syncers.push(() => (section.hidden = !params.some((p) => paramShown(p, this.engine.config))));
       return section;

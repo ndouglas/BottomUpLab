@@ -3959,6 +3959,43 @@ cover the climber's step by proxy pair, the human's interval and the floor in bo
 [the findings](docs/superpowers/specs/2026-10-14-misaligned-ai-findings.md) and
 [the design](docs/superpowers/specs/2026-10-14-misaligned-ai-design.md).
 
+### Hybrid populations (Booker 2023, Guo 2023, Si 2025, Shirado & Christakis 2017)
+
+Bots that never change their behavior share a population with humans who copy a better-earning
+neighbor by the Fermi rule. Four papers' worlds run on that one engine: Booker et al.'s donation
+game with Samaritan or discriminatory bots, Guo et al.'s games on the (T, S) plane with bots that
+cooperate with probability φ, Si et al.'s dilemma in three strategy frameworks, and Shirado and
+Christakis's network coloring game with noisy bots. `hybrid-booker-samaritan` puts a quarter Samaritan
+bots on Booker's open lattice at β = 0.1, where they bring most humans to cooperate (0.724).
+`hybrid-booker-discriminatory` puts bots that mirror their partner among sharp imitators, and draws
+the paper's exact chain as the reference. `hybrid-guo-snowdrift-lattice` and
+`hybrid-guo-snowdrift-scale-free` show Guo's snowdrift reversal: the more the bots cooperate, the
+less the humans do on the lattice and the more they do on a scale-free network. `hybrid-guo-hub-bots`
+puts ten cooperating bots on the hubs. `hybrid-si-mixed-lattice` and `hybrid-si-discrete-lattice` run
+Si et al.'s Fig. 3 as their code does. Bots that cooperate nine times in ten lift the humans in the
+mixed framework, and the same bots drawn once as cooperators or defectors pull them down.
+`hybrid-coloring-central` places three slightly noisy bots at the center of a 20-node coloring game
+among reconstructed humans.
+
+15 of the 22 scored rows hold. Booker's chain reproduces Fig. 1, and both printed errata are
+confirmed (G_D is off by a factor of M + 1, and α_c is printed 1/(1 + e^β) for 1 − e^{−β}). Their
+Eq. 18 does not depend on b, and x = 0 is never a fixed point. Topology does change the final state.
+Guo's phase diagrams, master equation, simulation dots and all six network slopes hold. The
+reversal survives random bots and mean payoffs at a quarter of its slope, and the Prisoner's Dilemma
+hub test fails against a 0.961 no-bot ceiling. Si et al.'s
+published C++, compiled and run sandboxed, docks with our port at all 36 points. Their well-mixed
+code drops the S and P terms by integer division, and Fig. 1's claims hold both ways. Fig. 6's
+interior optimum holds on the caption's lattice only as "θ = 1 does worse than θ = 0.9", and fails in
+the deposited well-mixed file. There, as in many mixed cells, the imitating humans settle exactly at
+the bots' θ. Shirado's solution-count correlation is −0.992 against the paper's −0.990, but in our
+reconstruction of the humans, 10% bot noise does not beat noiseless bots: at the errant rate fitted to
+the paper's control, noiseless central bots do better (0.885 against 0.760), and at the paper's
+measured rate the arms are within 2 SE (0.775 against 0.755). The
+paper's human result (17 of 20 against 20 of 30) is cited, not reproduced. Three `hybrid-*` sweeps
+cover Booker's bot fraction by β, Guo's φ on three networks, and Si's dilemma strength by framework.
+See [the findings](docs/superpowers/specs/2026-10-17-hybrid-populations-findings.md) and
+[the design](docs/superpowers/specs/2026-10-17-hybrid-populations-design.md).
+
 ### Emergent polarity (Cederman 1994; 1997 chapters 4–5)
 
 `polarity` reconstructs sovereign capitals and provinces on a bounded cardinal

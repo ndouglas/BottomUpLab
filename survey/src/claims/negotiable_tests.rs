@@ -33,7 +33,7 @@ fn negotiable_registration_is_exact_and_unique() {
 
 #[test]
 fn negotiable_legacy_catalog_metadata_is_byte_identical() {
-    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
+    let mut rows: Vec<_> = super::all().into_iter().filter(|c|!c.id.starts_with("negotiable.") && !c.id.starts_with("gridworlds.") && !c.id.starts_with("misaligned.") && !c.id.starts_with("hybrid.")).map(|c| serde_json::json!({"id":c.id,"item":c.item,"source":c.source,"citation":c.citation,"text":c.text})).collect();
     rows.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
     assert_eq!(rows.len(), 817);
     assert_eq!(
@@ -407,10 +407,11 @@ fn negotiable_compatibility_bridge_changes_only_the_exact_library_export_receipt
     let export = "\npub mod negotiable;\n";
     assert_eq!(text.matches(export).count(), 1);
     assert_eq!(export.len(), 21);
-    // Remove only the exact Notes/compact-receipt registration additions.
+    // Remove only the exact Notes/compact-receipt and milestone 42 registration additions.
     let additions = [
         "mod identity_bytes;\n",
         "\npub mod persistent_notes;\n\nmod compact_receipts;\n",
+        "\n/// Hybrid human\u{2013}machine populations: bots as a second species (milestone 42).\npub mod hybrid;\n",
     ];
     let mut pre_notes = text.to_owned();
     for addition in additions {

@@ -490,6 +490,9 @@ fn builtins_and_series_names_are_listed() {
             "misaligned-figure2-pairs",
             "misaligned-interval",
             "misaligned-floor",
+            "hybrid-booker-lattice-alpha",
+            "hybrid-guo-phi-networks",
+            "hybrid-si-lattice-r",
             "polarity-predators"
         ]
     );
@@ -861,6 +864,7 @@ fn presets_list_every_model_with_sugarscape_configs_untagged() {
         model("misaligned-recommender-proxy").as_deref(),
         Some("misaligned")
     );
+    assert_eq!(model("hybrid-booker-samaritan").as_deref(), Some("hybrid"));
     let geosim_ids = list
         .iter()
         .filter(|p| p["config"]["model"] == "geosim")
@@ -2094,4 +2098,29 @@ fn misaligned_presets_match_the_native_golden_entries() {
     .unwrap();
     let view: serde_json::Value = serde_json::from_str(&sim.inspect(124, 60).unwrap()).unwrap();
     assert_eq!(view["name"], "c");
+}
+
+#[wasm_bindgen_test]
+fn hybrid_presets_match_the_native_golden_entries() {
+    // crates/sugarscape-core/tests/golden.rs, MODEL_GOLDEN: f64 sums, the portable exponential and
+    // logarithm, and the shared RNG only, with NaNs canonicalized before hashing, so WASM repeats
+    // the native fingerprints.
+    for (id, expected) in [
+        ("hybrid-booker-samaritan", "0x007b1894c6b8911e"),
+        ("hybrid-booker-discriminatory", "0x005b1cf5210f1cce"),
+        ("hybrid-guo-snowdrift-lattice", "0xf2c16526f0660a4c"),
+        ("hybrid-guo-snowdrift-scale-free", "0x1669894ad571210e"),
+        ("hybrid-guo-hub-bots", "0x33da757bf1b9c5ab"),
+        ("hybrid-si-mixed-lattice", "0xc02c933a847be963"),
+        ("hybrid-si-discrete-lattice", "0xdfcff86a9fa3ef3f"),
+        ("hybrid-coloring-central", "0x930e04efcb783c1b"),
+    ] {
+        let mut sim = Sim::new(&preset_json(id), 1, JsValue::NULL).unwrap();
+        sim.step(200);
+        assert_eq!(sim.fingerprint(), expected, "{id}");
+        assert_ne!(sim.render("", "sugar").unwrap(), 0);
+    }
+    let sim = Sim::new(&preset_json("hybrid-coloring-central"), 1, JsValue::NULL).unwrap();
+    let view: serde_json::Value = serde_json::from_str(&sim.inspect(0, 0).unwrap()).unwrap();
+    assert_eq!(view["panel"], "node");
 }

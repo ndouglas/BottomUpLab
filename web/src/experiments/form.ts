@@ -122,6 +122,9 @@ export function defaultForm(model: ModelKind = 'sugarscape', config?: ModelConfi
     const p = config as PolarityConfig | undefined;
     return { ...form, description: 'Cederman predator-share settings; terminal sovereign count after the economic horizon or hegemony. Parameters and source profile are retained; ticks batch complete periods.', x: { path: 'predator_share', values: '0,0.05,0.1,0.2,0.4,0.6,0.8,1' }, ticks: p ? Math.ceil(p.horizon / p.periods_per_tick) : 1000, metric: { ...form.metric, kind: 'final', series: 'sovereign_count' } };
   }
+  if (model === 'hybrid') {
+    return { ...form, description: "Booker et al.'s lattice: human cooperation over the last 1,000 of 100,000 updates against the share of Samaritan bots. Pick another world on the Rules panel for Guo's, Si's or the coloring game, and change the axis to match.", x: { path: 'bot_fraction', values: '0,0.01,0.1,0.25,0.5,0.75' }, seeds: 5, ticks: 100000, metric: { ...form.metric, kind: 'window_mean', series: 'cooperation', from: 99000, to: null } };
+  }
   if (model === 'misaligned') {
     return { ...form, set: { robot: 'gradient', rate: 0.1, human: 'top', proxy_size: 2 }, description: "How often the human must act: the efficient robot under a human who re-specifies the proxy as the two most sensitive attributes every δ ticks; the gain over the start after 2,000 ticks. The gradient robot is deterministic, so one seed suffices; the random-search climber would need more.", x: { path: 'interval', values: '1,2,5,10,20,50,100,200' }, seeds: 1, ticks: 2000, metric: { ...form.metric, kind: 'final', series: 'gain' } };
   }

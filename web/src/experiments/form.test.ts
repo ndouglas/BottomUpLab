@@ -269,6 +269,12 @@ describe('sweeps over other models', () => {
       ticks: 2000,
       metric: { kind: 'final', series: 'gain' },
     });
+    expect(defaultForm('hybrid')).toMatchObject({
+      x: { path: 'bot_fraction', values: '0,0.01,0.1,0.25,0.5,0.75' },
+      seeds: 5,
+      ticks: 100000,
+      metric: { kind: 'window_mean', series: 'cooperation', from: 99000 },
+    });
     expect(defaultForm('misaligned').description).toContain('The gradient robot is deterministic, so one seed suffices; the random-search climber would need more.');
   });
 

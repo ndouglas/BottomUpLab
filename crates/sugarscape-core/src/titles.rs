@@ -3,7 +3,7 @@
 //! paper (`source`) stay on the preset as its reference.
 
 /// Titles by preset id, in catalog order.
-pub const TITLES: [(&str, &str); 458] = [
+pub const TITLES: [(&str, &str); 466] = [
     (
         "ii-1-instant",
         "Sugar grows back at once: agents climb the best ridges and the poorly endowed starve",
@@ -1557,6 +1557,14 @@ pub const TITLES: [(&str, &str); 458] = [
     ("misaligned-recommender-optimal", "Moving from the least-valued attribute to the most reaches the optimum"),
     ("misaligned-recommender-wasteful", "A robot that destroys what it was not told about should be switched off at once"),
     ("misaligned-logarithmic-floor", "With no floor under the unmentioned, the loss has no bottom"),
+    ("hybrid-booker-samaritan", "When imitation is noisy, bots that always cooperate bring most humans along"),
+    ("hybrid-booker-discriminatory", "Bots that mirror their partner, among sharp imitators"),
+    ("hybrid-guo-snowdrift-lattice", "On a lattice, the more the bots cooperate, the less the humans do"),
+    ("hybrid-guo-snowdrift-scale-free", "On a scale-free network, the more the bots cooperate, the more the humans do"),
+    ("hybrid-guo-hub-bots", "Ten cooperative bots on the hubs of a scale-free network"),
+    ("hybrid-si-mixed-lattice", "Bots that defect one time in ten lift the humans' cooperation on a lattice"),
+    ("hybrid-si-discrete-lattice", "Bots fixed as cooperators or defectors pull the humans' cooperation down on a lattice"),
+    ("hybrid-coloring-central", "Three slightly noisy bots at the center of a coloring game"),
     (
         "collusion-calvano",
         "Two pricing algorithms learn to keep prices high, but not as a best response",

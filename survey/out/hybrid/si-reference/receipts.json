@@ -1,0 +1,1340 @@
+{
+  "sources": {
+    "fig1a": {
+      "file": "For data_Figure1A_Discrete.cpp",
+      "sha256": "3f6220af6c19a28de2614576ddda330a945f37822d9fb0e7c8ca856ddad7b93b",
+      "patched_sha256": "25f1052bde93b0c765ab8565deff198e97e8bb64107b4760410eabef19247222",
+      "patches": [
+        {
+          "name": "constant run count",
+          "pattern": "^int loop = 100;",
+          "replacement": "const int loop = SI_LOOP;"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    },
+    "fig1b": {
+      "file": "For data_Figure1B_Continuous.cpp",
+      "sha256": "fb841277ba86ead17c0f89952e14ba6ad45286031c50259c5e1648e8d864564c",
+      "patched_sha256": "2fba01439a3f42755731b8f1b355d995e32f27d565a59f0f679b85a179169491",
+      "patches": [
+        {
+          "name": "constant run count",
+          "pattern": "^int loop = 100;",
+          "replacement": "const int loop = SI_LOOP;"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    },
+    "fig1c": {
+      "file": "For data_Figure1C_Mixed.cpp",
+      "sha256": "579d99b2568258a28c986f976330cc49217bd73f52bf1d102a165c74ac07fc24",
+      "patched_sha256": "e14c43543e0b65e5a7ee4823900548dd3cc72c2e1e127413b13c43f00e57f836",
+      "patches": [
+        {
+          "name": "constant run count",
+          "pattern": "^int loop = 100;",
+          "replacement": "const int loop = SI_LOOP;"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    },
+    "fig3a": {
+      "file": "For data_Figure3A_Discrete strategy.cpp",
+      "sha256": "ce55af63c21295b240aded83162c4093852ca8cfc44c4f093493906e29caa396",
+      "patched_sha256": "a08b68b5e22b47f514411c2198ac5ba27a036947ae9908e8927d1ca4e1f3f0b3",
+      "patches": [
+        {
+          "name": "constant run count",
+          "pattern": "^#define loop 100\\b",
+          "replacement": "#define loop SI_LOOP"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    },
+    "fig3b": {
+      "file": "For data_Figure3B_Continuous strategy.cpp",
+      "sha256": "150e47b90036fbe6782c5dceefd172f89a382bacd4f88327a8b9ff972bc28829",
+      "patched_sha256": "e4eea299062b59fed68036505c230312b3031e6521470a0ea2276316b98283d5",
+      "patches": [
+        {
+          "name": "stray characters before #include",
+          "pattern": "\\A[^#\\n]+(#include)",
+          "replacement": "\\1"
+        },
+        {
+          "name": "constant run count",
+          "pattern": "^#define loop 100\\b",
+          "replacement": "#define loop SI_LOOP"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    },
+    "fig3c": {
+      "file": "For data_Figure3C_Mixed strategy.cpp",
+      "sha256": "0be7c88b36db8d687f76cb54d3aaf9ba92633de22612edbe6f77715101425647",
+      "patched_sha256": "fc4af5725a17f293a46e587ebc03cc77ab1a96c6ac83761d89a3fc260c15540c",
+      "patches": [
+        {
+          "name": "stray characters before #include",
+          "pattern": "\\A[^#\\n]+(#include)",
+          "replacement": "\\1"
+        },
+        {
+          "name": "constant run count",
+          "pattern": "^#define loop 100\\b",
+          "replacement": "#define loop SI_LOOP"
+        },
+        {
+          "name": "seed",
+          "pattern": "sgenrand\\(time\\(0\\)\\);",
+          "replacement": "sgenrand(SI_SEED);"
+        },
+        {
+          "name": "r loop",
+          "pattern": "for\\s*\\(\\s*r\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (r = SI_R; r <= SI_R; r += 1)"
+        },
+        {
+          "name": "rho loop",
+          "pattern": "for\\s*\\(\\s*rho\\s*=\\s*0(?:\\.0+)?\\s*;[^)]*\\)",
+          "replacement": "for (rho = SI_RHO; rho <= SI_RHO; rho += 1)"
+        }
+      ]
+    }
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+  "flags": [
+    "-std=c++17",
+    "-O2"
+  ],
+  "sandbox_exec": "/usr/bin/sandbox-exec",
+  "sandbox": "(version 1)(allow default)(deny network*)(deny file-write* (require-not (subpath (param \"BOX\"))))(deny process-fork)(deny mach-lookup)(deny process-exec)(allow process-exec (literal (string-append (param \"BOX\") \"/run\")))",
+  "smoke": null,
+  "runs_per_point": 100,
+  "wall_seconds": 2791.2,
+  "chunks": [
+    {
+      "slug": "fig1a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 1,
+      "seconds": 128.0
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 2,
+      "seconds": 128.4
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 3,
+      "seconds": 128.3
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 4,
+      "seconds": 128.1
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 5,
+      "seconds": 124.4
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 6,
+      "seconds": 124.5
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 7,
+      "seconds": 124.9
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 8,
+      "seconds": 124.3
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 9,
+      "seconds": 121.0
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 10,
+      "seconds": 121.8
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 11,
+      "seconds": 122.3
+    },
+    {
+      "slug": "fig1a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 12,
+      "seconds": 121.8
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 13,
+      "seconds": 119.1
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 14,
+      "seconds": 118.6
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 15,
+      "seconds": 119.6
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 16,
+      "seconds": 118.9
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 17,
+      "seconds": 116.6
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 18,
+      "seconds": 117.7
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 19,
+      "seconds": 116.2
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 20,
+      "seconds": 117.7
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 21,
+      "seconds": 161.4
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 22,
+      "seconds": 161.4
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 23,
+      "seconds": 161.3
+    },
+    {
+      "slug": "fig1b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 24,
+      "seconds": 161.8
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 25,
+      "seconds": 199.1
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 26,
+      "seconds": 198.7
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 27,
+      "seconds": 199.5
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 28,
+      "seconds": 199.2
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 29,
+      "seconds": 203.9
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 30,
+      "seconds": 203.3
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 31,
+      "seconds": 213.0
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 32,
+      "seconds": 213.4
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 33,
+      "seconds": 169.1
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 34,
+      "seconds": 203.1
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 35,
+      "seconds": 205.2
+    },
+    {
+      "slug": "fig1c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 36,
+      "seconds": 203.8
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 37,
+      "seconds": 211.4
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 38,
+      "seconds": 211.4
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 39,
+      "seconds": 211.0
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 40,
+      "seconds": 210.9
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 41,
+      "seconds": 172.8
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 42,
+      "seconds": 197.5
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 43,
+      "seconds": 187.5
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 44,
+      "seconds": 187.2
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 45,
+      "seconds": 163.4
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 46,
+      "seconds": 162.1
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 47,
+      "seconds": 162.2
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 48,
+      "seconds": 161.3
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 49,
+      "seconds": 214.0
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 50,
+      "seconds": 213.9
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 51,
+      "seconds": 213.7
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 52,
+      "seconds": 208.0
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 53,
+      "seconds": 182.4
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 54,
+      "seconds": 182.0
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 55,
+      "seconds": 182.1
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 56,
+      "seconds": 182.5
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 57,
+      "seconds": 159.1
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 58,
+      "seconds": 157.8
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 59,
+      "seconds": 155.1
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 60,
+      "seconds": 155.2
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 61,
+      "seconds": 220.6
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 62,
+      "seconds": 184.6
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 63,
+      "seconds": 185.7
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 64,
+      "seconds": 186.0
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 65,
+      "seconds": 142.1
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 66,
+      "seconds": 141.6
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 67,
+      "seconds": 141.3
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 68,
+      "seconds": 139.7
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 69,
+      "seconds": 119.2
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 70,
+      "seconds": 119.5
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 71,
+      "seconds": 129.6
+    },
+    {
+      "slug": "fig3a",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 72,
+      "seconds": 153.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 73,
+      "seconds": 209.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 74,
+      "seconds": 208.9
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 75,
+      "seconds": 209.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 76,
+      "seconds": 209.9
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 77,
+      "seconds": 188.9
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 78,
+      "seconds": 188.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 79,
+      "seconds": 188.3
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 80,
+      "seconds": 187.9
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 81,
+      "seconds": 153.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 82,
+      "seconds": 135.0
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 83,
+      "seconds": 128.4
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 84,
+      "seconds": 128.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 85,
+      "seconds": 191.1
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 86,
+      "seconds": 190.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 87,
+      "seconds": 192.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 88,
+      "seconds": 192.5
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 89,
+      "seconds": 165.3
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 90,
+      "seconds": 166.0
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 91,
+      "seconds": 167.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 92,
+      "seconds": 170.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 93,
+      "seconds": 149.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 94,
+      "seconds": 149.0
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 95,
+      "seconds": 131.4
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 96,
+      "seconds": 130.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 97,
+      "seconds": 211.4
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 98,
+      "seconds": 208.3
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 99,
+      "seconds": 205.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 100,
+      "seconds": 206.5
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 101,
+      "seconds": 145.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 102,
+      "seconds": 142.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 103,
+      "seconds": 143.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 104,
+      "seconds": 143.2
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 105,
+      "seconds": 122.6
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 106,
+      "seconds": 122.7
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 107,
+      "seconds": 120.8
+    },
+    {
+      "slug": "fig3b",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 108,
+      "seconds": 123.0
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 109,
+      "seconds": 483.3
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 110,
+      "seconds": 482.0
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 111,
+      "seconds": 485.9
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 112,
+      "seconds": 481.3
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 113,
+      "seconds": 368.5
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 114,
+      "seconds": 368.5
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 115,
+      "seconds": 366.0
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 116,
+      "seconds": 365.7
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 117,
+      "seconds": 298.6
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 118,
+      "seconds": 291.8
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 119,
+      "seconds": 260.2
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.05,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 120,
+      "seconds": 261.2
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 121,
+      "seconds": 444.1
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 122,
+      "seconds": 445.7
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 123,
+      "seconds": 448.2
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 124,
+      "seconds": 448.2
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 125,
+      "seconds": 324.0
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 126,
+      "seconds": 323.5
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 127,
+      "seconds": 323.8
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 128,
+      "seconds": 325.8
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 129,
+      "seconds": 273.0
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 130,
+      "seconds": 273.9
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 131,
+      "seconds": 303.7
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.1,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 132,
+      "seconds": 302.8
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 0,
+      "seed": 133,
+      "seconds": 540.4
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 1,
+      "seed": 134,
+      "seconds": 538.7
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 2,
+      "seed": 135,
+      "seconds": 530.9
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.0,
+      "chunk": 3,
+      "seed": 136,
+      "seconds": 526.4
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 0,
+      "seed": 137,
+      "seconds": 398.3
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 1,
+      "seed": 138,
+      "seconds": 398.5
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 2,
+      "seed": 139,
+      "seconds": 402.7
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.3,
+      "chunk": 3,
+      "seed": 140,
+      "seconds": 405.5
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 0,
+      "seed": 141,
+      "seconds": 290.4
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 1,
+      "seed": 142,
+      "seconds": 290.1
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 2,
+      "seed": 143,
+      "seconds": 222.6
+    },
+    {
+      "slug": "fig3c",
+      "r": 0.15,
+      "rho": 0.5,
+      "chunk": 3,
+      "seed": 144,
+      "seconds": 222.3
+    }
+  ]
+}

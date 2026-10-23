@@ -2,7 +2,7 @@
 from pathlib import Path
 import tempfile
 import unittest
-from . import registration
+from survey.war1_study import registration
 
 ROOT = Path(__file__).resolve().parents[2]
 CORE = 'crates/sugarscape-core/'
@@ -21,7 +21,7 @@ class LeanIdentityTests(unittest.TestCase):
         return put
 
     def test_actual_current_literal_inventory_remains_complete(self):
-        self.assertEqual(len(registration.audit_literal_inputs(ROOT)), 250)
+        self.assertEqual(len(registration.audit_literal_inputs(ROOT)), 253)
 
     def test_identity_macro_preserves_native_input_and_rejects_forged_expansion(self):
         with tempfile.TemporaryDirectory() as temp:

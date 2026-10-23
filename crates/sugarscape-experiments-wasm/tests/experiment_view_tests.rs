@@ -21,10 +21,10 @@ fn catalog_and_retained_measurements_are_complete_core_records() {
         serde_json::from_str::<Value>(&experiment_catalog_json().unwrap()).unwrap(),
         serde_json::to_value(core::catalog()).unwrap()
     );
-    assert_eq!(
-        experiment_recorded_json().unwrap(),
-        core::recorded_results_json().unwrap()
-    );
+    // Recorded results now load through the lazy recorded asset (web/src/episodes/recorded-parity.test.ts
+    // checks it against core); the bundled entry point refuses with a field error.
+    let refused = format!("{:?}", experiment_recorded_json().unwrap_err());
+    assert!(refused.contains("\"field\":\"recorded\""), "{refused}");
 }
 #[wasm_bindgen_test]
 fn max_seed_and_complete_reconstruction_are_lossless() {
@@ -79,7 +79,7 @@ use spatial_test_support::{
 
 #[wasm_bindgen_test]
 fn runnable_catalog_and_five_legacy_spatial_defaults() {
-    assert_eq!(core::catalog().len(), 18);
+    assert_eq!(core::catalog().len(), 19);
     assert_eq!(spatial_defaults().len(), 5);
     for input in default_seed_cases() {
         let text = input.to_string();

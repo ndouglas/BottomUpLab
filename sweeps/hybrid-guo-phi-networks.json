@@ -1,0 +1,17 @@
+{
+  "name": "Hybrid populations: Guo's bots in snowdrift on three networks",
+  "description": "Guo et al. (iScience 2023), Fig. 6B: human cooperation against the bots' cooperation probability φ in the snowdrift game T = 1.4, S = 0.5 with 4,871 random bots among 10,000 players (K = 10), on the periodic lattice, an Erdős–Rényi graph and a Barabási–Albert graph (mean degree 4). Shortened to 5,000 steps averaged over the last 1,000, two seeds; the survey runs the paper's 50,000 steps, the last 5,000, sixty runs.",
+  "base": { "config": { "model": "hybrid", "world": "guo", "structure": "lattice", "side": 100, "nodes": 10000, "periodic": true, "bots": "count", "bot_count": 4871, "beta": 10, "t": 1.4, "s": 0.5 } },
+  "x": { "label": "Bot cooperation φ", "path": "phi", "values": [0, 0.2, 0.4, 0.6, 0.8, 1] },
+  "series": {
+    "label": "Network",
+    "values": [
+      { "at": 0, "name": "Lattice", "set": { "structure": "lattice" } },
+      { "at": 1, "name": "Erdős–Rényi", "set": { "structure": "erdos_renyi" } },
+      { "at": 2, "name": "Barabási–Albert", "set": { "structure": "barabasi_albert" } }
+    ]
+  },
+  "seeds": { "from": 1, "count": 2 },
+  "ticks": 5000,
+  "metric": { "kind": "window_mean", "series": "cooperation", "from": 4000 }
+}

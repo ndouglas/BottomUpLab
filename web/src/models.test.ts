@@ -26,6 +26,7 @@ import {
   isRetirementView,
   isFarolView,
   isGridworldsView,
+  isHybridView,
   isMisalignedView,
   isCivilView,
   isClassesView,
@@ -910,5 +911,25 @@ describe('the misaligned model', () => {
     const c = { model: 'misaligned' } as unknown as ModelConfig;
     expect(ticksLeft(c, 500)).toBe(Infinity);
     expect(finishesUnpredictably(c)).toBe(false);
+  });
+});
+
+describe('the hybrid model', () => {
+  it('is read by its tag, and its inspections by their panel and world', () => {
+    expect(modelOf({ model: 'hybrid' } as unknown as ModelConfig)).toBe('hybrid');
+    const node = { panel: 'node', world: 'si', node: 1, tick: 0, x: 1, y: 0, reference: null, agent: null } as unknown as AnyInspection;
+    const empty = { panel: 'empty', world: 'guo', tick: 0, x: 3, y: 2, reference: null, agent: null } as unknown as AnyInspection;
+    const bar = { panel: 'attribute', index: 2, name: 'c', outcome: { utility_start: 16 }, agent: null } as unknown as AnyInspection;
+    expect([node, empty, bar].map(isHybridView)).toEqual([true, true, false]);
+    expect(isMisalignedView(node)).toBe(false);
+  });
+
+  it('colors by strategy, has no overlays, and only the coloring game ends', () => {
+    expect(COLOR_MODES.hybrid.map(([m]) => m)).toEqual(['strategy']);
+    expect(MODEL_OVERLAYS.hybrid).toEqual([]);
+    const pop = { model: 'hybrid', world: 'si' } as unknown as ModelConfig;
+    const game = { model: 'hybrid', world: 'coloring', time_limit: 300 } as unknown as ModelConfig;
+    expect([ticksLeft(pop, 10), ticksLeft(game, 10)]).toEqual([Infinity, 290]);
+    expect([finishesUnpredictably(pop), finishesUnpredictably(game)]).toEqual([false, true]);
   });
 });

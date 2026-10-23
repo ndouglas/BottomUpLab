@@ -585,6 +585,7 @@ describe('other models through the engine', () => {
     ['assistance-paperclips-iterated', '0x7b977f21a17e3a3d'],
     ['gridworlds-sokoban', '0x2a7fd0eaec62a0bb'],
     ['misaligned-recommender-proxy', '0x15bfaf872143c81b'],
+    ['hybrid-guo-hub-bots', '0x33da757bf1b9c5ab'],
   ];
 
   it.each(GOLDEN_MODELS)('%s reproduces its golden fingerprint, whatever is watched', async (id, golden) => {

@@ -1,0 +1,17 @@
+{
+  "name": "Hybrid populations: Samaritan bots on Booker's lattice",
+  "description": "Booker et al. (arXiv 2306.17747), Figs. 4–6: human cooperation on the open 50 × 50 lattice, averaged over the last 1,000 of 100,000 single updates, against the share of Samaritan bots, one line per selection strength β (donation game b = 2, c = 1). Five seeds here; the survey runs the paper's thirty.",
+  "base": { "config": { "model": "hybrid", "world": "booker" } },
+  "x": { "label": "Bot fraction α", "path": "bot_fraction", "values": [0, 0.01, 0.1, 0.25, 0.5, 0.75] },
+  "series": {
+    "label": "Selection strength",
+    "values": [
+      { "at": 0, "name": "β = 0.1", "set": { "beta": 0.1 } },
+      { "at": 1, "name": "β = 1", "set": { "beta": 1 } },
+      { "at": 2, "name": "β = 5", "set": { "beta": 5 } }
+    ]
+  },
+  "seeds": { "from": 1, "count": 5 },
+  "ticks": 100000,
+  "metric": { "kind": "window_mean", "series": "cooperation", "from": 99000 }
+}
