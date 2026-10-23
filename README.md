@@ -3758,6 +3758,13 @@ different numbers in the CLI and in the Experiments view.
 
 Requirements: Rust with the `wasm32-unknown-unknown` target, `wasm-pack`, Node 22+.
 
+The paid-notes evaluation reference is 253 MB, over GitHub's file limit, so it is committed
+compressed. Unpack it once after cloning, before building core (the build reads it byte for byte):
+
+    xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
+
+Then run the page:
+
     cd web
     npm install
     npm run dev

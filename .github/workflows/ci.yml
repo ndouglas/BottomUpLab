@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -26,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -39,6 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo run --release -p sugarscape-cli -- sweep --builtin fig-iv-10-11 --seeds 1 --ticks 100 --quiet > /dev/null
@@ -47,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -70,6 +74,7 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -103,6 +108,7 @@ jobs:
       PYTHONDONTWRITEBYTECODE: "1"
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -126,6 +132,7 @@ jobs:
       PYTHONDONTWRITEBYTECODE: "1"
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: actions/setup-python@v7
         with:
           python-version: 3.13.5
@@ -138,6 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -151,6 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy

@@ -28,6 +28,7 @@ jobs:
         with:
           # The commit CI tested; empty (the default ref) for manual runs.
           ref: ${{ github.event.workflow_run.head_sha }}
+      - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
