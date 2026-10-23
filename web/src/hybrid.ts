@@ -7,10 +7,10 @@ const WORLD_GROUPS = Object.values(WORLD_GROUP);
 const COLOR_NAMES = ['green', 'orange', 'purple'];
 const swatch = (label: string, color: string): LegendItem => ({ label, mark: { kind: 'swatch', color } });
 
-/** The coloring game validates a Barabási–Albert graph of 3 to 60 nodes with two links per new node; offer nothing else. */
+/** The coloring game validates a Barabási–Albert graph of 3 to 40 nodes with two links per new node; offer nothing else. */
 const narrowForColoring = (p: Param): Param => {
   if (p.path === 'structure' && p.choices) return { ...p, choices: p.choices.filter((c) => c.value === 'barabasi_albert') };
-  if (p.path === 'nodes') return { ...p, min: 3, max: 60 };
+  if (p.path === 'nodes') return { ...p, min: 3, max: 40 };
   if (p.path === 'links') return { ...p, min: 2, max: 2 };
   return p;
 };

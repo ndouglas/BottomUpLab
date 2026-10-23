@@ -98,6 +98,8 @@ says nothing about the paper's human result.
   directory, patches it, compiles it with Apple clang 17.0.0 (clang-1700.0.13.5) using
   `-std=c++17 -O2`, and runs every chunk under `/usr/bin/sandbox-exec`. The profile is
   `(version 1)(allow default)(deny network*)(deny file-write* (require-not (subpath (param "BOX"))))(deny process-fork)(deny mach-lookup)(deny process-exec)(allow process-exec (literal (string-append (param "BOX") "/run")))`.
+  The reference run used the profile recorded in `receipts.json` (network denied; signals to
+  other processes not yet denied); later runs also deny signals to other processes.
   It applies five changes and nothing else. Four are patches to the source: stray characters before
   `#include` (Figs. 3B and 3C), `loop` made a constant (`SI_LOOP`), `sgenrand(time(0))` changed to
   `sgenrand(SI_SEED)`, and the r and ρ loops pinned to one point. The pinned loops set exact

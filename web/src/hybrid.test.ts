@@ -24,7 +24,7 @@ describe('hybrid page helpers', () => {
     ];
     const [structure, nodes, links] = hybridParams(shared, config('coloring'));
     expect(structure.choices?.map((c) => c.value)).toEqual(['barabasi_albert']);
-    expect([nodes.min, nodes.max, links.min, links.max]).toEqual([3, 60, 2, 2]);
+    expect([nodes.min, nodes.max, links.min, links.max]).toEqual([3, 40, 2, 2]);
     expect(hybridParams(shared, config('guo'))).toEqual(shared);
   });
 

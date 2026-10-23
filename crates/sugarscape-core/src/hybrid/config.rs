@@ -255,7 +255,9 @@ impl HybridConfig {
             World::Coloring => {
                 // The solution count enumerates the proper colorings one at a time, so the
                 // graph stays small: Shirado and Christakis's two links per new node, at most
-                // 60 nodes (about 1.7 million colorings; one link would give 6·2^(n−3)).
+                // 40 nodes (one link would give 6·2^(n−3)). The worst case bounds it, not the
+                // median: at 60 nodes counts reach about 8×10⁸ (about 13 s native); at 40 they
+                // stay under 10⁶.
                 check(
                     self.structure == Structure::BarabasiAlbert,
                     "structure",
@@ -267,9 +269,9 @@ impl HybridConfig {
                     "the coloring game adds two links per new node",
                 );
                 check(
-                    (3..=60).contains(&self.nodes),
+                    (3..=40).contains(&self.nodes),
                     "nodes",
-                    "the coloring game runs on 3 to 60 nodes",
+                    "the coloring game runs on 3 to 40 nodes",
                 );
             }
             World::Guo | World::Si => {}
@@ -591,14 +593,14 @@ mod tests {
             "structure"
         );
         // The solution count enumerates proper colorings one at a time: one link per new node
-        // gives 6·2^(n−3) of them, and two links grow too fast past 60 nodes.
+        // gives 6·2^(n−3) of them, and two links grow too fast past 40 nodes.
         let one_link = HybridConfig {
             links: 1,
             ..coloring_defaults()
         };
         assert_eq!(one_link.validate().unwrap_err()[0].field, "links");
         let large = HybridConfig {
-            nodes: 61,
+            nodes: 41,
             ..coloring_defaults()
         };
         assert_eq!(large.validate().unwrap_err()[0].field, "nodes");
@@ -608,7 +610,7 @@ mod tests {
         };
         assert_eq!(tiny.validate().unwrap_err()[0].field, "nodes");
         assert!(HybridConfig {
-            nodes: 60,
+            nodes: 40,
             ..coloring_defaults()
         }
         .validate()

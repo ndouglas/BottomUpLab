@@ -3978,7 +3978,7 @@ mixed framework, and the same bots drawn once as cooperators or defectors pull t
 among reconstructed humans.
 
 15 of the 22 scored rows hold. Booker's chain reproduces Fig. 1, and both printed errata are
-confirmed (G_D is off by a factor of M + 1, and α_c is printed 1/(1 + e^β) for 1 − e^{−β}). His
+confirmed (G_D is off by a factor of M + 1, and α_c is printed 1/(1 + e^β) for 1 − e^{−β}). Their
 Eq. 18 does not depend on b, and x = 0 is never a fixed point. Topology does change the final state.
 Guo's phase diagrams, master equation, simulation dots and all six network slopes hold. The
 reversal survives random bots and mean payoffs at a quarter of its slope, and the Prisoner's Dilemma

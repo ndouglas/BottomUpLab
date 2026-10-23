@@ -101,6 +101,9 @@ class Runner(unittest.TestCase):
             self.assertEqual(self.calls[0][1]["cwd"], box)
             self.assertEqual(out[5], [0.5])
 
+    def test_the_profile_denies_signals_to_other_processes(self):
+        self.assertIn("(deny signal (target others))", dock.SANDBOX)
+
     def test_a_finished_chunk_is_resumed_not_rerun(self):
         self.calls = []
         with tempfile.TemporaryDirectory() as t:
@@ -156,6 +159,41 @@ class Runner(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t, mock.patch.object(dock.subprocess, "run", side_effect=failing):
             with self.assertRaisesRegex(RuntimeError, "boom"):
                 dock.run_chunk(("fig1a", 0.05, 0.3, 1, 1, "int main(){}", pathlib.Path(t), 0))
+
+
+class InPlace(unittest.TestCase):
+    """The deposit is never compiled or run in place: a scratch or out directory inside the source
+    or the repository's papers/ is refused before anything is copied."""
+
+    def refused(self, source, scratch, out):
+        argv = ["dock.py", "--source", str(source), "--scratch", str(scratch), "--out", str(out), "--smoke"]
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(dock.subprocess, "run") as run:
+            with self.assertRaises(SystemExit) as caught:
+                dock.main()
+            run.assert_not_called()
+        self.assertNotIn(caught.exception.code, (None, 0))
+        return str(caught.exception.code)
+
+    def test_a_scratch_inside_the_source_is_refused(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = pathlib.Path(t).resolve()
+            source, out = root / "deposit", root / "out"
+            source.mkdir()
+            self.assertIn("--scratch", self.refused(source, source / "scratch", out))
+            self.assertFalse((source / "scratch").exists())
+            self.assertFalse(out.exists())
+            self.assertIn("--out", self.refused(source, root / "scratch", source / "out"))
+            self.assertFalse((root / "scratch").exists())
+
+    def test_a_scratch_inside_papers_is_refused(self):
+        inside = dock.PAPERS / "alignment" / "code" / "dock-test-never-created"
+        with tempfile.TemporaryDirectory() as t:
+            root = pathlib.Path(t).resolve()
+            (root / "deposit").mkdir()
+            self.assertIn("papers", self.refused(root / "deposit", inside, root / "out"))
+            self.assertFalse(inside.exists())
+            self.assertIn("papers", self.refused(root / "deposit", root / "scratch", inside))
+            self.assertFalse(inside.exists())
 
 
 if __name__ == "__main__":

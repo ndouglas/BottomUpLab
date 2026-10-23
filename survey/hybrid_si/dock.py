@@ -13,8 +13,9 @@ variable-length array initializer) settable as SI_LOOP, set the seed to SI_SEED,
 
 Each compiled program runs under /usr/bin/sandbox-exec. The profile denies the network, file
 writes everywhere except the chunk's own box directory (the programs write their summary CSV into
-their working directory), forks, Mach lookups, and exec of anything but the box's ./run. The
-deposit is never compiled or run in place. Each chunk's result is kept on disk as it finishes, and
+their working directory), forks, Mach lookups, signals to other processes, and exec of anything
+but the box's ./run. The deposit is never compiled or run in place: a --scratch or --out inside
+--source or the repository's papers/ is refused before anything is copied. Each chunk's result is kept on disk as it finishes, and
 rerunning the same command resumes. --smoke runs one run of each file's first point.
 """
 import argparse, concurrent.futures, hashlib, json, os, pathlib, re, shutil, subprocess, time
@@ -31,14 +32,30 @@ R = [0.05, 0.1, 0.15]
 RHO = {"well_mixed": [0.3], "lattice": [0.0, 0.3, 0.5]}
 CHUNKS = 4
 # BOX is the run's own directory, passed with `sandbox-exec -D BOX=...`. Beyond the network and
-# writes outside BOX, the program may not fork, look up Mach services, or exec anything but BOX/run.
+# writes outside BOX, the program may not fork, look up Mach services, signal another process, or
+# exec anything but BOX/run.
 SANDBOX_EXEC = "/usr/bin/sandbox-exec"
 SANDBOX = (
     '(version 1)(allow default)(deny network*)(deny file-write* (require-not (subpath (param "BOX"))))'
-    '(deny process-fork)(deny mach-lookup)'
+    '(deny process-fork)(deny mach-lookup)(deny signal (target others))'
     '(deny process-exec)(allow process-exec (literal (string-append (param "BOX") "/run")))'
 )
 FLAGS = ["-std=c++17", "-O2"]
+
+
+def checkouts():
+    """This checkout's root and, when it is a worktree, the main checkout's: papers/ is not tracked,
+    so a worktree's deposits live in the main checkout's papers/."""
+    root = pathlib.Path(__file__).resolve().parents[2]
+    roots, link = [root], root / ".git"
+    if link.is_file() and (text := link.read_text(encoding="utf-8")).startswith("gitdir:"):
+        own = pathlib.Path(text[len("gitdir:"):].strip())
+        common = own / (own / "commondir").read_text(encoding="utf-8").strip() if (own / "commondir").exists() else own.parent.parent
+        roots.append(common.resolve().parent)
+    return roots
+
+
+PAPERS = checkouts()[-1] / "papers"  # the main checkout's papers/
 
 # (name, pattern, replacement, optional): an optional patch may match zero times; every patch
 # that matches must match exactly once.
@@ -108,6 +125,16 @@ def smoke_indices():
     return [next(p for p, point in enumerate(all_points) if point[0] == slug) for slug in FILES]
 
 
+def in_place(flag, path, source):
+    """Why `path` may not hold the build (inside the deposit or the repository's papers/), or None."""
+    path = path.resolve()
+    roots = [("--source", source.resolve())] + [("the repository's papers/", (r / "papers").resolve()) for r in checkouts()]
+    for name, root in roots:
+        if path == root or path.is_relative_to(root):
+            return f"{flag} {path} is inside {name} ({root}); the deposit is never compiled or run in place"
+    return None
+
+
 def checked(what, where, argv, **kw):
     """subprocess.run with check=True, but a failure raises with the process's stderr in the message."""
     try:
@@ -167,6 +194,9 @@ def main():
     ap.add_argument("--smoke", action="store_true", help="one run (chunk 0's seed) of each file's first point")
     a = ap.parse_args()
     assert a.runs % CHUNKS == 0, "runs split into four chunks"
+    for flag, path in (("--scratch", a.scratch), ("--out", a.out)):
+        if (why := in_place(flag, path, a.source)) is not None:
+            raise SystemExit(why)
     a.scratch.mkdir(parents=True, exist_ok=True)
     a.out.mkdir(parents=True, exist_ok=True)
     sources, jobs = {}, []
