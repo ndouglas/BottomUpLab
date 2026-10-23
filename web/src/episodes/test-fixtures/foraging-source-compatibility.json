@@ -103,7 +103,7 @@
       "path": "crates/sugarscape-core/src/titles.rs",
       "fixture": "web/src/episodes/test-fixtures/pre-foraging-integration/titles.rs.txt",
       "historical_sha256": "33d2c9c255df449cfe9d7d6a4d542d03d3951466852fe16eac8865733e56c226",
-      "reviewed_sha256": "567e0610c12250920877fa9f063c517ad8e0d64b87fd3155f36121d4a42b012b"
+      "reviewed_sha256": "3d632b53b239ae1a6030160ecaffbfb81221beb3a98fbb574e853b57b931d758"
     }
   ]
 }
