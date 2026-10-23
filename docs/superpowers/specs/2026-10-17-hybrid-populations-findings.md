@@ -20,8 +20,8 @@ All local copies are under `papers/alignment/` (gitignored).
   No code exists.
 - Si, He, Shen and Tanimoto, "Cooperative bots exhibit nuanced effects on cooperation across
   strategic frameworks," J. R. Soc. Interface 22:20240427 (2025), which is the reference text. The
-  preprint is arXiv 2406.14913v1. The published C++ is Zenodo 10.5281/zenodo.13957161 (22 files,
-  one per panel), under `code/si-et-al-2024-jrsi-cooperative-bots-zenodo-13957161/`.
+  preprint is arXiv 2406.14913v1. The published C++ is Zenodo 10.5281/zenodo.13957161 (26 files:
+  21 C++ files, one per panel, and 5 notebooks), under `code/si-et-al-2024-jrsi-cooperative-bots-zenodo-13957161/`.
 - Shirado and Christakis, "Locally noisy autonomous agents improve global human coordination in
   network experiments," Nature 545:370 (2017), with its Supplementary Information. Only its model
   is used: the bot rule, the network generator, the solution count and Extended Data Fig. 2.
@@ -33,7 +33,8 @@ All local copies are under `papers/alignment/` (gitignored).
 ## Summary
 
 All 28 rows ran or were accounted for: 15 Holds, 7 Fails, and 6 reported without a target (the
-pilot, four evaluation rows, and two evaluation rows not run because they were over budget). No run
+pilot, three evaluation rows that ran, and two evaluation rows not run because they were over
+budget). No run
 count was reduced.
 
 **Booker.** The exact chain reproduces Fig. 1. The all-cooperate weight switches on at 3 Samaritan
@@ -44,7 +45,7 @@ formula gives 1 − e^{−β}. Eq. 18 fails as registered: for Samaritan bots th
 not depend on b, and x = 0 is not a fixed point at α = 0.5. Eq. 20 fails on its b* statement. On
 the lattice, Samaritan bots raise cooperation at β = 0.1 and barely help at β = 5, as claimed, under
 both step units. Topology does change the final state, against the claim: Barabási–Albert and the
-lattice differ by more than 0.1 at 7 of 12 points.
+lattice differ by more than 0.1 at 6 of 12 points.
 
 **Guo.** The replicator phase diagrams, the master-equation roots, Algorithm I's agreement with them,
 and all six network slopes of Fig. 6 hold. That includes the snowdrift reversal, where cooperation
@@ -64,10 +65,11 @@ reason the code fixes: humans only imitate, bots never change, and nothing mutat
 humans settle at the bots' θ.
 
 **Coloring.** Extended Data Fig. 2's correlation is reproduced (−0.992 against the paper's −0.990).
-In our reconstruction of the human players, three central bots help more the less noisy they are.
-This holds both at the errant rate fitted to the paper's control (0.120) and at the paper's
-measured 0.041, so the mechanism-sufficiency claim fails twice. This says nothing about the paper's
-human result.
+In our reconstruction of the human players, 10% bot noise does not beat noiseless bots, so the
+mechanism-sufficiency claim fails twice. At the errant rate fitted to the paper's control (0.120),
+three central bots help more the less noisy they are, each step by more than 2 SE. At the paper's
+measured 0.041, 10% noise does no better than noiseless, and every difference is within 2 SE. This
+says nothing about the paper's human result.
 
 ## Provenance
 
@@ -77,7 +79,7 @@ human result.
   2026-10-21 at 17:13 EDT and ended 2026-10-23 at about 08:00 EDT, a wall time of 142,978 s
   (39.7 h). The machine was under heavy contention from other processes for most of the run (load
   average 200–320), so the wall time far exceeds the pilot's uncontended projections (the rows
-  below sum to about 25 h). Commits: `05e5dff` (results), `bd7e7ff` (the pilot fix), `58e5fff` (the
+  below sum to about 17.6 h). Commits: `05e5dff` (results), `bd7e7ff` (the pilot fix), `58e5fff` (the
   pilot row spliced in, cargo's build lines dropped). `results.md` SHA-256:
   `935e6178f5755a469e638995e103c8f591591634eef2aec5bcbc6582cd376a4e`.
 - **Pilot and run counts (amendment 8).** The pilot times one run of each protocol and projects
@@ -135,10 +137,10 @@ marked "evaluation" are not scored as the paper's claims. B3, B5, S2, S4 and C2 
 | `hybrid.b2-samaritan-vs-discriminatory` | mean all-C weight over M 0..100 × b 1.1..3: Samaritan higher at β 0.1, discriminatory higher at β 2.5 | Holds | β 0.1: Samaritan 0.9708, discriminatory 0.1801; β 2.5: Samaritan 0.0000, discriminatory 0.1616 |
 | `hybrid.b3-eq18` | Eq. 18 as printed: b*(0.1) < b*(0.5) at α 0.1, β_AI 1; \|ẋ(0)\| < 1e-12 at α 0.5 for every b (registered expectation: fails) | Fails | part 1 Holds: b* 1.1 at β_H 0.1, none at 0.5; part 2 Fails: largest \|ẋ(0)\| 1.345e-1; spread of ẋ(x) across b 0.000 |
 | `hybrid.b3-eq20` | the same two statements on Eq. 20 | Fails | part 1 Fails: b* none at either β_H; part 2 Holds: \|ẋ(0)\| 0.000; spread across b 2.134e-3 |
-| `hybrid.b4-errata` | printed G_D and α_c off by > 1e-9 relative; corrected within 1e-9 | Holds | G_D printed off by 1, 10, 50, 100 (relative) at M 1, 10, 50, 100, corrected ≤ 1.1e-13; α_c root scan 0.095163, 0.632121, 0.917915 at β 0.1, 1, 2.5 against printed 0.475021, 0.268941, 0.075858; corrected exact |
+| `hybrid.b4-errata` | printed G_D and α_c off by > 1e-9 relative; corrected within 1e-9 | Holds | G_D printed off by 1, 10, 50, 100 (relative) at M 1, 10, 50, 100, corrected ≤ 1.2e-13 (largest 1.137e-13); α_c root scan 0.095163, 0.632121, 0.917915 at β 0.1, 1, 2.5 against printed 0.475021, 0.268941, 0.075858; corrected exact |
 | `hybrid.b5-lattice` | 30 runs, 10⁵ updates: β 0.1 ≥ 0.5 at α 0.25 and 0.5, ≤ 0.2 at α 0.01; β 5 every α ≤ 0.5 within 0.2 of α 0 | Holds | β 0.1: 0.724, 0.993, 0.034; β 5: α 0 0.000, largest rise 0.056 |
 | `hybrid.b5-lattice-sweep-steps` (variant) | B5's rule, one tick = N updates | Holds | β 0.1: 0.941, 1.000, 0.025; β 5: largest rise 0.056 |
-| `hybrid.b6-topology` | \|lattice − BA\| ≤ 0.1 at α 0.1–0.4 × β {0.1, 1, 5} | Fails | fails at all four α at β 0.1 (0.289 vs 0.137, 0.590 vs 0.342, 0.829 vs 0.561, 0.957 vs 0.742) and at α 0.4 at β 1 (0.038 vs 0.269) and β 5 (0.025 vs 0.201); holds at the other five |
+| `hybrid.b6-topology` | \|lattice − BA\| ≤ 0.1 at α 0.1–0.4 × β {0.1, 1, 5} | Fails | fails at all four α at β 0.1 (0.289 vs 0.137, 0.590 vs 0.342, 0.829 vs 0.561, 0.957 vs 0.742) and at α 0.4 at β 1 (0.038 vs 0.269) and β 5 (0.025 vs 0.201); holds at the other six |
 | `hybrid.g1-phase-diagrams` | numerical classification on 101 × 101 matches the closed form off boundaries; y_min = 0.4 within 1e-9 | Holds | no mismatch in snowdrift (10,198 cells), stag hunt (10,194) or dilemma (10,201); y_min 0.399999999999 |
 | `hybrid.g2-master-equation` | Fig. 5's master-equation statements (amendment 15's grids) | Holds | PD K 100: largest stable root 0.0000, no empty point; snowdrift K 100: 0.7143 → 1.0000 at φ 0.1 and 0.7143 → 0.0876 at φ 0.9; K 1: φ 0.9 above φ 0.1 at every y in all three games |
 | `hybrid.g3-algorithm-i` | Algorithm I within 0.05 of the stable root, 20 runs | Holds | all 75 cells, e.g., snowdrift y 5 φ 0.9 K 100 0.085 vs 0.088, dilemma y 0.5 φ 0.9 K 1 0.759 vs 0.756 |
@@ -268,10 +270,12 @@ labeled reconstruction: greedy responders with exponential decision times of mea
 Data Fig. 1's median) and an errant rate e. The bot rule, the graph, the solution count and Extended
 Data Fig. 2 are the paper's computational parts. C2 tests whether the paper's bot rule, among these
 reconstructed humans, is sufficient for the 10% central-noise advantage. It is not a test of the
-human result. The reconstruction fails that test at both e values, because noiseless bots do best
-(0.885 > 0.760 > 0.630 at e = 0.120 and 0.775 > 0.755 > 0.710 at e = 0.041). Interpretation, a
-hypothesis not tested here: our humans' errant moves may already supply the noise that lets a
-session leave a local conflict, so the bots' noise only costs them. Whatever made the paper's noisy
+human result. The reconstruction fails that test at both e values. At the fitted e = 0.120, noiseless bots do
+best: 0.885 > 0.760 > 0.630, with gaps of 0.125 (2 SE 0.075) and 0.130 (2 SE 0.091). At e = 0.041 the
+arms read 0.775, 0.755 and 0.710 with 2 SE of 0.085 and 0.088, so 10% noise does no better than
+noiseless and no pairwise difference is resolved. Interpretation, a hypothesis not tested here: our
+humans' errant moves may already supply the noise that lets a session leave a local conflict, so
+the bots' noise adds nothing, and at e = 0.120 it costs them. Whatever made the paper's noisy
 bots help would then lie in human behavior this greedy-plus-errant model lacks.
 
 ## Human data, cited and not reproduced

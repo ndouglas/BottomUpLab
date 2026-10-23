@@ -3982,13 +3982,15 @@ confirmed (G_D is off by a factor of M + 1, and α_c is printed 1/(1 + e^β) for
 Eq. 18 does not depend on b, and x = 0 is never a fixed point. Topology does change the final state.
 Guo's phase diagrams, master equation, simulation dots and all six network slopes hold. The
 reversal survives random bots and mean payoffs at a quarter of its slope, and the Prisoner's Dilemma
-hub test fails only because the network without bots already cooperates at 0.961. Si et al.'s
+hub test fails against a 0.961 no-bot ceiling. Si et al.'s
 published C++, compiled and run sandboxed, docks with our port at all 36 points. Their well-mixed
 code drops the S and P terms by integer division, and Fig. 1's claims hold both ways. Fig. 6's
 interior optimum holds on the caption's lattice only as "θ = 1 does worse than θ = 0.9", and fails in
 the deposited well-mixed file. There, as in many mixed cells, the imitating humans settle exactly at
 the bots' θ. Shirado's solution-count correlation is −0.992 against the paper's −0.990, but in our
-reconstruction of the humans, noiseless central bots beat 10% noise (0.775 against 0.755). The
+reconstruction of the humans, 10% bot noise does not beat noiseless bots: at the errant rate fitted to
+the paper's control, noiseless central bots do better (0.885 against 0.760), and at the paper's
+measured rate the arms are within 2 SE (0.775 against 0.755). The
 paper's human result (17 of 20 against 20 of 30) is cited, not reproduced. Three `hybrid-*` sweeps
 cover Booker's bot fraction by β, Guo's φ on three networks, and Si's dilemma strength by framework.
 See [the findings](docs/superpowers/specs/2026-10-17-hybrid-populations-findings.md) and
