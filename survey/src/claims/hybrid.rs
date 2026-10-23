@@ -1180,66 +1180,133 @@ fn c2_observed(_: &[u64]) -> Outcome {
 // ---- The pilot -------------------------------------------------------------------------------
 
 fn pilot(_: &[u64]) -> Outcome {
-    let rows: Vec<(&str, HybridConfig, u64, u64)> = vec![
+    // One entry per scored row that runs simulations: its parts as (probe config, steps, runs),
+    // the runs counted from the claim function's own loops. The budget test is on the row total.
+    type Part = (HybridConfig, u64, u64);
+    let sweep = HybridConfig {
+        step: StepUnit::Sweep,
+        ..booker_lattice(0.25, 1.0)
+    };
+    // G3 runs one start where the master equation has one stable root and two where it has more.
+    let g3_runs: u64 = [PD, SD3, SH4]
+        .iter()
+        .map(|&plane| {
+            let mut starts = 0;
+            for y in [0.5, 1.0, 2.0, 5.0] {
+                for phi in [0.1, 0.9] {
+                    for k in [1.0, 10.0, 100.0] {
+                        starts += if stable_roots(&plane, y, phi, k).len() == 1 {
+                            1
+                        } else {
+                            2
+                        };
+                    }
+                }
+            }
+            starts
+        })
+        .sum::<u64>()
+        * RUNS_ALG_I;
+    let si_lat = si_lattice(Framework::Mixed, 0.1, 0.3, 100);
+    let si_mix =
+        |division: Division, nodes: u32| si_well_mixed(Framework::Mixed, 0.1, 0.3, division, nodes);
+    let booker_ba_part: Part = (
+        booker_ba(0.25, 1.0),
+        BOOKER_STEPS,
+        12 * BOOKER_NETWORKS * RUNS_PER_NETWORK,
+    );
+    let guo_ba = guo_net(Structure::BarabasiAlbert, SD6);
+    let rows: Vec<(&str, Vec<Part>)> = vec![
+        // 3 betas x 6 alphas.
         (
-            "Booker lattice, B5 and B6",
-            booker_lattice(0.25, 1.0),
-            BOOKER_STEPS,
-            30 * RUNS_BOOKER_LATTICE,
+            "B5",
+            vec![(
+                booker_lattice(0.25, 1.0),
+                BOOKER_STEPS,
+                18 * RUNS_BOOKER_LATTICE,
+            )],
         ),
         (
-            "Booker lattice under sweep_steps, B5",
-            HybridConfig {
-                step: StepUnit::Sweep,
-                ..booker_lattice(0.25, 1.0)
-            },
-            BOOKER_STEPS,
-            18 * RUNS_BOOKER_LATTICE,
+            "B5 sweep-steps",
+            vec![(sweep, BOOKER_STEPS, 18 * RUNS_BOOKER_LATTICE)],
+        ),
+        // 4 alphas x 3 betas, a lattice and a Barabási–Albert arm each.
+        (
+            "B6",
+            vec![
+                (
+                    booker_lattice(0.25, 1.0),
+                    BOOKER_STEPS,
+                    12 * RUNS_BOOKER_LATTICE,
+                ),
+                booker_ba_part,
+            ],
         ),
         (
-            "Booker Barabási–Albert, B6",
-            booker_ba(0.25, 1.0),
-            BOOKER_STEPS,
-            12 * BOOKER_NETWORKS * RUNS_PER_NETWORK,
+            "G3",
+            vec![(alg_i(SD3, 1.0, 0.9, 10.0, 0.5), ALG_I_STEPS, g3_runs)],
+        ),
+        // 2 games x 3 structures x 6 phis.
+        (
+            "G4",
+            vec![(
+                guo_net(Structure::BarabasiAlbert, SD6),
+                GUO_STEPS,
+                36 * RUNS_GUO,
+            )],
+        ),
+        // 3 games x (no bots, ten hubs x 6 phis, ten random x 6 phis).
+        (
+            "G5",
+            vec![(
+                HybridConfig {
+                    bot_count: 10,
+                    ..guo_net(Structure::BarabasiAlbert, PD)
+                },
+                GUO_STEPS,
+                39 * RUNS_GUO,
+            )],
+        ),
+        // 3 frameworks x 3 r x 3 rho on the lattice, 3 x 3 x 1 well-mixed.
+        (
+            "S1",
+            vec![
+                (si_lat.clone(), SI_STEPS, 27 * RUNS_SI),
+                (si_mix(Division::Integer, 10_000), SI_STEPS, 9 * RUNS_SI),
+            ],
+        ),
+        // 3 frameworks x 4 rho x 6 r.
+        (
+            "S2 code",
+            vec![(si_mix(Division::Integer, 10_000), SI_STEPS, 72 * RUNS_SI)],
         ),
         (
-            "Guo Algorithm I, G3",
-            alg_i(SD3, 1.0, 0.9, 10.0, 0.5),
-            ALG_I_STEPS,
-            144 * RUNS_ALG_I,
+            "S2 stated",
+            vec![(si_mix(Division::Float, 10_000), SI_STEPS, 72 * RUNS_SI)],
+        ),
+        // Discrete and continuous: 13 r x 2 rho each; mixed: 21 r x 2 rho.
+        (
+            "S3",
+            vec![(si_lat.clone(), SI_STEPS, (13 * 2 * 2 + 21 * 2) * RUNS_SI)],
+        ),
+        // 11 thetas.
+        ("S4 lattice", vec![(si_lat.clone(), SI_STEPS, 11 * RUNS_SI)]),
+        (
+            "S4 well-mixed",
+            vec![(si_mix(Division::Integer, 10_000), SI_STEPS, 11 * RUNS_SI)],
+        ),
+        // The evaluation rows: 2 payoff rules x 6 phis; mixed only, 21 r x 2 rho; N 500.
+        (
+            "the hub evaluation (evaluation)",
+            vec![(guo_ba, GUO_STEPS, 12 * RUNS_GUO)],
         ),
         (
-            "Guo networks, G4",
-            guo_net(Structure::BarabasiAlbert, SD6),
-            GUO_STEPS,
-            36 * RUNS_GUO,
+            "S3 per_round (evaluation)",
+            vec![(si_lat, SI_STEPS, 21 * 2 * RUNS_SI)],
         ),
         (
-            "Guo Barabási–Albert with ten bots, G5",
-            HybridConfig {
-                bot_count: 10,
-                ..guo_net(Structure::BarabasiAlbert, PD)
-            },
-            GUO_STEPS,
-            39 * RUNS_GUO,
-        ),
-        (
-            "Guo Barabási–Albert, the hub evaluation",
-            guo_net(Structure::BarabasiAlbert, SD6),
-            GUO_STEPS,
-            12 * RUNS_GUO,
-        ),
-        (
-            "Si lattice (mixed, the costliest), S1, S3, S4, per_round",
-            si_lattice(Framework::Mixed, 0.1, 0.3, 100),
-            SI_STEPS,
-            206 * RUNS_SI,
-        ),
-        (
-            "Si well-mixed, S1, S2 twice, S4",
-            si_well_mixed(Framework::Mixed, 0.1, 0.3, Division::Integer, 10_000),
-            SI_STEPS,
-            164 * RUNS_SI,
+            "S2 preprint-n (evaluation)",
+            vec![(si_mix(Division::Integer, 500), SI_STEPS, 72 * RUNS_SI)],
         ),
     ];
     let line = |name: &str, runs: u64, hours: f64| {
@@ -1255,7 +1322,14 @@ fn pilot(_: &[u64]) -> Outcome {
     };
     let mut out: Vec<String> = rows
         .into_iter()
-        .map(|(name, config, steps, runs)| line(name, runs, projected_hours(&config, steps, runs)))
+        .map(|(name, parts)| {
+            let runs = parts.iter().map(|p| p.2).sum();
+            let hours = parts
+                .iter()
+                .map(|(c, steps, n)| projected_hours(c, *steps, *n))
+                .sum();
+            line(name, runs, hours)
+        })
         .collect();
     // The coloring protocols run outside `Runner`: one graph's 100 repeats (C1) and one control
     // session (C2's 41-value fit and its six arms, 200 sessions each), timed directly.
