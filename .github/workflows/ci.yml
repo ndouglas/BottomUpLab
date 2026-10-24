@@ -75,6 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: xz -dk crates/sugarscape-core/src/persistent_notes/tests/fixtures/evaluation-reference.json.xz
+        working-directory: .
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
